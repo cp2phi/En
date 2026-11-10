@@ -1,9 +1,17 @@
 "use strict";
 
-const POS_NAMES = { verb: "动词", combo: "组合（多空）" };
+const POS_NAMES = {
+  verb: "动词", phrasal: "动词词组", adjective: "形容词", preposition: "介词", adverb: "副词",
+  noun: "名词", nounphrase: "名词词组", other: "连接词 / 委婉 / 习语 / 句式", combo: "组合（多空）",
+  grammar: "语法专题",
+};
+const POS_ORDER = Object.keys(POS_NAMES);
 const SCENE_NAMES = {
   work: "职场", tech: "IT 技术", restaurant: "餐厅饮食", sports: "体育", shopping: "购物",
   travel: "出行", health: "健康", home: "居家", social: "社交", money: "金钱", mixed: "混合",
+  connector: "连接词", polite: "委婉表达", idiom: "习语俚语", pattern: "常用句式",
+  past: "过去时专题", future: "将来时专题", continuous: "现在进行时专题", subjunctive: "虚拟语气专题",
+  tenses: "其他常用时态专题", third: "第三人称专题", plural: "复数专题", misc: "其他语法专题",
 };
 const KIND_TEXT = {
   correct: "正确", grammar: "词对了，但词形/语法不对", spelling: "拼写不对",
@@ -69,8 +77,13 @@ function speakButtons(text) {
   ];
 }
 
+// replaceChildren, but accepts nested arrays and skips null/false (as h() does).
+function fill(el, ...nodes) {
+  el.replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false));
+}
+
 function show(...nodes) {
-  view.replaceChildren(...nodes);
+  fill(view, ...nodes);
 }
 
 // ---- home -------------------------------------------------------------
@@ -105,11 +118,24 @@ async function clozeView() {
       h("option", { value: "" }, label),
       options.map(([value, text]) => h("option", { value, selected: clozeFilters[key] === String(value) }, text)));
   const box = h("div", {});
+  // Scenes (or grammar topics) offered depend on the chosen word class.
+  const scenes = {};
+  for (const [pos, counts] of Object.entries(meta.by_pos)) {
+    if (clozeFilters.pos && clozeFilters.pos !== pos) continue;
+    for (const [scene, n] of Object.entries(counts)) scenes[scene] = (scenes[scene] || 0) + n;
+  }
+  if (clozeFilters.scene && !(clozeFilters.scene in scenes)) clozeFilters.scene = "";
+  const posList = Object.entries(meta.pos).sort(([a], [b]) =>
+    (POS_ORDER.indexOf(a) + 1 || 99) - (POS_ORDER.indexOf(b) + 1 || 99));
+  const posSelect = h("select", { "aria-label": "词类", onchange: (e) => { clozeFilters.pos = e.target.value; clozeView(); } },
+    h("option", { value: "" }, "全部词类和专题"),
+    posList.map(([k, n]) => h("option", { value: k, selected: clozeFilters.pos === k }, `${POS_NAMES[k] || k}（${n}）`)));
   show(
     h("h1", {}, clozeFilters.mode === "wrongbook" ? "重做错题" : "翻译填空"),
     h("div", { class: "row", style: "margin-bottom:16px" },
-      select("pos", "全部词类", Object.entries(meta.pos).map(([k, n]) => [k, `${POS_NAMES[k] || k}（${n}）`])),
-      select("scene", "全部场景", Object.entries(meta.scenes).map(([k, n]) => [k, `${SCENE_NAMES[k] || k}（${n}）`])),
+      posSelect,
+      select("scene", clozeFilters.pos === "grammar" ? "全部专题" : "全部场景",
+        Object.entries(scenes).map(([k, n]) => [k, `${SCENE_NAMES[k] || k}（${n}）`])),
       select("level", "全部难度", Object.entries(meta.levels).map(([k, n]) => [k, `L${k}（${n}）`])),
       clozeFilters.mode === "wrongbook"
         ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "回到普通练习")
@@ -122,7 +148,7 @@ async function clozeView() {
     const params = new URLSearchParams(Object.entries(clozeFilters).filter(([, v]) => v));
     const { question: q, redo } = await api("GET", "cloze/next?" + params);
     if (!q) {
-      box.replaceChildren(h("div", { class: "card" },
+      fill(box, h("div", { class: "card" },
         clozeFilters.mode === "wrongbook" ? "错题集是空的。" : "这个范围的题目都做完了，换一个词类、场景或难度吧。"));
       return;
     }
@@ -135,7 +161,9 @@ async function clozeView() {
     const sentence = h("div", { class: "en" }, q.segments.map((seg) => {
       if (seg.text !== undefined) return seg.text;
       const input = h("input", {
-        class: "blank", placeholder: seg.hint + "…", autocomplete: "off", autocapitalize: "off",
+        class: "blank", placeholder: seg.cue ? `(${seg.cue})` : seg.hint ? seg.hint + "…" : "",
+        style: `width:${Math.max(6, seg.length + 3, (seg.cue || "").length + 3)}ch`,
+        autocomplete: "off", autocapitalize: "off",
         spellcheck: "false", "aria-label": `第 ${seg.blank + 1} 个空`,
       });
       inputs.push(input);
@@ -153,7 +181,7 @@ async function clozeView() {
       sentence, feedback, actions);
 
     function answeringActions() {
-      actions.replaceChildren(
+      fill(actions, 
         h("button", { class: "primary", type: "submit" }, attempted ? "再试一次" : "提交"),
         h("button", { type: "button", onclick: revealAnswer }, "看答案"),
         h("button", { class: "link", type: "button", onclick: never }, "永不出现"),
@@ -167,7 +195,7 @@ async function clozeView() {
       result.blanks.forEach((b, i) => { inputs[i].className = "blank " + b.kind; });
       if (result.correct) return finish(result, !attempted);
       attempted = true;
-      feedback.replaceChildren(...result.blanks.map((b, i) =>
+      fill(feedback, ...result.blanks.map((b, i) =>
         h("div", { class: b.kind === "correct" ? "good" : "bad" }, `第 ${i + 1} 空：${KIND_TEXT[b.kind]}`)));
       answeringActions();
       (inputs.find((i) => !i.classList.contains("correct")) || inputs[0]).focus();
@@ -189,7 +217,7 @@ async function clozeView() {
     function finish(result, firstTry) {
       inputs.forEach((i) => { i.disabled = true; });
       speak(result.sentence);
-      feedback.replaceChildren(
+      fill(feedback, 
         h("div", { class: firstTry ? "good" : "bad" },
           firstTry ? "答对了。" : "这道题会在今天再出现，之后按间隔重做。"),
         h("div", { class: "answer" }, result.sentence,
@@ -201,7 +229,7 @@ async function clozeView() {
         guessed.disabled = true;
         toast("已加入重做");
       } }, "其实是蒙对的");
-      actions.replaceChildren(
+      fill(actions, 
         next,
         firstTry ? guessed : null,
         h("button", { type: "button", onclick: () => {
@@ -214,7 +242,7 @@ async function clozeView() {
     }
 
     answeringActions();
-    box.replaceChildren(form);
+    fill(box, form);
     inputs[0].focus();
   }
 
@@ -277,9 +305,9 @@ async function reviewView() {
       mine.value = "";
       toast("例句已保存");
     });
-    back.replaceChildren(...cardDetails(word).flat().filter(Boolean), mine);
+    fill(back, ...cardDetails(word).flat().filter(Boolean), mine);
     const forget = h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "忘记");
-    actions.replaceChildren(
+    fill(actions, 
       forget,
       h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "模糊"),
       h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "记住"),
@@ -313,7 +341,7 @@ function addView() {
     h("input", { style: "flex:2", placeholder: "英文例句", value: ex.en || "" }),
     h("input", { style: "flex:1", placeholder: "中文", value: ex.zh || "" })));
   const setExamples = (list) => {
-    examplesBox.replaceChildren();
+    fill(examplesBox);
     list.forEach(addExample);
     for (let i = list.length; i < 3; i++) addExample();
   };
@@ -328,7 +356,7 @@ function addView() {
       definition.value = r.definition;
       const mine = r.sentence ? [{ en: r.sentence, zh: r.sentence_zh }] : [];
       setExamples([...mine, ...r.examples]);
-      notesBox.replaceChildren(
+      fill(notesBox, 
         h("label", {}, "AI 解释（勾选的会放进备注）"),
         ...r.notes.map((n) => h("div", {}, h("label", { style: "color:inherit;font-size:16px;margin:4px 0" },
           h("input", { type: "checkbox", value: n }), " " + n))));
@@ -379,7 +407,7 @@ function addView() {
 async function wordsView() {
   const { words } = await api("GET", "words");
   const body = h("tbody", {});
-  const draw = (filter) => body.replaceChildren(...words
+  const draw = (filter) => fill(body, ...words
     .filter((w) => !filter || w.term.includes(filter.toLowerCase()))
     .map((w) => h("tr", {},
       h("td", {}, h("b", {}, w.term), h("div", { class: "muted" }, w.respelling)),
@@ -395,6 +423,283 @@ async function wordsView() {
     h("h1", {}, `单词本（${words.length}）`),
     h("input", { class: "wide", placeholder: "搜索", oninput: (e) => draw(e.target.value.trim()), style: "margin-bottom:12px" }),
     h("div", { class: "card" }, h("table", {}, body)),
+  );
+}
+
+// ---- keep writing / keep speaking / improv / toastmasters ---------------
+const practiceTrack = {}; // remembered track per module
+let recorder = null; // active MediaRecorder, stopped when leaving the page
+
+function cancelRecording() {
+  if (recorder && recorder.state !== "inactive") {
+    recorder.cancelled = true;
+    recorder.stop();
+  }
+}
+
+function clock(seconds) {
+  const s = Math.floor(seconds);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function practiceView(module) {
+  cancelRecording();
+  const meta = (await api("GET", "practice/meta"))[module];
+  settings = await api("GET", "settings");
+  const open = meta.tracks.filter((t) => !t.locked);
+  let track = open.find((t) => t.id === practiceTrack[module]) || open[open.length - 1];
+  if (!meta.ladder) track = open.find((t) => t.id === practiceTrack[module]) || open[0];
+  practiceTrack[module] = track.id;
+  let voice = module !== "write";
+  const box = h("div", {});
+
+  const trackButtons = meta.tracks.map((t) => h("button", {
+    type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
+    title: t.locked ? "完成上一级后解锁" : `做过 ${t.done} / ${t.count} 题`,
+    onclick: () => { practiceTrack[module] = t.id; practiceView(module); },
+  }, (t.locked ? "🔒 " : "") + t.name));
+  const next = meta.tracks[meta.tracks.indexOf(track) + 1];
+  const ladderNote = meta.ladder && next && next.locked
+    ? `本级再完成 ${Math.max(0, meta.unlock_sessions - track.good)} 次合格练习，解锁「${next.name}」`
+    : `本组做过 ${track.done} / ${track.count} 题`;
+
+  show(
+    h("h1", {}, meta.name),
+    h("div", { class: "row", style: "margin-bottom:8px" }, trackButtons),
+    h("div", { class: "muted", style: "margin-bottom:16px" }, ladderNote),
+    box,
+  );
+
+  async function loadPrompt(same) {
+    const prompt = same || (await api("GET", `practice/next?module=${module}&track=${track.id}`)).prompt;
+    if (!prompt) {
+      fill(box, h("div", { class: "card" }, "这一组还没有题目。"));
+      return;
+    }
+    const work = h("div", {});
+    fill(box, h("div", { class: "card" },
+      h("div", { class: "answer" }, prompt.task),
+      prompt.say ? h("div", { class: "en", style: "font-size:20px;line-height:1.6" }, "“" + prompt.say + "”",
+        h("button", { class: "link", type: "button", onclick: () => speak(prompt.say) }, "🔊")) : null,
+      h("div", { class: "muted" }, prompt.zh),
+      work));
+    if (prompt.say) speak(prompt.say);
+    if (voice) voiceInput(prompt, work); else textInput(prompt, work);
+  }
+
+  function textInput(prompt, work) {
+    let startedAt = null;
+    const area = h("textarea", { rows: 8, placeholder: "直接写英文。不会的词可以先写中文，反馈时会告诉你怎么说。" });
+    const counter = h("span", { class: "muted" }, "0 词");
+    const timer = setInterval(() => {
+      if (!area.isConnected) return clearInterval(timer);
+      const words = (area.value.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) || []).length;
+      counter.textContent = `${words} 词　${startedAt ? clock((Date.now() - startedAt) / 1000) : "0:00"}`;
+    }, 500);
+    area.addEventListener("input", () => { startedAt = startedAt || Date.now(); });
+    const send = () => {
+      if (!area.value.trim()) return toast("先写点什么");
+      submit(prompt, area.value, startedAt ? (Date.now() - startedAt) / 1000 : 0, "write", 0);
+    };
+    area.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); });
+    fill(work, 
+      h("div", { style: "margin-top:12px" }, area),
+      h("div", { class: "row", style: "margin-top:10px" },
+        h("button", { class: "primary", type: "button", onclick: send }, "提交（⌘ + Enter）"),
+        h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "换一题"),
+        module !== "write" ? h("button", { class: "link", type: "button", onclick: () => { voice = true; loadPrompt(prompt); } }, "改用说的") : null,
+        counter));
+    area.focus();
+  }
+
+  function voiceInput(prompt, work) {
+    const [green, yellow, red] = track.timing || [];
+    const time = h("b", { style: "font-size:28px" }, "0:00");
+    const light = h("span", { class: "tag" }, "");
+    const status = h("span", { class: "muted" });
+    let stuck = 0;
+    let startedAt = null;
+    let ticker = null;
+
+    const startButton = h("button", { class: "primary", type: "button", onclick: start }, "开始说");
+    const controls = h("div", { class: "row", style: "margin-top:12px" },
+      startButton,
+      h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "换一题"),
+      h("button", { class: "link", type: "button", onclick: () => { voice = false; loadPrompt(prompt); } }, "改用打字"),
+      status);
+    fill(work, controls);
+    if (!settings.has_key) status.textContent = "没有设置 OpenAI key：只会记录说话时长，没有文字和反馈。";
+    startButton.focus();
+
+    async function start() {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        status.textContent = "无法使用麦克风：" + e.message;
+        return;
+      }
+      const chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        clearInterval(ticker);
+        const cancelled = recorder.cancelled;
+        const type = recorder.mimeType || "audio/webm";
+        recorder = null;
+        if (!cancelled) finish(new Blob(chunks, { type }), (Date.now() - startedAt) / 1000);
+      };
+      recorder.start();
+      startedAt = Date.now();
+      ticker = setInterval(() => {
+        const s = (Date.now() - startedAt) / 1000;
+        time.textContent = clock(s);
+        if (green) {
+          const [text, color] = s >= red ? ["红灯：该收尾了", "var(--bad)"]
+            : s >= yellow ? ["黄灯", "var(--warn)"] : s >= green ? ["绿灯：时间够了", "var(--good)"] : ["", ""];
+          light.textContent = text;
+          light.style.color = light.style.borderColor = color;
+          light.style.visibility = text ? "visible" : "hidden";
+        }
+      }, 250);
+      light.style.visibility = "hidden";
+      const stuckButton = h("button", { class: "warn", type: "button", onclick: () => {
+        stuck += 1;
+        stuckButton.textContent = `卡壳了（${stuck}）`;
+      } }, "卡壳了（0）");
+      const stop = h("button", { class: "primary", type: "button", onclick: () => recorder && recorder.stop() }, "说完了");
+      fill(work, 
+        h("div", { class: "row", style: "margin-top:12px" }, time, light),
+        h("div", { class: "muted" }, "别停。想不起来的词直接说中文，或者点「卡壳了」，然后接着说。"),
+        h("div", { class: "row", style: "margin-top:10px" }, stop, stuckButton));
+      stop.focus();
+    }
+
+    async function finish(blob, seconds) {
+      if (!settings.has_key) return submit(prompt, "", seconds, "speak", stuck);
+      fill(work, h("div", { class: "muted", style: "margin-top:12px" }, "正在把录音转成文字…"));
+      try {
+        const { text } = await api("POST", "practice/transcribe", { audio_b64: await blobToBase64(blob), mime: blob.type });
+        submit(prompt, text, seconds, "speak", stuck);
+      } catch (e) {
+        fill(work, 
+          h("p", { class: "feedback" }, h("span", { class: "bad" }, "转文字失败：" + e.message)),
+          h("div", { class: "row" },
+            h("button", { type: "button", onclick: () => finish(blob, seconds) }, "重试"),
+            h("button", { type: "button", onclick: () => submit(prompt, "", seconds, "speak", stuck) }, "只记录时长")));
+      }
+    }
+  }
+
+  async function submit(prompt, text, seconds, mode, stuck) {
+    fill(box, h("div", { class: "card muted" }, "正在看你的内容…"));
+    let r;
+    try {
+      r = await api("POST", "practice/submit", { prompt_id: prompt.id, text, seconds, mode, stuck });
+    } catch (e) {
+      fill(box, h("div", { class: "card" }, "提交失败：" + e.message,
+        h("pre", {}, text),
+        h("button", { type: "button", onclick: () => submit(prompt, text, seconds, mode, stuck) }, "重试")));
+      return;
+    }
+    const s = r.session;
+    const f = r.feedback;
+    const facts = [`${s.words} 词`, clock(s.seconds)];
+    if (s.seconds >= 30 && s.words) facts.push(`${Math.round(s.words / (s.seconds / 60))} 词/分钟`);
+    if (mode === "speak") facts.push(`卡壳 ${s.stuck} 次`, `口头禅 ${s.fillers} 次`);
+    facts.push(`+${s.xp} 经验`, `总等级 ${r.rank.level}`);
+    const nextButton = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "下一题");
+    fill(box, 
+      h("div", { class: "card" },
+        s.leveled_up ? h("p", { class: "feedback" }, h("b", { class: "good" }, `升级了，解锁 L${s.leveled_up}。`)) : null,
+        h("div", { class: "muted" }, facts.join("　")),
+        f && f.score ? h("div", {}, "★".repeat(f.score) + "☆".repeat(5 - f.score)) : null,
+        f ? h("p", {}, f.comment) : null,
+        r.ai_error ? h("p", { class: "feedback" }, h("span", { class: "bad" }, "没有拿到 AI 反馈：" + r.ai_error)) : null,
+        !f && !r.ai_error && text ? h("p", { class: "muted" }, "没有设置 OpenAI key，所以只做了统计。") : null,
+        h("div", { class: "row", style: "margin-top:10px" },
+          nextButton,
+          h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "同一题再来一遍"))),
+      text ? h("div", { class: "card" },
+        h("label", {}, mode === "speak" ? "你说的（自动转写）" : "你写的"), h("div", {}, text),
+        f && f.natural ? [h("label", {}, "更自然的说法"),
+          h("div", { class: "answer" }, f.natural,
+            h("button", { class: "link", type: "button", onclick: () => speak(f.natural) }, "🔊"))] : null) : null,
+      f && f.issues.length ? h("div", { class: "card" },
+        h("label", {}, "最值得改的地方"),
+        f.issues.map((i) => h("div", { class: "example" },
+          h("span", { class: "bad", style: "color:var(--bad)" }, i.original), " → ",
+          h("b", {}, i.better), h("span", { class: "muted" }, i.why)))) : null,
+      f && f.vocab.length ? h("div", { class: "card" },
+        h("label", {}, "可以收进生词本的表达"),
+        f.vocab.map((v) => {
+          const add = h("button", { class: "link", type: "button", onclick: async () => {
+            const res = await api("POST", "words", { term: v.term, note: v.zh,
+              examples: v.example ? [{ en: v.example, zh: "" }] : [] });
+            add.disabled = true;
+            add.textContent = res.duplicate ? "已在生词本" : "已加入";
+          } }, "+ 加入生词");
+          return h("div", { class: "example" }, h("b", {}, v.term), "　" + v.zh, add,
+            h("span", { class: "muted" }, v.example));
+        })) : null,
+    );
+    nextButton.focus();
+  }
+
+  await loadPrompt();
+}
+
+async function statsView() {
+  const s = await api("GET", "practice/stats");
+  const w = s.modules.write;
+  const sp = s.modules.spoken;
+  const dash = (v, unit = "") => (v === null || v === undefined ? "—" : v + unit);
+  const row = (label, ...cells) => h("tr", {}, h("td", { class: "muted" }, label), cells.map((c) => h("td", {}, String(c))));
+  const names = { write: "一直写", speak: "一直说", improv: "Improv", toast: "Toastmasters" };
+  show(
+    h("h1", {}, "统计"),
+    h("div", { class: "grid" },
+      h("div", { class: "card stat" }, h("b", {}, String(s.rank.level)), `总等级（${s.rank.xp} / ${s.rank.next_at} 经验）`),
+      h("div", { class: "card stat" }, h("b", {}, String(s.streak)), "天连续练习"),
+      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.write), "一直写 已解锁"),
+      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.speak), "一直说 已解锁")),
+    h("div", { class: "card" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "写"), h("th", {}, "今天"), h("th", {}, "近 7 天"), h("th", {}, "前 7 天"), h("th", {}, "累计"))),
+      h("tbody", {},
+        row("词数", w.today.words, w.this_week.words, w.last_week.words, w.all.words),
+        row("时长（分钟）", w.today.minutes, w.this_week.minutes, w.last_week.minutes, w.all.minutes),
+        row("打字速度（词/分钟）", dash(w.today.wpm), dash(w.this_week.wpm), dash(w.last_week.wpm), dash(w.all.wpm)),
+        row("每 100 词的问题数", dash(w.today.issues_per_100), dash(w.this_week.issues_per_100), dash(w.last_week.issues_per_100), dash(w.all.issues_per_100)),
+        row("平均得分", dash(w.today.avg_score), dash(w.this_week.avg_score), dash(w.last_week.avg_score), dash(w.all.avg_score)),
+        row("用过的不同单词", "", "", "", w.unique_words),
+        row("单次最多词数", "", "", "", w.all.most_words)))),
+    h("div", { class: "card" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "说（含 Improv、Toastmasters）"), h("th", {}, "今天"), h("th", {}, "近 7 天"), h("th", {}, "前 7 天"), h("th", {}, "累计"))),
+      h("tbody", {},
+        row("开口时长（分钟）", sp.today.minutes, sp.this_week.minutes, sp.last_week.minutes, sp.all.minutes),
+        row("说出的词数", sp.today.words, sp.this_week.words, sp.last_week.words, sp.all.words),
+        row("语速（词/分钟）", dash(sp.today.wpm), dash(sp.this_week.wpm), dash(sp.last_week.wpm), dash(sp.all.wpm)),
+        row("卡壳次数", sp.today.stuck, sp.this_week.stuck, sp.last_week.stuck, sp.all.stuck),
+        row("口头禅次数", sp.today.fillers, sp.this_week.fillers, sp.last_week.fillers, sp.all.fillers),
+        row("每 100 词的问题数", dash(sp.today.issues_per_100), dash(sp.this_week.issues_per_100), dash(sp.last_week.issues_per_100), dash(sp.all.issues_per_100)),
+        row("用过的不同单词", "", "", "", sp.unique_words),
+        row("单次最长（分钟）", "", "", "", (sp.all.longest_seconds / 60).toFixed(1))))),
+    h("div", { class: "card" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "模块"), h("th", {}, "练习次数"), h("th", {}, "词数"), h("th", {}, "分钟"))),
+      h("tbody", {}, Object.entries(s.by_module).map(([m, v]) => row(names[m] || m, v.sessions, v.words, v.minutes))))),
+    h("div", { class: "card" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", {}, "最近 14 天"), h("th", {}, "写（词）"), h("th", {}, "说（分钟）"), h("th", {}, "经验"))),
+      h("tbody", {}, [...s.days].reverse().map((d) => row(d.date, d.write_words, d.spoken_minutes, d.xp))))),
   );
 }
 
@@ -455,9 +760,13 @@ document.getElementById("sync").addEventListener("click", async (e) => {
 const routes = {
   home: homeView, cloze: clozeView, wrongbook: wrongbookView, review: reviewView,
   add: addView, words: wordsView, settings: settingsView,
+  write: () => practiceView("write"), speak: () => practiceView("speak"),
+  improv: () => practiceView("improv"), toast: () => practiceView("toast"), stats: statsView,
 };
 
 async function render() {
+  cancelRecording();
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
   const name = location.hash.slice(1) || "home";
   document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + name));
   try {

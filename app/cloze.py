@@ -6,6 +6,8 @@ Question files live in questions/<pos>/<scene>.json. Each question:
      "en": "She {runs|chairs} the team meeting every Monday."}
 Each {...} is one blank; alternatives are separated by "|", the first one is
 the main answer (used for the first-letter hint and shown as the solution).
+A blank may carry a cue shown instead of the first letter, e.g. the base verb
+in grammar drills:  "She {went::go} home early."
 """
 
 import json
@@ -21,6 +23,8 @@ BLANK = re.compile(r"\{([^{}]+)\}")
 # A wrong question leaves the review loop once its interval reaches this many days.
 GRADUATE_INTERVAL = 15
 OUTCOMES = ("correct", "wrong", "reveal", "guessed", "never")
+# Word classes where the first letter would give the answer away.
+NO_LETTER_HINT = {"preposition", "grammar"}
 
 DEFAULT_PROGRESS = {"seq": 0, "items": {}}
 
@@ -33,8 +37,10 @@ def parse(en: str) -> tuple[list[dict], list[list[str]]]:
     for m in BLANK.finditer(en):
         if m.start() > pos:
             segments.append({"text": en[pos:m.start()]})
-        accepted = [a.strip() for a in m.group(1).split("|") if a.strip()]
-        segments.append({"blank": len(blanks), "hint": accepted[0][0], "length": len(accepted[0])})
+        answers, _, cue = m.group(1).partition("::")
+        accepted = [a.strip() for a in answers.split("|") if a.strip()]
+        segments.append({"blank": len(blanks), "hint": accepted[0][0], "length": len(accepted[0]),
+                         "cue": cue.strip()})
         blanks.append(accepted)
         pos = m.end()
     if pos < len(en):
@@ -43,7 +49,7 @@ def parse(en: str) -> tuple[list[dict], list[list[str]]]:
 
 
 def solution(en: str) -> str:
-    return BLANK.sub(lambda m: m.group(1).split("|")[0].strip(), en)
+    return BLANK.sub(lambda m: m.group(1).partition("::")[0].split("|")[0].strip(), en)
 
 
 def load_questions(root: Path) -> dict[str, dict]:
@@ -70,7 +76,12 @@ def load_questions(root: Path) -> dict[str, dict]:
 
 def public_view(q: dict) -> dict:
     """What the browser gets before answering: no answers, only hints."""
-    return {k: q[k] for k in ("id", "pos", "scene", "level", "zh", "segments")} | {"g": q.get("g", "")}
+    segments = []
+    for seg in q["segments"]:
+        if "blank" in seg and (seg["cue"] or q["pos"] in NO_LETTER_HINT):
+            seg = seg | {"hint": ""}
+        segments.append(seg)
+    return {k: q[k] for k in ("id", "pos", "scene", "level", "zh")} | {"g": q.get("g", ""), "segments": segments}
 
 
 def classify(given: str, accepted: list[str]) -> str:
@@ -186,13 +197,14 @@ def wrong_book(questions: dict, progress: dict) -> list[dict]:
 
 def meta(questions: dict) -> dict:
     pos: dict[str, int] = {}
-    scenes: dict[str, int] = {}
+    by_pos: dict[str, dict[str, int]] = {}
     levels: dict[int, int] = {}
     for q in questions.values():
         pos[q["pos"]] = pos.get(q["pos"], 0) + 1
+        scenes = by_pos.setdefault(q["pos"], {})
         scenes[q["scene"]] = scenes.get(q["scene"], 0) + 1
         levels[q["level"]] = levels.get(q["level"], 0) + 1
-    return {"pos": pos, "scenes": scenes, "levels": dict(sorted(levels.items())), "total": len(questions)}
+    return {"pos": pos, "by_pos": by_pos, "levels": dict(sorted(levels.items())), "total": len(questions)}
 
 
 def stats(questions: dict, progress: dict, today: date) -> dict:

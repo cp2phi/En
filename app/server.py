@@ -1,6 +1,9 @@
 """Local HTTP server: JSON API + static frontend. Standard library only."""
 
+import base64
+import binascii
 import json
+import math
 import mimetypes
 import threading
 from datetime import date
@@ -8,11 +11,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import ai, cloze, words
+from . import ai, cloze, practice, words
 from .store import JsonStore
 from .sync import sync
 
 DEFAULT_SETTINGS = {"accent": "us", "new_per_day": 20, "model": ai.DEFAULT_MODEL}
+MAX_BODY = 40 * 1024 * 1024  # a few minutes of recorded audio, base64 encoded
+MAX_SESSION_SECONDS = 4 * 3600  # caps a clock left running by mistake
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 
 
@@ -26,12 +31,16 @@ class ApiError(Exception):
 class App:
     """All state and request logic. `root` is the repository directory."""
 
-    def __init__(self, root: Path, today=date.today, explain=ai.explain):
+    def __init__(self, root: Path, today=date.today, explain=ai.explain,
+                 feedback=ai.feedback, transcribe=ai.transcribe):
         self.root = Path(root)
         self.data_dir = self.root / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.static_dir = Path(__file__).resolve().parent.parent / "static"
-        self.questions = cloze.load_questions(Path(__file__).resolve().parent.parent / "questions")
+        content = Path(__file__).resolve().parent.parent
+        self.questions = cloze.load_questions(content / "questions")
+        self.prompts = practice.load_prompts(content / "prompts")
+        self.practice = JsonStore(self.data_dir / "practice.json", practice.DEFAULT_PRACTICE)
         self.words = JsonStore(self.data_dir / "words.json", words.DEFAULT_WORDS)
         self.cloze = JsonStore(self.data_dir / "cloze.json", cloze.DEFAULT_PROGRESS)
         self.settings = JsonStore(self.data_dir / "settings.json", DEFAULT_SETTINGS)
@@ -39,6 +48,8 @@ class App:
         self.secrets = JsonStore(self.root / "config.local.json", {"openai_key": ""})
         self.today = today
         self.explain = explain
+        self.feedback = feedback
+        self.transcribe = transcribe
         self.lock = threading.Lock()
 
     # ---- helpers -------------------------------------------------------
@@ -62,8 +73,71 @@ class App:
                                     secrets["openai_key"], settings["model"])
             except ai.AIError as e:
                 raise ApiError(502, str(e)) from e
+        if route == ("POST", "practice", "transcribe"):
+            try:
+                audio = base64.b64decode(str(body.get("audio_b64", "")), validate=True)
+            except (binascii.Error, ValueError) as e:
+                raise ApiError(400, "audio_b64 is not valid base64") from e
+            try:
+                text = self.transcribe(audio, str(body.get("mime") or "audio/webm"),
+                                       self.secrets.load()["openai_key"])
+            except ai.AIError as e:
+                raise ApiError(502, str(e)) from e
+            return {"text": text}
+        if route == ("POST", "practice", "submit"):
+            return self._practice_submit(body)
         with self.lock:
             return self._handle_locked(method, parts, query, body)
+
+    def _practice_submit(self, body: dict) -> dict:
+        prompt = practice.find_prompt(self.prompts, body.get("prompt_id"))
+        if prompt is None:
+            raise ApiError(404, "prompt not found")
+        mode = body.get("mode")
+        if mode not in ("write", "speak"):
+            raise ApiError(400, "mode must be write or speak")
+        text = str(body.get("text") or "").strip()
+        try:
+            seconds = float(body.get("seconds") or 0)
+            stuck = int(body.get("stuck") or 0)
+        except (TypeError, ValueError) as e:
+            raise ApiError(400, "seconds and stuck must be numbers") from e
+        if not math.isfinite(seconds):
+            raise ApiError(400, "seconds must be a finite number")
+        seconds = min(seconds, MAX_SESSION_SECONDS)
+        with self.lock:
+            # Checked before the paid AI call, and again when recording.
+            if practice.is_locked(self.prompts, self.practice.load(), prompt["module"], prompt["track"]):
+                raise ApiError(400, "this level is still locked")
+
+        # The AI call runs outside the lock; practice still counts if it fails.
+        feedback, ai_error = None, None
+        key = self.secrets.load()["openai_key"]
+        if key and practice.count_words(text):
+            task = prompt["task"] + (f'\nLine given to the learner: "{prompt["say"]}"' if prompt.get("say") else "")
+            if prompt["task"].startswith("Translate"):
+                task += f"\nChinese sentence: {prompt['zh']}"
+            try:
+                feedback = self.feedback(prompt["module"], task, text, mode, key, self.settings.load()["model"])
+            except ai.AIError as e:
+                ai_error = str(e)
+
+        with self.lock:
+            today = self.today()
+            data = self.practice.load()
+            if practice.is_locked(self.prompts, data, prompt["module"], prompt["track"]):
+                raise ApiError(400, "this level is still locked")
+            session = practice.record_session(data, prompt, text, seconds, mode, stuck, feedback, today)
+            self.practice.save(data)
+            journal = JsonStore(self.data_dir / "journal" / f"{today:%Y-%m}.json", {"entries": []})
+            entries = journal.load()
+            entries["entries"].append({"session": session["id"], "date": session["date"],
+                                       "prompt_id": prompt["id"], "task": prompt["task"],
+                                       "text": text, "feedback": feedback})
+            journal.save(entries)
+            total_xp = sum(s["xp"] for s in data["sessions"])
+        return {"session": session, "feedback": feedback, "ai_error": ai_error,
+                "rank": practice.rank(total_xp)}
 
     def _handle_locked(self, method: str, parts: list[str], query: dict, body: dict) -> dict:
         today = self.today()
@@ -158,6 +232,21 @@ class App:
                 self.words.save(data)
                 return {"ok": True}
 
+            # ---- practice ----
+            case ("GET", "practice", "meta"):
+                return practice.meta(self.prompts, self.practice.load())
+            case ("GET", "practice", "next"):
+                module, track = query.get("module"), query.get("track")
+                if module not in self.prompts or track not in self.prompts[module]["tracks"]:
+                    raise ApiError(404, "unknown module or track")
+                data = self.practice.load()
+                if practice.is_locked(self.prompts, data, module, track):
+                    raise ApiError(400, "this level is still locked")
+                prompt = practice.next_prompt(self.prompts, data, module, track)
+                return {"prompt": prompt}
+            case ("GET", "practice", "stats"):
+                return practice.stats(self.practice.load(), today)
+
             # ---- settings / sync ----
             case ("GET", "settings"):
                 return self._settings_view()
@@ -228,6 +317,8 @@ def make_handler(app: App):
                 if method == "POST" and not is_json:
                     return self._json(415, {"error": "expected application/json"})
                 length = int(self.headers.get("Content-Length") or 0)
+                if length > MAX_BODY:
+                    return self._json(413, {"error": "request too large"})
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
                 except ValueError:

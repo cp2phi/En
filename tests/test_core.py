@@ -3,7 +3,7 @@ import unittest
 from datetime import date, timedelta
 from pathlib import Path
 
-from app import ai, cloze, srs, words
+from app import ai, cloze, practice, srs, words
 from app.text import edit_distance, stem, stem_phrase
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -101,7 +101,21 @@ class ClozeTest(unittest.TestCase):
     def test_parse(self):
         self.assertEqual(self.q["blanks"], [["runs", "chairs"], ["meeting"]])
         self.assertEqual(self.q["sentence"], "She runs the meeting every Monday.")
-        self.assertEqual(self.q["segments"][1], {"blank": 0, "hint": "r", "length": 4})
+        self.assertEqual(self.q["segments"][1], {"blank": 0, "hint": "r", "length": 4, "cue": ""})
+
+    def test_cue_replaces_letter_hint(self):
+        q = self._q("g1", "She {went|walked::go} home and {didn't call::not call}.")
+        self.assertEqual(q["blanks"], [["went", "walked"], ["didn't call"]])
+        self.assertEqual(q["sentence"], "She went home and didn't call.")
+        blanks = [seg for seg in cloze.public_view(q)["segments"] if "blank" in seg]
+        self.assertEqual([(b["cue"], b["hint"]) for b in blanks], [("go", ""), ("not call", "")])
+        self.assertTrue(cloze.check(q, ["went", "didn't call"])["correct"])
+        self.assertEqual(cloze.classify("goed", ["went"]), "grammar")
+        self.assertEqual(cloze.classify("go", ["went"]), "grammar")
+
+    def test_no_letter_hint_for_prepositions(self):
+        q = self._q("p1", "I'm good {at} this.") | {"pos": "preposition"}
+        self.assertEqual(cloze.public_view(q)["segments"][1]["hint"], "")
 
     def test_public_view_hides_answers(self):
         self.assertNotIn("runs", str(cloze.public_view(self.q)))
@@ -185,8 +199,12 @@ class QuestionBankTest(unittest.TestCase):
 
     def test_counts(self):
         m = cloze.meta(self.questions)
-        self.assertEqual(m["pos"]["verb"], 200)
-        self.assertGreaterEqual(m["pos"]["combo"], 20)
+        expected = {"verb": 200, "combo": 20, "phrasal": 200, "adjective": 200, "preposition": 200,
+                    "adverb": 200, "noun": 500, "nounphrase": 300, "other": 200, "grammar": 420}
+        self.assertEqual(m["pos"], expected)
+        topics = {"past": 100, "future": 40, "continuous": 40, "subjunctive": 40, "tenses": 60,
+                  "third": 40, "plural": 40, "misc": 60}
+        self.assertEqual(m["by_pos"]["grammar"], topics)
 
     def test_every_question_is_well_formed(self):
         for q in self.questions.values():
@@ -198,13 +216,20 @@ class QuestionBankTest(unittest.TestCase):
                     self.assertEqual(len(accepted), len(set(accepted)))
                     for answer in accepted:
                         self.assertRegex(answer, r"^[A-Za-z][A-Za-z' -]*$")
+                self.assertNotIn("::", q["sentence"])
+                if q["pos"] == "grammar":
+                    self.assertTrue(all(seg["cue"] for seg in q["segments"] if "blank" in seg),
+                                    "grammar drills show a cue for every blank")
                 self.assertTrue(cloze.check(q, [b[0] for b in q["blanks"]])["correct"])
                 if q["pos"] == "combo":
                     self.assertGreaterEqual(len(q["blanks"]), 2)
 
     def test_no_duplicate_sentences(self):
-        sentences = [q["sentence"] for q in self.questions.values() if q["pos"] == "verb"]
-        self.assertEqual(len(sentences), len(set(sentences)))
+        seen = {}
+        for q in self.questions.values():
+            key = (q["pos"], q["sentence"])
+            self.assertNotIn(key, seen, f"{q['id']} repeats {seen.get(key)}")
+            seen[key] = q["id"]
 
 
 class WordsTest(unittest.TestCase):
@@ -293,6 +318,158 @@ class AiTest(unittest.TestCase):
             ai.explain("", "", "sk")
         with self.assertRaises(ai.AIError):
             ai.explain("x", "", "sk", post=lambda p, k: {"choices": [{"message": {"content": "not json"}}]})
+
+
+class PracticeTest(unittest.TestCase):
+    def setUp(self):
+        def prompts(module, track, n):
+            return [{"id": f"{module}-{track}-{i}", "level": 1, "task": "Say it.", "zh": "说",
+                     "module": module, "track": track} for i in range(n)]
+        self.bank = {
+            "write": {"name": "写", "ladder": True, "tracks": {
+                "l1": {"name": "L1", "prompts": prompts("write", "l1", 3)},
+                "l2": {"name": "L2", "prompts": prompts("write", "l2", 3)}}},
+            "toast": {"name": "T", "ladder": False, "tracks": {
+                "table_topics": {"name": "TT", "green": 60, "yellow": 90, "red": 120,
+                                 "prompts": prompts("toast", "table_topics", 2)}}},
+        }
+        self.data = {"sessions": [], "done": {}, "vocab": {"write": {}, "spoken": {}}}
+
+    def do(self, prompt, text, score=None, seconds=60, mode="write", day=D0, stuck=0):
+        fb = {"score": score, "issues": [{"original": "a", "better": "b", "why": "c"}]} if score else None
+        return practice.record_session(self.data, prompt, text, seconds, mode, stuck, fb, day)
+
+    def test_ladder_unlocks_after_enough_good_sessions(self):
+        p1 = self.bank["write"]["tracks"]["l1"]["prompts"][0]
+        self.assertTrue(practice.is_locked(self.bank, self.data, "write", "l2"))
+        self.do(p1, "too short")                       # under the word minimum: not good
+        self.do(p1, "I will take tomorrow off.", score=2)  # low score: not good
+        for _ in range(practice.UNLOCK_SESSIONS - 1):
+            self.assertIsNone(self.do(p1, "I will take tomorrow off.", score=4)["leveled_up"])
+        self.assertTrue(practice.is_locked(self.bank, self.data, "write", "l2"))
+        self.assertEqual(self.do(p1, "I will take tomorrow off.")["leveled_up"], 2)
+        self.assertFalse(practice.is_locked(self.bank, self.data, "write", "l2"))
+        tracks = {t["id"]: t for t in practice.meta(self.bank, self.data)["write"]["tracks"]}
+        self.assertEqual((tracks["l1"]["good"], tracks["l1"]["done"], tracks["l2"]["locked"]), (5, 1, False))
+        self.assertEqual(practice.meta(self.bank, self.data)["toast"]["tracks"][0]["timing"], [60, 90, 120])
+
+    def test_next_prompt_prefers_unseen(self):
+        rng = random.Random(3)
+        seen = []
+        for _ in range(3):
+            p = practice.next_prompt(self.bank, self.data, "write", "l1", rng)
+            seen.append(p["id"])
+            self.do(p, "one two three four five")
+        self.assertEqual(len(set(seen)), 3)
+        again = practice.next_prompt(self.bank, self.data, "write", "l1", rng)
+        self.assertNotEqual(again["id"], seen[-1], "does not repeat the prompt just done")
+
+    def test_session_numbers(self):
+        p = self.bank["toast"]["tracks"]["table_topics"]["prompts"][0]
+        s = self.do(p, "Um, I think, uh, you know, 这个 it's good. I don't know.", score=3, seconds=30,
+                    mode="speak", stuck=2)
+        self.assertEqual((s["words"], s["fillers"], s["stuck"], s["issues"]), (11, 3, 2, 1))
+        self.assertEqual(s["xp"], 11 + 10 + 15)
+        self.assertEqual(self.data["vocab"]["spoken"]["i"], 2)
+        self.assertEqual(self.data["vocab"]["write"], {})
+        empty = self.do(p, "", seconds=45, mode="speak")
+        self.assertEqual((empty["words"], empty["xp"], empty["good"]), (0, 10, False))
+        spoken = practice.stats(self.data, D0)["modules"]["spoken"]["all"]
+        self.assertEqual(spoken["wpm"], 22, "time without a transcript does not lower the speed")
+        only_silent = practice._summary([self.data["sessions"][-1]])
+        self.assertIsNone(only_silent["wpm"])
+
+    def test_stats_streak_and_rank(self):
+        p = self.bank["write"]["tracks"]["l1"]["prompts"][0]
+        for back in (0, 1, 2, 4):
+            self.do(p, "word " * 50, score=4, seconds=120, day=D0 - timedelta(days=back))
+        self.do(self.bank["toast"]["tracks"]["table_topics"]["prompts"][0], "hello there " * 60,
+                seconds=90, mode="speak", day=D0 - timedelta(days=8))
+        st = practice.stats(self.data, D0)
+        self.assertEqual(st["streak"], 3)
+        w = st["modules"]["write"]
+        self.assertEqual((w["today"]["words"], w["this_week"]["words"], w["all"]["wpm"]), (50, 200, 25))
+        self.assertEqual(w["all"]["issues_per_100"], 2.0)
+        self.assertEqual(w["unique_words"], 1)
+        sp = st["modules"]["spoken"]
+        self.assertEqual((sp["last_week"]["minutes"], sp["all"]["wpm"], sp["this_week"]["sessions"]), (1.5, 80, 0))
+        self.assertEqual(len(st["days"]), 14)
+        self.assertEqual(st["days"][-1]["write_words"], 50)
+        xp = sum(s["xp"] for s in self.data["sessions"])
+        self.assertEqual(st["rank"], practice.rank(xp))
+        self.assertEqual(practice.rank(0)["level"], 1)
+        self.assertEqual(practice.rank(800), {"level": 3, "xp": 800, "next_at": 1800})
+        self.assertEqual(practice.streak({(D0 - timedelta(days=1)).isoformat()}, D0), 1)
+        self.assertEqual(practice.streak(set(), D0), 0)
+
+
+class PromptBankTest(unittest.TestCase):
+    def test_every_track_has_prompts(self):
+        bank = practice.load_prompts(ROOT / "prompts")
+        self.assertEqual(set(bank), set(practice.MODULES))
+        ids = set()
+        for module, info in bank.items():
+            for track, t in info["tracks"].items():
+                with self.subTest(f"{module}/{track}"):
+                    self.assertGreaterEqual(len(t["prompts"]), 20)
+                    for p in t["prompts"]:
+                        self.assertNotIn(p["id"], ids)
+                        ids.add(p["id"])
+                        self.assertTrue(p["task"].strip() and p["zh"].strip())
+        for module in ("write", "speak"):
+            self.assertEqual(list(bank[module]["tracks"]), [f"l{i}" for i in range(1, 7)])
+            self.assertTrue(bank[module]["ladder"])
+        self.assertEqual(len(bank["toast"]["tracks"]["table_topics"]["prompts"]), 100)
+        self.assertIs(practice.find_prompt(bank, "nope"), None)
+
+
+class AiFeedbackTest(unittest.TestCase):
+    def test_feedback_is_cleaned(self):
+        seen = {}
+
+        def post(payload, key):
+            seen["system"] = payload["messages"][0]["content"]
+            seen["user"] = payload["messages"][1]["content"]
+            content = ('{"natural":"I went there.","issues":[{"original":"I go","better":"I went","why":"过去"},'
+                       '{"better":"no original"},1,2,{"original":"x"},{"original":"y"},{"original":"z"}],'
+                       '"vocab":[{"term":"deadline","zh":"截止日期","example":"We missed it."}],'
+                       '"score":"9","comment":"不错"}')
+            return {"choices": [{"message": {"content": content}}]}
+
+        r = ai.feedback("improv", "Say yes and", "I go there", "speak", "sk", "m", post=post)
+        self.assertEqual(r["score"], 5)
+        self.assertEqual(len(r["issues"]), 3)
+        self.assertEqual(r["issues"][0], {"original": "I go", "better": "I went", "why": "过去"})
+        self.assertEqual(r["vocab"][0]["term"], "deadline")
+        self.assertIn("transcript", seen["system"])
+        self.assertIn("improv", seen["system"])
+        self.assertIn("I go there", seen["user"])
+        written = ai.feedback("write", "t", "x", "write", "sk", post=lambda p, k: {
+            "choices": [{"message": {"content": '{"score": null}'}}]})
+        self.assertEqual((written["score"], written["issues"], written["natural"]), (None, [], ""))
+        with self.assertRaises(ai.AIError):
+            ai.feedback("write", "t", "x", "write", "")
+
+    def test_transcribe_builds_multipart(self):
+        seen = {}
+
+        def post(body, content_type, key):
+            seen.update(body=body, content_type=content_type, key=key)
+            return {"text": " Hello there. "}
+
+        text = ai.transcribe(b"\x00\x01AUDIO", "audio/webm;codecs=opus", "sk", post=post)
+        self.assertEqual(text, "Hello there.")
+        self.assertTrue(seen["content_type"].startswith("multipart/form-data; boundary="))
+        boundary = seen["content_type"].split("boundary=")[1].encode()
+        self.assertEqual(seen["body"].count(b"--" + boundary), 4)
+        self.assertIn(b'filename="speech.webm"', seen["body"])
+        self.assertIn(b"Content-Type: audio/webm\r\n\r\n\x00\x01AUDIO\r\n", seen["body"])
+        self.assertIn(b'name="model"\r\n\r\nwhisper-1', seen["body"])
+        self.assertIn(b'filename="speech.mp4"', (ai.transcribe(b"x", "audio/mp4", "sk", post=post), seen["body"])[1])
+        with self.assertRaises(ai.AIError):
+            ai.transcribe(b"x", "audio/webm", "")
+        with self.assertRaises(ai.AIError):
+            ai.transcribe(b"", "audio/webm", "sk")
 
 
 if __name__ == "__main__":

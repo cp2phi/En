@@ -7,8 +7,13 @@ import unittest
 from datetime import date, datetime
 from pathlib import Path
 
+from app import ai
 from app.server import make_server
 from app.sync import sync
+
+
+def practice_prompt(app, module, track):
+    return app.prompts[module]["tracks"][track]["prompts"][0]
 
 
 def git(cwd, *args):
@@ -25,7 +30,19 @@ class ServerTest(unittest.TestCase):
             self.explained.append((focus, sentence, key, model))
             return {"term": focus, "notes": []}
 
-        self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), explain=fake_explain)
+        self.feedback_calls = []
+
+        def fake_feedback(module, task, text, mode, key, model):
+            self.feedback_calls.append((module, task, text, mode))
+            return {"natural": "Better.", "issues": [], "vocab": [], "score": 4, "comment": "好"}
+
+        def fake_transcribe(audio, mime, key):
+            if not key:
+                raise ai.AIError("no key")
+            return f"heard {len(audio)} bytes of {mime}"
+
+        self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), explain=fake_explain,
+                                  feedback=fake_feedback, transcribe=fake_transcribe)
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
@@ -66,6 +83,11 @@ class ServerTest(unittest.TestCase):
     def test_cloze_flow(self):
         status, meta = self.call("GET", "/api/cloze/meta")
         self.assertEqual((status, meta["pos"]["verb"]), (200, 200))
+        self.assertEqual(meta["by_pos"]["grammar"]["past"], 100)
+        _, drill = self.call("GET", "/api/cloze/next?pos=grammar&scene=past")
+        blank = next(seg for seg in drill["question"]["segments"] if "blank" in seg)
+        self.assertTrue(blank["cue"])
+        self.assertEqual(blank["hint"], "")
         _, nxt = self.call("GET", "/api/cloze/next?pos=verb&scene=work&level=3")
         q = nxt["question"]
         self.assertEqual((q["pos"], q["scene"], q["level"]), ("verb", "work", 3))
@@ -122,6 +144,65 @@ class ServerTest(unittest.TestCase):
 
         self.call("POST", "/api/ai/explain", {"focus": "zone", "sentence": "In the zone."})
         self.assertEqual(self.explained[0][:3], ("zone", "In the zone.", "sk-secret"))
+
+
+    def test_practice_flow(self):
+        _, meta = self.call("GET", "/api/practice/meta")
+        self.assertEqual(set(meta), {"write", "speak", "improv", "toast"})
+        self.assertEqual([t["locked"] for t in meta["write"]["tracks"]], [False] + [True] * 5)
+        self.assertFalse(any(t["locked"] for t in meta["improv"]["tracks"]))
+        self.assertEqual(self.call("GET", "/api/practice/next?module=write&track=l2")[0], 400)
+        self.assertEqual(self.call("GET", "/api/practice/next?module=write&track=zz")[0], 404)
+
+        _, nxt = self.call("GET", "/api/practice/next?module=write&track=l1")
+        prompt = nxt["prompt"]
+        body = {"prompt_id": prompt["id"], "text": "I will take 请假 tomorrow.", "seconds": 20, "mode": "write"}
+
+        # Without a key: the session is counted, no feedback.
+        status, r = self.call("POST", "/api/practice/submit", body)
+        self.assertEqual(status, 200)
+        self.assertEqual((r["feedback"], r["ai_error"], r["session"]["words"]), (None, None, 4))
+        self.assertEqual(self.feedback_calls, [])
+        self.assertEqual(self.call("POST", "/api/practice/transcribe", {"audio_b64": "AAAA"})[0], 502)
+
+        self.call("PUT", "/api/settings", {"openai_key": "sk-secret"})
+        for _ in range(4):
+            _, r = self.call("POST", "/api/practice/submit", body)
+        self.assertEqual(r["feedback"]["score"], 4)
+        self.assertEqual(r["session"]["leveled_up"], 2)
+        self.assertIn(prompt["zh"], self.feedback_calls[0][1], "translation tasks send the Chinese sentence")
+        self.assertEqual(self.call("GET", "/api/practice/next?module=write&track=l2")[0], 200)
+
+        _, heard = self.call("POST", "/api/practice/transcribe", {"audio_b64": "AAAA", "mime": "audio/mp4"})
+        self.assertEqual(heard["text"], "heard 3 bytes of audio/mp4")
+        self.assertEqual(self.call("POST", "/api/practice/transcribe", {"audio_b64": "!!"})[0], 400)
+
+        _, topic = self.call("GET", "/api/practice/next?module=toast&track=table_topics")
+        _, spoken = self.call("POST", "/api/practice/submit", {
+            "prompt_id": topic["prompt"]["id"], "text": "Um, well, I think so.", "seconds": 75,
+            "mode": "speak", "stuck": 1})
+        self.assertEqual((spoken["session"]["fillers"], spoken["session"]["stuck"]), (1, 1))
+        self.assertIn(topic["prompt"]["say"], self.feedback_calls[-1][1])
+
+        _, stats = self.call("GET", "/api/practice/stats")
+        self.assertEqual(stats["modules"]["write"]["all"]["sessions"], 5)
+        self.assertEqual(stats["modules"]["spoken"]["today"]["minutes"], 1.2)
+        self.assertEqual((stats["levels"]["write"], stats["streak"]), (2, 1))
+        journal = json.loads((self.root / "data" / "journal" / "2026-11.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(journal["entries"]), 6)
+        self.assertEqual(journal["entries"][0]["text"], body["text"])
+        self.assertNotIn("sk-secret", (self.root / "data" / "practice.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(self.call("POST", "/api/practice/submit", {**body, "seconds": float("nan")})[0], 400)
+        calls = len(self.feedback_calls)
+        l3_prompt = practice_prompt(self.server.app, "write", "l3")
+        self.assertEqual(self.call("POST", "/api/practice/submit", {**body, "prompt_id": l3_prompt["id"]})[0], 400)
+        self.assertEqual(len(self.feedback_calls), calls, "no paid AI call for a locked level")
+        self.assertEqual(self.call("POST", "/api/practice/submit", {"prompt_id": "nope", "mode": "write"})[0], 404)
+        self.assertEqual(self.call("POST", "/api/practice/submit", {**body, "mode": "sing"})[0], 400)
+        locked = meta["write"]["tracks"][5]["id"]
+        _, deep = self.call("GET", "/api/practice/meta")
+        self.assertTrue(next(t for t in deep["write"]["tracks"] if t["id"] == locked)["locked"])
 
 
 class SyncTest(unittest.TestCase):
