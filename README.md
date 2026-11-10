@@ -41,6 +41,7 @@ Each practice module has its own question bank and does not draw on your word ba
 |---|---|---|
 | Verbs | 200 | 10 scenes: work, IT, restaurant, sport, shopping, travel, health, home, social, money |
 | Phrasal verbs | 200 | Same 10 scenes |
+| Particles & directions | 280 | Small words that change the meaning: video calls & meetings 60 (bring your camera *back on*, you're *on mute*), directions & places in NZ 60 (*down* to Hamilton = south, *up* north, *over* to the Shore, *across* the ditch), everyday on/off/up/down 60 (the milk's *off*, is it still *on*?), work 50 (I'm *across* it, *off* sick), IT 50 (the server *went down*, it's *back up*). Each answer comes with a one-line explanation |
 | Adjectives | 200 | Same 10 scenes |
 | Prepositions | 200 | Same 10 scenes (no first-letter hint) |
 | Adverbs | 200 | Same 10 scenes |

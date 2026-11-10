@@ -1,7 +1,8 @@
 "use strict";
 
 const POS_NAMES = {
-  verb: "Verbs", phrasal: "Phrasal verbs", adjective: "Adjectives", preposition: "Prepositions",
+  verb: "Verbs", phrasal: "Phrasal verbs", particle: "Particles & directions",
+  adjective: "Adjectives", preposition: "Prepositions",
   adverb: "Adverbs", noun: "Nouns", nounphrase: "Noun phrases",
   other: "Connectors / polite / idioms / patterns", combo: "Combos (multiple blanks)",
   grammar: "Grammar topics",
@@ -14,6 +15,7 @@ const SCENE_NAMES = {
   past: "Past simple", future: "Future", continuous: "Present continuous",
   subjunctive: "Subjunctive & conditionals", tenses: "Other tenses", third: "Third person",
   plural: "Plurals", misc: "Other grammar",
+  calls: "Video calls & meetings", directions: "Directions & places (NZ)", everyday: "Everyday on / off / up / down",
 };
 const KIND_TEXT = {
   correct: "correct", grammar: "right word, wrong form", spelling: "spelling mistake",
@@ -291,6 +293,7 @@ async function clozeView() {
           firstTry ? "Correct." : "This question comes back later today, then at growing intervals."),
         h("div", { class: "answer" }, result.sentence,
           h("button", { class: "link", type: "button", onclick: () => speak(result.sentence) }, "🔊")),
+        result.note ? h("div", { class: "note" }, "💡 " + result.note) : null,
       );
       const next = h("button", { class: "primary", type: "button", onclick: loadQuestion }, "Next");
       const guessed = h("button", { type: "button", onclick: async () => {

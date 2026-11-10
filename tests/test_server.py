@@ -103,6 +103,7 @@ class ServerTest(unittest.TestCase):
         self.assertFalse(nxt["redo"])
 
         _, solution = self.call("GET", f"/api/cloze/solution?id={q['id']}")
+        self.assertIn("note", solution)
         _, wrong = self.call("POST", "/api/cloze/answer", {"id": q["id"], "answers": ["zzzzzz"]})
         self.assertFalse(wrong["correct"])
         self.assertNotIn("sentence", wrong, "the answer is not leaked on a wrong attempt")

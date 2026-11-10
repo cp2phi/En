@@ -46,6 +46,10 @@ Each file is a JSON array, one question per line:
     and every alternative with the right form must be listed (went|walked|drove
     if 去了 could be any of them).
 - Mix the forms being tested (tenses, third person, plurals) across a file.
+- `note` (optional; required for `questions/particle/`): one short sentence
+  in simple English (4–45 words) explaining the meaning or why that word is
+  used, shown after the learner answers. E.g. "In New Zealand, down means
+  south. Hamilton is south of Auckland, so you go down to Hamilton."
 - Every sentence must be unique within the word class. Prefer the *useful*
   sense of a common word over an obscure word.
 - No Chinese inside `en`. No blank at a position where many unrelated words fit.

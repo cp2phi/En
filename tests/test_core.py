@@ -118,6 +118,19 @@ class ClozeTest(unittest.TestCase):
         q = self._q("p1", "I'm good {at} this.") | {"pos": "preposition"}
         self.assertEqual(cloze.public_view(q)["segments"][1]["hint"], "")
 
+    def test_no_letter_hint_when_the_answer_starts_with_a_particle(self):
+        q = self._q("pt1", "We're heading {down} to Hamilton, then {pop over|pop round} to see Sam.") | {"pos": "particle"}
+        hints = [seg["hint"] for seg in cloze.public_view(q)["segments"] if "blank" in seg]
+        self.assertEqual(hints, ["", "p"], "particle hidden, verb + particle keeps the verb's letter")
+        idiom = self._q("o1", "Thanks for the heads {up}.") | {"pos": "other"}
+        self.assertEqual(cloze.public_view(idiom)["segments"][1]["hint"], "")
+
+    def test_reveal_includes_the_note(self):
+        q = self.q | {"note": "Run a meeting means lead it."}
+        self.assertEqual(cloze.reveal(q)["note"], "Run a meeting means lead it.")
+        self.assertEqual(cloze.reveal(self.q)["note"], "")
+        self.assertNotIn("note", cloze.public_view(q), "the note is not shown before answering")
+
     def test_public_view_hides_answers(self):
         self.assertNotIn("runs", str(cloze.public_view(self.q)))
 
@@ -220,11 +233,22 @@ class QuestionBankTest(unittest.TestCase):
     def test_counts(self):
         m = cloze.meta(self.questions)
         expected = {"verb": 200, "combo": 20, "phrasal": 200, "adjective": 200, "preposition": 200,
-                    "adverb": 200, "noun": 500, "nounphrase": 300, "other": 200, "grammar": 420}
+                    "adverb": 200, "noun": 500, "nounphrase": 300, "other": 200, "grammar": 420,
+                    "particle": 280}
         self.assertEqual(m["pos"], expected)
         topics = {"past": 100, "future": 40, "continuous": 40, "subjunctive": 40, "tenses": 60,
                   "third": 40, "plural": 40, "misc": 60}
         self.assertEqual(m["by_pos"]["grammar"], topics)
+        self.assertEqual(m["by_pos"]["particle"],
+                         {"calls": 60, "directions": 60, "everyday": 60, "work": 50, "tech": 50})
+
+    def test_particle_questions_explain_themselves(self):
+        particle = [q for q in self.questions.values() if q["pos"] == "particle"]
+        self.assertTrue(all(q.get("note", "").strip() for q in particle), "every particle question has a note")
+        # The two expressions that started this set are covered.
+        sentences = " ".join(q["sentence"] for q in particle)
+        self.assertRegex(sentences, r"camera back on")
+        self.assertRegex(sentences, r"down to Hamilton")
 
     def test_every_question_is_well_formed(self):
         for q in self.questions.values():
@@ -492,6 +516,24 @@ class PromptBankTest(unittest.TestCase):
 
 
 class CheckerTest(unittest.TestCase):
+    def test_question_notes_are_validated(self):
+        import subprocess
+        import sys
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "questions" / "particle"
+            folder.mkdir(parents=True)
+            base = {"level": 1, "g": "-", "zh": "我们开车去汉密尔顿。"}
+            rows = [base | {"id": "pt-x-01", "en": "We drove {down} to Hamilton.", "note": "Down means south: Hamilton is south of Auckland."},
+                    base | {"id": "pt-x-02", "en": "We flew {up} to Auckland.", "note": "向北"},
+                    base | {"id": "pt-x-03", "en": "We went {over} to the Shore.", "note": "Over."}]
+            (folder / "x.json").write_text(json.dumps(rows, ensure_ascii=False))
+            out = subprocess.run([sys.executable, str(ROOT / "tools" / "check_bank.py"), str(folder)],
+                                 capture_output=True, text=True).stdout
+        self.assertIn("2 errors", out)
+        self.assertIn("pt-x-02: note must be English", out)
+        self.assertIn("pt-x-03: note should be", out)
+
     def test_prompt_examples_are_validated(self):
         import subprocess
         import sys

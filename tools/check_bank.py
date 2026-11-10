@@ -49,6 +49,12 @@ def check_questions(folder: Path) -> list[str]:
                 if len(accepted) != len(set(a.lower() for a in accepted)):
                     errors.append(f"{where}: repeated answer")
                 errors += [f"{where}: bad answer {a!r}" for a in accepted if not ANSWER.match(a)]
+            if "note" in item:
+                note = item["note"]
+                if not isinstance(note, str) or not note.strip() or CJK.search(note):
+                    errors.append(f"{where}: note must be English text")
+                elif not 4 <= len(note.split()) <= 45:
+                    errors.append(f"{where}: note should be one short sentence or two (4-45 words)")
             sentence = cloze.solution(item["en"])
             if "{" in sentence or "}" in sentence or "::" in item["en"]:
                 errors.append(f"{where}: broken braces")

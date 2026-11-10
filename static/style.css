@@ -78,3 +78,5 @@ pre { white-space: pre-wrap; font-size: 13px; background: var(--bg); padding: 10
 .chart-tip-row { margin-top: 2px; }
 .chart-table summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .chart-table table { margin-top: 8px; font-variant-numeric: tabular-nums; }
+.note { margin: 6px 0 2px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--bg);
+        border-radius: 0 6px 6px 0; font-size: 15px; }

@@ -23,6 +23,12 @@ GRADUATE_INTERVAL = 15
 OUTCOMES = ("correct", "wrong", "reveal", "guessed", "never")
 # Word classes where the first letter would give the answer away.
 NO_LETTER_HINT = {"preposition"}
+# Particles: "d" for "down" would decide "down to Hamilton" vs "up to Auckland" for the
+# learner. In the particle word class a blank starting with one gets no letter hint; in other
+# classes only a blank that is just a particle does ("heads {up}"), not "{in advance}".
+PARTICLES = {"up", "down", "over", "out", "in", "into", "on", "off", "back", "across", "round",
+             "around", "away", "through", "along", "by", "about"}
+LONE_PARTICLES = PARTICLES - {"round", "by", "about"}  # also nouns/prepositions elsewhere
 
 DEFAULT_PROGRESS = {"seq": 0, "items": {}}
 
@@ -74,8 +80,12 @@ def public_view(q: dict) -> dict:
     """What the browser gets before answering: no answers, only hints."""
     segments = []
     for seg in q["segments"]:
-        if "blank" in seg and q["pos"] in NO_LETTER_HINT:
-            seg = seg | {"hint": ""}
+        if "blank" in seg:
+            words = q["blanks"][seg["blank"]][0].lower().split()
+            if (q["pos"] in NO_LETTER_HINT
+                    or (q["pos"] == "particle" and words[0] in PARTICLES)
+                    or (len(words) == 1 and words[0] in LONE_PARTICLES)):
+                seg = seg | {"hint": ""}
         segments.append(seg)
     return {k: q[k] for k in ("id", "pos", "scene", "level", "zh")} | {"g": q.get("g", ""), "segments": segments}
 
@@ -104,7 +114,9 @@ def check(q: dict, answers: list[str]) -> dict:
 
 
 def reveal(q: dict) -> dict:
-    return {"sentence": q["sentence"], "answers": [b[0] for b in q["blanks"]], "zh": q["zh"]}
+    # "note" (optional): a one-sentence explanation shown with the answer.
+    return {"sentence": q["sentence"], "answers": [b[0] for b in q["blanks"]], "zh": q["zh"],
+            "note": q.get("note", "")}
 
 
 def in_wrong_book(item: dict) -> bool:
