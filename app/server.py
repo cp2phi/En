@@ -23,6 +23,7 @@ DEFAULT_SETTINGS = {
     "tts": "openai", "voice": ai.TTS_VOICES[0], "pace": "normal", "tts_model": ai.TTS_MODEL,
     # Filled into example answers that contain {name} / {hometown} (small talk introductions).
     "my_name": "", "hometown": "",
+    "letter_hint": True,  # show the first letter of each cloze blank
 }
 TTS_ENGINES = ("openai", "browser")
 MAX_BODY = 40 * 1024 * 1024  # a few minutes of recorded audio, base64 encoded
@@ -211,7 +212,8 @@ class App:
                 if q is None:
                     return {"question": None}
                 status = progress["items"].get(q["id"], {}).get("status", "new")
-                return {"question": cloze.public_view(q), "redo": status == "learning"}
+                return {"question": cloze.public_view(q, self.settings.load()["letter_hint"]),
+                        "redo": status == "learning"}
             case ("POST", "cloze", "answer"):
                 q = self._question(body.get("id"))
                 answers = body.get("answers")
@@ -316,6 +318,10 @@ class App:
                     if body["accent"] not in ("us", "uk"):
                         raise ApiError(400, "accent must be us or uk")
                     settings["accent"] = body["accent"]
+                if "letter_hint" in body:
+                    if not isinstance(body["letter_hint"], bool):
+                        raise ApiError(400, "letter_hint must be true or false")
+                    settings["letter_hint"] = body["letter_hint"]
                 for field in ("my_name", "hometown"):
                     if field in body:
                         value = " ".join(str(body[field] or "").split())

@@ -76,13 +76,15 @@ def load_questions(root: Path) -> dict[str, dict]:
     return questions
 
 
-def public_view(q: dict) -> dict:
-    """What the browser gets before answering: no answers, only hints."""
+def public_view(q: dict, letter_hint: bool = True) -> dict:
+    """What the browser gets before answering: no answers, only hints.
+    letter_hint=False (a setting) hides the first letter of every blank."""
     segments = []
     for seg in q["segments"]:
         if "blank" in seg:
             words = q["blanks"][seg["blank"]][0].lower().split()
-            if (q["pos"] in NO_LETTER_HINT
+            if (not letter_hint
+                    or q["pos"] in NO_LETTER_HINT
                     or (q["pos"] == "particle" and words[0] in PARTICLES)
                     or (len(words) == 1 and words[0] in LONE_PARTICLES)):
                 seg = seg | {"hint": ""}

@@ -945,6 +945,7 @@ async function settingsView() {
     h("option", { value: "uk", selected: settings.accent === "uk" }, "British"));
   const perDay = h("input", { type: "number", min: "0", max: "500", value: String(settings.new_per_day) });
   const myName = h("input", { class: "wide", maxlength: "40", value: settings.my_name || "", placeholder: "The name you use in English" });
+  const letterHint = h("input", { type: "checkbox", checked: settings.letter_hint !== false });
   const hometown = h("input", { class: "wide", maxlength: "40", value: settings.hometown || "", placeholder: "e.g. a city or region" });
   const option = (value, text, current) => h("option", { value, selected: value === current }, text);
   const engine = h("select", {},
@@ -960,7 +961,7 @@ async function settingsView() {
     accent.value, { tts: engine.value, voice: voice.value, pace: pace.value });
   const save = async () => {
     const body = { accent: accent.value, model: model.value, new_per_day: perDay.value,
-      my_name: myName.value, hometown: hometown.value,
+      my_name: myName.value, hometown: hometown.value, letter_hint: letterHint.checked,
       tts: engine.value, voice: voice.value, pace: pace.value, tts_model: ttsModel.value };
     if (key.value.trim()) body.openai_key = key.value.trim();
     try {
@@ -977,6 +978,9 @@ async function settingsView() {
       h("label", {}, "OpenAI key (kept only in config.local.json on this computer, never uploaded by Sync)"), key,
       h("label", {}, "AI model"), model,
       h("label", {}, "New words per day"), perDay,
+      h("label", { style: "color:inherit;font-size:16px;margin-top:14px" }, letterHint,
+        " Show the first letter in cloze blanks"),
+      h("div", { class: "muted" }, "Turn it off to recall every word with no hint. Particle choices such as up/down never show a letter."),
       h("label", {}, "Your name (used in small-talk example answers)"), myName,
       h("label", {}, "Where you're from (used in small-talk example answers)"), hometown,
       h("div", { class: "row", style: "margin-top:16px" },

@@ -30,7 +30,7 @@ The interface is in English. Chinese appears only as learning support: the sente
 | Review words | Forgot / Fuzzy / Remembered / Never show again. Due reviews come first, then new words. |
 | Add / Capture | Paste a sentence and mark the part you don't understand; the AI explains it and fills in the card, and you tick which notes to keep. |
 | Word bank | Browse, search and delete words. |
-| Settings | OpenAI key, AI model, daily new-word limit, your name and where you're from (filled into small-talk example answers); read-aloud voice (OpenAI natural voice or browser voice), US or UK accent, voice, pace and speech model, with a preview before saving. |
+| Settings | OpenAI key, AI model, daily new-word limit, whether cloze blanks show their first letter, your name and where you're from (filled into small-talk example answers); read-aloud voice (OpenAI natural voice or browser voice), US or UK accent, voice, pace and speech model, with a preview before saving. |
 | Sync | Commits the whole repository (code, question banks, practice records, cached audio), pulls what other computers uploaded, and pushes to the git remote. On another computer, `git clone` or `git pull` and carry on. `config.local.json`, which holds the API key, is never uploaded. |
 
 Each practice module has its own question bank and does not draw on your word bank. When you meet an expression you don't know during practice, click **Add to word bank** to keep it.

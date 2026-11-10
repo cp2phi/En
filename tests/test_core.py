@@ -125,6 +125,11 @@ class ClozeTest(unittest.TestCase):
         idiom = self._q("o1", "Thanks for the heads {up}.") | {"pos": "other"}
         self.assertEqual(cloze.public_view(idiom)["segments"][1]["hint"], "")
 
+    def test_letter_hint_setting_hides_every_letter(self):
+        hints = [seg["hint"] for seg in cloze.public_view(self.q, letter_hint=False)["segments"] if "blank" in seg]
+        self.assertEqual(hints, ["", ""])
+        self.assertEqual([seg["hint"] for seg in cloze.public_view(self.q)["segments"] if "blank" in seg], ["r", "m"])
+
     def test_reveal_includes_the_note(self):
         q = self.q | {"note": "Run a meeting means lead it."}
         self.assertEqual(cloze.reveal(q)["note"], "Run a meeting means lead it.")

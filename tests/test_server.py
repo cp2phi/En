@@ -97,6 +97,13 @@ class ServerTest(unittest.TestCase):
         blank = next(seg for seg in drill["question"]["segments"] if "blank" in seg)
         self.assertNotIn("cue", blank)
         self.assertRegex(blank["hint"], r"^[A-Za-z]$", "grammar drills show the first letter only")
+        _, s = self.call("GET", "/api/settings")
+        self.assertIs(s["letter_hint"], True, "on by default")
+        self.call("PUT", "/api/settings", {"letter_hint": False})
+        _, hidden = self.call("GET", "/api/cloze/next?pos=verb&scene=work")
+        self.assertEqual({seg["hint"] for seg in hidden["question"]["segments"] if "blank" in seg}, {""})
+        self.assertEqual(self.call("PUT", "/api/settings", {"letter_hint": "no"})[0], 400)
+        self.call("PUT", "/api/settings", {"letter_hint": True})
         _, nxt = self.call("GET", "/api/cloze/next?pos=verb&scene=work&level=3")
         q = nxt["question"]
         self.assertEqual((q["pos"], q["scene"], q["level"]), ("verb", "work", 3))
