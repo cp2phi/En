@@ -1,0 +1,193 @@
+import http.client
+import json
+import subprocess
+import tempfile
+import threading
+import unittest
+from datetime import date, datetime
+from pathlib import Path
+
+from app.server import make_server
+from app.sync import sync
+
+
+def git(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout
+
+
+class ServerTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.explained = []
+
+        def fake_explain(focus, sentence, key, model):
+            self.explained.append((focus, sentence, key, model))
+            return {"term": focus, "notes": []}
+
+        self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), explain=fake_explain)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.tmp.cleanup()
+
+    def call(self, method, path, body=None, headers=None):
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        hdrs = dict(headers or {})
+        data = None
+        if body is not None:
+            data = json.dumps(body).encode()
+            hdrs.setdefault("Content-Type", "application/json")
+        conn.request(method, path, body=data, headers=hdrs)
+        response = conn.getresponse()
+        raw = response.read()
+        conn.close()
+        ctype = response.getheader("Content-Type", "")
+        return response.status, (json.loads(raw) if "json" in ctype else raw)
+
+    def test_static_files_and_traversal(self):
+        status, body = self.call("GET", "/")
+        self.assertEqual(status, 200)
+        self.assertIn(b"English Practice", body)
+        self.assertEqual(self.call("GET", "/app.js")[0], 200)
+        self.assertEqual(self.call("GET", "/../run.py")[0], 404)
+        self.assertEqual(self.call("GET", "/%2e%2e/run.py")[0], 404)
+
+    def test_rejects_foreign_host_and_non_json_posts(self):
+        self.assertEqual(self.call("GET", "/api/summary", headers={"Host": "evil.example"})[0], 403)
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        conn.request("POST", "/api/sync", body="x=1", headers={"Content-Type": "text/plain"})
+        self.assertEqual(conn.getresponse().status, 415)
+        conn.close()
+
+    def test_cloze_flow(self):
+        status, meta = self.call("GET", "/api/cloze/meta")
+        self.assertEqual((status, meta["pos"]["verb"]), (200, 200))
+        _, nxt = self.call("GET", "/api/cloze/next?pos=verb&scene=work&level=3")
+        q = nxt["question"]
+        self.assertEqual((q["pos"], q["scene"], q["level"]), ("verb", "work", 3))
+        self.assertFalse(nxt["redo"])
+
+        _, solution = self.call("GET", f"/api/cloze/solution?id={q['id']}")
+        _, wrong = self.call("POST", "/api/cloze/answer", {"id": q["id"], "answers": ["zzzzzz"]})
+        self.assertFalse(wrong["correct"])
+        self.assertNotIn("sentence", wrong, "the answer is not leaked on a wrong attempt")
+        # A retry with record=false must not change progress.
+        _, retry = self.call("POST", "/api/cloze/answer",
+                             {"id": q["id"], "answers": solution["answers"], "record": False})
+        self.assertTrue(retry["correct"])
+        _, book = self.call("GET", "/api/cloze/wrongbook")
+        self.assertEqual([i["id"] for i in book["items"]], [q["id"]])
+        _, summary = self.call("GET", "/api/summary")
+        self.assertEqual((summary["cloze"]["learning"], summary["cloze"]["due"]), (1, 1))
+
+        self.call("POST", "/api/cloze/mark", {"id": q["id"], "outcome": "never"})
+        _, book = self.call("GET", "/api/cloze/wrongbook")
+        self.assertEqual(book["items"], [])
+        self.assertEqual(self.call("POST", "/api/cloze/answer", {"id": "nope", "answers": []})[0], 404)
+        self.assertEqual(self.call("POST", "/api/cloze/mark", {"id": q["id"], "outcome": "correct"})[0], 400)
+
+    def test_words_flow(self):
+        status, added = self.call("POST", "/api/words", {
+            "term": "in the zone", "examples": [{"en": "You're in the zone.", "zh": "你很专注"}]})
+        self.assertEqual((status, added["duplicate"]), (200, False))
+        word_id = added["word"]["id"]
+        self.assertTrue(self.call("POST", "/api/words", {"term": "In the zone"})[1]["duplicate"])
+        self.assertEqual(self.call("POST", "/api/words", {"term": ""})[0], 400)
+
+        _, nxt = self.call("GET", "/api/words/next")
+        self.assertEqual(nxt["word"]["id"], word_id)
+        _, rated = self.call("POST", "/api/words/rate", {"id": word_id, "rating": "forget"})
+        self.assertEqual(rated["word"]["srs"]["same_day_left"], 2)
+        self.assertEqual(self.call("POST", "/api/words/rate", {"id": word_id, "rating": "x"})[0], 400)
+        self.assertEqual(self.call("POST", "/api/words/rate", {"id": "nope", "rating": "forget"})[0], 404)
+
+        self.call("PUT", f"/api/words/{word_id}", {"my_examples": ["I was in the zone."]})
+        _, listing = self.call("GET", "/api/words")
+        self.assertEqual(listing["words"][0]["my_examples"], ["I was in the zone."])
+        self.assertEqual(self.call("DELETE", f"/api/words/{word_id}")[0], 200)
+        self.assertEqual(self.call("DELETE", f"/api/words/{word_id}")[0], 404)
+
+    def test_settings_keep_key_out_of_data(self):
+        _, s = self.call("PUT", "/api/settings", {"accent": "uk", "new_per_day": "7", "openai_key": "sk-secret"})
+        self.assertEqual((s["accent"], s["new_per_day"], s["has_key"]), ("uk", 7, True))
+        self.assertNotIn("sk-secret", json.dumps(s))
+        for path in (self.root / "data").glob("*"):
+            self.assertNotIn("sk-secret", path.read_text(encoding="utf-8"))
+        self.assertIn("sk-secret", (self.root / "config.local.json").read_text(encoding="utf-8"))
+        self.assertEqual(self.call("PUT", "/api/settings", {"accent": "fr"})[0], 400)
+
+        self.call("POST", "/api/ai/explain", {"focus": "zone", "sentence": "In the zone."})
+        self.assertEqual(self.explained[0][:3], ("zone", "In the zone.", "sk-secret"))
+
+
+class SyncTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self.remote = base / "remote.git"
+        self.repo = base / "repo"
+        git(base, "init", "--bare", "-b", "main", str(self.remote))
+        git(base, "clone", str(self.remote), str(self.repo))
+        for cwd in (self.repo,):
+            git(cwd, "config", "user.email", "t@example.com")
+            git(cwd, "config", "user.name", "T")
+            git(cwd, "config", "commit.gpgsign", "false")
+        (self.repo / ".gitignore").write_text("config.local.json\n")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-m", "init")
+        git(self.repo, "push", "-u", "origin", "HEAD")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_no_data_yet(self):
+        self.assertFalse(sync(self.repo)["ok"])
+
+    def test_commits_only_data_and_pushes(self):
+        (self.repo / "data").mkdir()
+        (self.repo / "data" / "words.json").write_text("{}\n")
+        (self.repo / "config.local.json").write_text('{"openai_key": "sk-secret"}')
+        (self.repo / "scratch.py").write_text("print('wip')\n")
+
+        result = sync(self.repo, now=datetime(2026, 11, 10, 21, 30))
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(git(self.repo, "log", "-1", "--format=%s").strip(), "practice: sync 2026-11-10 21:30")
+        pushed = git(self.remote, "ls-tree", "-r", "--name-only", "main").split()
+        self.assertEqual(sorted(pushed), [".gitignore", "data/words.json"])
+
+        again = sync(self.repo)
+        self.assertTrue(again["ok"])
+        self.assertIn("没有新的", again["message"])
+
+    def test_pulls_changes_from_another_computer(self):
+        other = Path(self.tmp.name) / "other"
+        git(self.tmp.name, "clone", str(self.remote), str(other))
+        git(other, "config", "user.email", "o@example.com")
+        git(other, "config", "user.name", "O")
+        (other / "data").mkdir()
+        (other / "data" / "cloze.json").write_text("{}\n")
+        self.assertTrue(sync(other)["ok"])
+
+        (self.repo / "data").mkdir()
+        (self.repo / "data" / "words.json").write_text("{}\n")
+        result = sync(self.repo)
+        self.assertTrue(result["ok"], result)
+        self.assertTrue((self.repo / "data" / "cloze.json").exists())
+        pushed = git(self.remote, "ls-tree", "-r", "--name-only", "main").split()
+        self.assertIn("data/words.json", pushed)
+
+    def test_no_remote(self):
+        git(self.repo, "remote", "remove", "origin")
+        (self.repo / "data").mkdir()
+        (self.repo / "data" / "words.json").write_text("{}\n")
+        result = sync(self.repo)
+        self.assertFalse(result["ok"])
+        self.assertIn("远程", result["message"])
+
+
+if __name__ == "__main__":
+    unittest.main()

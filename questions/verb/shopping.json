@@ -1,0 +1,22 @@
+[
+{"id":"v-shopping-01","level":2,"g":"base","zh":"我想退掉这件衬衫。","en":"I'd like to {return} this shirt."},
+{"id":"v-shopping-02","level":3,"g":"base","zh":"你能帮我把它包起来吗？","en":"Could you {wrap} it for me?"},
+{"id":"v-shopping-03","level":3,"g":"3sg","zh":"这件外套你穿很合身。","en":"This jacket {fits|suits} you well."},
+{"id":"v-shopping-04","level":2,"g":"past","zh":"这双鞋去年花了我两百块。","en":"These shoes {cost} me 200 dollars last year."},
+{"id":"v-shopping-05","level":1,"g":"past","zh":"我在网上订了一台新笔记本电脑。","en":"I {ordered|bought} a new laptop online."},
+{"id":"v-shopping-06","level":2,"g":"base","zh":"他们下周送货。","en":"They will {deliver} it next week."},
+{"id":"v-shopping-07","level":3,"g":"past","zh":"我比较了几个品牌的价格。","en":"I {compared} the prices of several brands."},
+{"id":"v-shopping-08","level":2,"g":"past","zh":"她用信用卡付了款。","en":"She {paid} by credit card."},
+{"id":"v-shopping-09","level":1,"g":"base","zh":"这家店周日不开门。","en":"This shop doesn't {open} on Sundays."},
+{"id":"v-shopping-10","level":3,"g":"past","zh":"我把旧手机换成了新款。","en":"I {exchanged|swapped|traded} my old phone for a new model."},
+{"id":"v-shopping-11","level":5,"g":"past","zh":"这件毛衣洗后缩水了。","en":"This sweater {shrank} after washing."},
+{"id":"v-shopping-12","level":4,"g":"past","zh":"他们把钱退给了我。","en":"They {refunded} my money."},
+{"id":"v-shopping-13","level":1,"g":"past","zh":"我省了五十块。","en":"I {saved} 50 dollars."},
+{"id":"v-shopping-14","level":2,"g":"3sg","zh":"她每个周末都在商场购物。","en":"She {shops} at the mall every weekend."},
+{"id":"v-shopping-15","level":2,"g":"ing","zh":"这家店正在打折卖冬装。","en":"The store is {selling} winter clothes at a discount."},
+{"id":"v-shopping-16","level":2,"g":"past","zh":"我在衣服上花了太多钱。","en":"I {spent} too much money on clothes."},
+{"id":"v-shopping-17","level":3,"g":"base","zh":"你能帮我量一下腰围吗？","en":"Could you {measure} my waist?"},
+{"id":"v-shopping-18","level":3,"g":"past","zh":"收银员扫描了条形码。","en":"The cashier {scanned} the barcode."},
+{"id":"v-shopping-19","level":3,"g":"perfect","zh":"这个品牌已经涨价了。","en":"This brand has {raised|increased} its prices."},
+{"id":"v-shopping-20","level":2,"g":"past","zh":"我选了便宜的那个。","en":"I {chose|picked} the cheaper one."}
+]

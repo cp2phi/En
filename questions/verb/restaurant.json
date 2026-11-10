@@ -1,0 +1,22 @@
+[
+{"id":"v-restaurant-01","level":1,"g":"base","zh":"我想订一张今晚两个人的桌子。","en":"I'd like to {book|reserve} a table for two tonight."},
+{"id":"v-restaurant-02","level":2,"g":"past","zh":"服务员给我们上了汤。","en":"The waiter {served|brought} us the soup."},
+{"id":"v-restaurant-03","level":1,"g":"perfect","zh":"你们点菜了吗？","en":"Have you {ordered} yet?"},
+{"id":"v-restaurant-04","level":3,"g":"ing","zh":"他正在切洋葱。","en":"He is {chopping|cutting|slicing} the onions."},
+{"id":"v-restaurant-05","level":2,"g":"base","zh":"把水烧开，然后放入面条。","en":"{Boil} the water, then add the noodles."},
+{"id":"v-restaurant-06","level":2,"g":"3sg","zh":"她每天早上烤面包。","en":"She {bakes} bread every morning."},
+{"id":"v-restaurant-07","level":3,"g":"past","zh":"我把牛奶洒在桌子上了。","en":"I {spilled|spilt} milk on the table."},
+{"id":"v-restaurant-08","level":3,"g":"past","zh":"我们昨晚平分了账单。","en":"We {split} the bill last night."},
+{"id":"v-restaurant-09","level":1,"g":"base","zh":"你能尝一下这个酱汁吗？","en":"Can you {taste|try} this sauce?"},
+{"id":"v-restaurant-10","level":3,"g":"past","zh":"厨师把鱼煎了五分钟。","en":"The chef {fried} the fish for five minutes."},
+{"id":"v-restaurant-11","level":2,"g":"base","zh":"请把盐递给我。","en":"Please {pass} me the salt."},
+{"id":"v-restaurant-12","level":2,"g":"base","zh":"我推荐这里的牛排。","en":"I {recommend} the steak here."},
+{"id":"v-restaurant-13","level":2,"g":"past","zh":"他把剩菜带回了家。","en":"He {took} the leftovers home."},
+{"id":"v-restaurant-14","level":2,"g":"base","zh":"把鸡蛋和糖搅拌在一起。","en":"{Mix|Stir|Beat|Whisk} the eggs and sugar together."},
+{"id":"v-restaurant-15","level":1,"g":"past","zh":"她往咖啡里加了一点糖。","en":"She {added} a little sugar to her coffee."},
+{"id":"v-restaurant-16","level":2,"g":"passive","zh":"这道菜是用新鲜番茄做的。","en":"This dish is {made} with fresh tomatoes."},
+{"id":"v-restaurant-17","level":1,"g":"ing","zh":"我们正在等位。","en":"We're {waiting} for a table."},
+{"id":"v-restaurant-18","level":2,"g":"past","zh":"服务员给我们的杯子倒满了水。","en":"The waiter {filled} our glasses with water."},
+{"id":"v-restaurant-19","level":3,"g":"base","zh":"我通常不吃早饭。","en":"I usually {skip} breakfast."},
+{"id":"v-restaurant-20","level":5,"g":"base","zh":"把肉腌两个小时。","en":"{Marinate} the meat for two hours."}
+]

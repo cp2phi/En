@@ -1,0 +1,22 @@
+[
+{"id":"v-sports-01","level":2,"g":"past","zh":"他在最后一分钟进了一球。","en":"He {scored} a goal in the last minute."},
+{"id":"v-sports-02","level":1,"g":"past","zh":"我们队昨晚赢了比赛。","en":"Our team {won} the game last night."},
+{"id":"v-sports-03","level":3,"g":"past","zh":"他们昨天以二比一击败了对手。","en":"They {beat|defeated} their opponents 2-1 yesterday."},
+{"id":"v-sports-04","level":2,"g":"3sg","zh":"她每天早上慢跑五公里。","en":"She {jogs|runs} five kilometres every morning."},
+{"id":"v-sports-05","level":2,"g":"past","zh":"守门员接住了球。","en":"The goalkeeper {caught|saved} the ball."},
+{"id":"v-sports-06","level":1,"g":"base","zh":"把球传给我！","en":"{Pass} me the ball!"},
+{"id":"v-sports-07","level":1,"g":"past","zh":"他把球踢过了围栏。","en":"He {kicked} the ball over the fence."},
+{"id":"v-sports-08","level":2,"g":"ing","zh":"我正在为马拉松训练。","en":"I'm {training} for a marathon."},
+{"id":"v-sports-09","level":3,"g":"past","zh":"她在训练中伤了膝盖。","en":"She {injured|hurt} her knee during training."},
+{"id":"v-sports-10","level":3,"g":"base","zh":"运动前一定要拉伸。","en":"Always {stretch} before you exercise."},
+{"id":"v-sports-11","level":2,"g":"past","zh":"他把球扔给了队友。","en":"He {threw} the ball to his teammate."},
+{"id":"v-sports-12","level":1,"g":"past","zh":"我们输掉了决赛。","en":"We {lost} the final."},
+{"id":"v-sports-13","level":2,"g":"past","zh":"她举起了一百公斤。","en":"She {lifted} 100 kilos."},
+{"id":"v-sports-14","level":4,"g":"past","zh":"裁判吹响了哨子。","en":"The referee {blew} the whistle."},
+{"id":"v-sports-15","level":1,"g":"3sg","zh":"他每周游三次泳。","en":"He {swims} three times a week."},
+{"id":"v-sports-16","level":3,"g":"past","zh":"她去年打破了世界纪录。","en":"She {broke} the world record last year."},
+{"id":"v-sports-17","level":4,"g":"past","zh":"两队昨晚打平了。","en":"The two teams {drew|tied} last night."},
+{"id":"v-sports-18","level":4,"g":"past","zh":"教练换下了受伤的球员。","en":"The coach {replaced|substituted} the injured player."},
+{"id":"v-sports-19","level":4,"g":"perfect","zh":"他已经参加过三届奥运会。","en":"He has {competed} in three Olympic Games."},
+{"id":"v-sports-20","level":5,"g":"past","zh":"她带球过了两名防守队员。","en":"She {dribbled} past two defenders."}
+]

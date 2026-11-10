@@ -1,0 +1,22 @@
+[
+{"id":"v-tech-01","level":3,"g":"past","zh":"我昨晚部署了新版本。","en":"I {deployed|released} the new version last night."},
+{"id":"v-tech-02","level":2,"g":"past","zh":"服务器今天早上崩溃了。","en":"The server {crashed} this morning."},
+{"id":"v-tech-03","level":2,"g":"3sg","zh":"这个脚本每小时运行一次。","en":"This script {runs} once an hour."},
+{"id":"v-tech-04","level":4,"g":"ing","zh":"我们正在把数据迁移到云上。","en":"We are {migrating|moving} our data to the cloud."},
+{"id":"v-tech-05","level":1,"g":"base","zh":"你能重启一下电脑吗？","en":"Could you {restart|reboot} your computer?"},
+{"id":"v-tech-06","level":1,"g":"perfect","zh":"我已经安装了最新的更新。","en":"I have {installed} the latest update."},
+{"id":"v-tech-07","level":2,"g":"passive","zh":"这个 bug 是上周被发现的。","en":"This bug was {found|discovered} last week."},
+{"id":"v-tech-08","level":3,"g":"ing","zh":"他正在调试登录问题。","en":"He is {debugging} the login issue."},
+{"id":"v-tech-09","level":2,"g":"3sg","zh":"这个应用占用了太多内存。","en":"This app {uses|consumes} too much memory."},
+{"id":"v-tech-10","level":1,"g":"base","zh":"请把文件上传到共享文件夹。","en":"Please {upload} the file to the shared folder."},
+{"id":"v-tech-11","level":2,"g":"base","zh":"我们需要升级数据库。","en":"We need to {upgrade|update} the database."},
+{"id":"v-tech-12","level":3,"g":"past","zh":"她昨天重置了我的密码。","en":"She {reset} my password yesterday."},
+{"id":"v-tech-13","level":3,"g":"past","zh":"这个改动把登录页面弄坏了。","en":"This change {broke} the login page."},
+{"id":"v-tech-14","level":3,"g":"past","zh":"我们上个月上线了这个功能。","en":"We {launched|released|shipped} this feature last month."},
+{"id":"v-tech-15","level":4,"g":"past","zh":"监控工具检测到了异常流量。","en":"The monitoring tool {detected} unusual traffic."},
+{"id":"v-tech-16","level":2,"g":"3sg","zh":"这个 API 返回一个用户列表。","en":"This API {returns} a list of users."},
+{"id":"v-tech-17","level":1,"g":"past","zh":"我删掉了旧的日志文件。","en":"I {deleted|removed} the old log files."},
+{"id":"v-tech-18","level":3,"g":"perfect","zh":"我们已经把成本降低了百分之二十。","en":"We have {reduced|cut} costs by 20 percent."},
+{"id":"v-tech-19","level":2,"g":"past","zh":"防火墙拦截了这个请求。","en":"The firewall {blocked} the request."},
+{"id":"v-tech-20","level":1,"g":"ing","zh":"我正在下载安装包。","en":"I'm {downloading} the installer."}
+]
