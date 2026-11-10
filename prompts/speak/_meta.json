@@ -1,8 +1,8 @@
-{"name": "一直说", "ladder": true, "tracks": {
- "l1": {"name": "L1 跟读复述"},
- "l2": {"name": "L2 说 30 秒", "green": 20, "yellow": 30, "red": 45},
- "l3": {"name": "L3 讲经历", "green": 60, "yellow": 90, "red": 120},
- "l4": {"name": "L4 观点和理由", "green": 120, "yellow": 150, "red": 180},
- "l5": {"name": "L5 即兴故事与反驳", "green": 120, "yellow": 150, "red": 180},
- "l6": {"name": "L6 即兴演讲", "green": 120, "yellow": 150, "red": 180}
+{"name": "Keep speaking", "ladder": true, "tracks": {
+ "l1": {"name": "L1 Listen and repeat"},
+ "l2": {"name": "L2 Talk for 30 seconds", "green": 20, "yellow": 30, "red": 45},
+ "l3": {"name": "L3 Tell an experience", "green": 60, "yellow": 90, "red": 120},
+ "l4": {"name": "L4 Opinion and reasons", "green": 120, "yellow": 150, "red": 180},
+ "l5": {"name": "L5 Improvised story or rebuttal", "green": 120, "yellow": 150, "red": 180},
+ "l6": {"name": "L6 Impromptu speech", "green": 120, "yellow": 150, "red": 180}
 }}

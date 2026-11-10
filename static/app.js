@@ -1,21 +1,23 @@
 "use strict";
 
 const POS_NAMES = {
-  verb: "动词", phrasal: "动词词组", adjective: "形容词", preposition: "介词", adverb: "副词",
-  noun: "名词", nounphrase: "名词词组", other: "连接词 / 委婉 / 习语 / 句式", combo: "组合（多空）",
-  grammar: "语法专题",
+  verb: "Verbs", phrasal: "Phrasal verbs", adjective: "Adjectives", preposition: "Prepositions",
+  adverb: "Adverbs", noun: "Nouns", nounphrase: "Noun phrases",
+  other: "Connectors / polite / idioms / patterns", combo: "Combos (multiple blanks)",
+  grammar: "Grammar topics",
 };
 const POS_ORDER = Object.keys(POS_NAMES);
 const SCENE_NAMES = {
-  work: "职场", tech: "IT 技术", restaurant: "餐厅饮食", sports: "体育", shopping: "购物",
-  travel: "出行", health: "健康", home: "居家", social: "社交", money: "金钱", mixed: "混合",
-  connector: "连接词", polite: "委婉表达", idiom: "习语俚语", pattern: "常用句式",
-  past: "过去时专题", future: "将来时专题", continuous: "现在进行时专题", subjunctive: "虚拟语气专题",
-  tenses: "其他常用时态专题", third: "第三人称专题", plural: "复数专题", misc: "其他语法专题",
+  work: "Work", tech: "IT", restaurant: "Restaurant & food", sports: "Sport", shopping: "Shopping",
+  travel: "Travel", health: "Health", home: "Home", social: "Social", money: "Money", mixed: "Mixed",
+  connector: "Connectors", polite: "Polite language", idiom: "Idioms & slang", pattern: "Sentence patterns",
+  past: "Past simple", future: "Future", continuous: "Present continuous",
+  subjunctive: "Subjunctive & conditionals", tenses: "Other tenses", third: "Third person",
+  plural: "Plurals", misc: "Other grammar",
 };
 const KIND_TEXT = {
-  correct: "正确", grammar: "词对了，但词形/语法不对", spelling: "拼写不对",
-  word: "词不对", empty: "没有填",
+  correct: "correct", grammar: "right word, wrong form", spelling: "spelling mistake",
+  word: "wrong word", empty: "empty",
 };
 
 const view = document.getElementById("view");
@@ -46,7 +48,7 @@ async function api(method, path, body) {
   }
   const response = await fetch("/api/" + path, options);
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "请求失败");
+  if (!response.ok) throw new Error(data.error || "Request failed");
   return data;
 }
 
@@ -110,7 +112,7 @@ async function speak(text, accent, options = {}) {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, accent: a, voice, pace }),
         });
-        if (!response.ok) throw new Error((await response.json()).error || "语音生成失败");
+        if (!response.ok) throw new Error((await response.json()).error || "Could not generate speech");
         url = URL.createObjectURL(await response.blob());
         audioUrls.set(cacheKey, url);
       }
@@ -123,7 +125,7 @@ async function speak(text, accent, options = {}) {
       if (speakToken !== token || e.name === "NotAllowedError" || e.name === "AbortError") return;
       if (!ttsWarned) {
         ttsWarned = true;
-        toast("自然语音暂时不可用，先用浏览器语音：" + e.message);
+        toast("Natural voice unavailable, using the browser voice: " + e.message);
       }
     }
   }
@@ -132,8 +134,8 @@ async function speak(text, accent, options = {}) {
 
 function speakButtons(text) {
   return [
-    h("button", { class: "link", type: "button", title: "英式发音", onclick: () => speak(text, "uk") }, "🔊 英"),
-    h("button", { class: "link", type: "button", title: "美式发音", onclick: () => speak(text, "us") }, "🔊 美"),
+    h("button", { class: "link", type: "button", title: "British pronunciation", onclick: () => speak(text, "uk") }, "🔊 UK"),
+    h("button", { class: "link", type: "button", title: "American pronunciation", onclick: () => speak(text, "us") }, "🔊 US"),
   ];
 }
 
@@ -151,21 +153,21 @@ async function homeView() {
   const s = await api("GET", "summary");
   const stat = (n, label) => h("div", { class: "card stat" }, h("b", {}, String(n)), label);
   show(
-    h("h1", {}, "今天练什么"),
+    h("h1", {}, "What to practise today"),
     h("div", { class: "grid" },
-      stat(s.words.due, "个单词待复习"),
-      stat(s.words.new_today_left, "个新词今天可学"),
-      stat(s.cloze.due, "道填空题待重做"),
-      stat(s.cloze.unseen, "道填空题还没做过"),
+      stat(s.words.due, "words due for review"),
+      stat(s.words.new_today_left, "new words left today"),
+      stat(s.cloze.due, "cloze questions to redo"),
+      stat(s.cloze.unseen, "cloze questions not yet done"),
     ),
     h("div", { class: "card" },
-      h("div", {}, `填空题库 ${s.cloze.total} 题：已通过 ${s.cloze.passed}，练习中 ${s.cloze.learning}，永不出现 ${s.cloze.never}`),
-      h("div", {}, `单词本 ${s.words.total} 个：永不出现 ${s.words.never}`),
-      s.has_key ? null : h("p", { class: "muted" }, "还没有设置 OpenAI key，AI 解释暂时不可用。到「设置」里填写。"),
+      h("div", {}, `Cloze bank: ${s.cloze.total} questions · ${s.cloze.passed} passed · ${s.cloze.learning} learning · ${s.cloze.never} hidden`),
+      h("div", {}, `Word bank: ${s.words.total} words · ${s.words.never} hidden`),
+      s.has_key ? null : h("p", { class: "muted" }, "No OpenAI key yet, so AI explanations and feedback are off. Add it in Settings."),
     ),
     h("div", { class: "row" },
-      h("a", { href: "#cloze" }, h("button", { class: "primary", type: "button" }, "开始填空")),
-      h("a", { href: "#review" }, h("button", { type: "button" }, "背单词")),
+      h("a", { href: "#cloze" }, h("button", { class: "primary", type: "button" }, "Start cloze")),
+      h("a", { href: "#review" }, h("button", { type: "button" }, "Review words")),
     ),
   );
 }
@@ -187,18 +189,18 @@ async function clozeView() {
   if (clozeFilters.scene && !(clozeFilters.scene in scenes)) clozeFilters.scene = "";
   const posList = Object.entries(meta.pos).sort(([a], [b]) =>
     (POS_ORDER.indexOf(a) + 1 || 99) - (POS_ORDER.indexOf(b) + 1 || 99));
-  const posSelect = h("select", { "aria-label": "词类", onchange: (e) => { clozeFilters.pos = e.target.value; clozeView(); } },
-    h("option", { value: "" }, "全部词类和专题"),
-    posList.map(([k, n]) => h("option", { value: k, selected: clozeFilters.pos === k }, `${POS_NAMES[k] || k}（${n}）`)));
+  const posSelect = h("select", { "aria-label": "Word class", onchange: (e) => { clozeFilters.pos = e.target.value; clozeView(); } },
+    h("option", { value: "" }, "All word classes and topics"),
+    posList.map(([k, n]) => h("option", { value: k, selected: clozeFilters.pos === k }, `${POS_NAMES[k] || k} (${n})`)));
   show(
-    h("h1", {}, clozeFilters.mode === "wrongbook" ? "重做错题" : "翻译填空"),
+    h("h1", {}, clozeFilters.mode === "wrongbook" ? "Redo wrong answers" : "Translation cloze"),
     h("div", { class: "row", style: "margin-bottom:16px" },
       posSelect,
-      select("scene", clozeFilters.pos === "grammar" ? "全部专题" : "全部场景",
-        Object.entries(scenes).map(([k, n]) => [k, `${SCENE_NAMES[k] || k}（${n}）`])),
-      select("level", "全部难度", Object.entries(meta.levels).map(([k, n]) => [k, `L${k}（${n}）`])),
+      select("scene", clozeFilters.pos === "grammar" ? "All topics" : "All scenes",
+        Object.entries(scenes).map(([k, n]) => [k, `${SCENE_NAMES[k] || k} (${n})`])),
+      select("level", "All levels", Object.entries(meta.levels).map(([k, n]) => [k, `L${k} (${n})`])),
       clozeFilters.mode === "wrongbook"
-        ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "回到普通练习")
+        ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "Back to normal practice")
         : null,
     ),
     box,
@@ -209,7 +211,7 @@ async function clozeView() {
     const { question: q, redo } = await api("GET", "cloze/next?" + params);
     if (!q) {
       fill(box, h("div", { class: "card" },
-        clozeFilters.mode === "wrongbook" ? "错题集是空的。" : "这个范围的题目都做完了，换一个词类、场景或难度吧。"));
+        clozeFilters.mode === "wrongbook" ? "The wrong book is empty." : "You have done every question in this range. Try another word class, scene or level."));
       return;
     }
     renderQuestion(q, redo);
@@ -224,7 +226,7 @@ async function clozeView() {
         class: "blank", placeholder: seg.hint ? seg.hint + "…" : "",
         style: `width:${Math.max(6, seg.length + 3)}ch`,
         autocomplete: "off", autocapitalize: "off",
-        spellcheck: "false", "aria-label": `第 ${seg.blank + 1} 个空`,
+        spellcheck: "false", "aria-label": `Blank ${seg.blank + 1}`,
       });
       inputs.push(input);
       return input;
@@ -236,15 +238,15 @@ async function clozeView() {
         h("span", { class: "tag" }, POS_NAMES[q.pos] || q.pos),
         h("span", { class: "tag" }, SCENE_NAMES[q.scene] || q.scene),
         h("span", { class: "tag" }, "L" + q.level),
-        redo ? h("span", { class: "tag redo" }, "重做") : null),
+        redo ? h("span", { class: "tag redo" }, "Redo") : null),
       h("div", { class: "zh" }, q.zh),
       sentence, feedback, actions);
 
     function answeringActions() {
       fill(actions, 
-        h("button", { class: "primary", type: "submit" }, attempted ? "再试一次" : "提交"),
-        h("button", { type: "button", onclick: revealAnswer }, "看答案"),
-        h("button", { class: "link", type: "button", onclick: never }, "永不出现"),
+        h("button", { class: "primary", type: "submit" }, attempted ? "Try again" : "Check"),
+        h("button", { type: "button", onclick: revealAnswer }, "Show answer"),
+        h("button", { class: "link", type: "button", onclick: never }, "Never show again"),
       );
     }
 
@@ -256,7 +258,7 @@ async function clozeView() {
       if (result.correct) return finish(result, !attempted);
       attempted = true;
       fill(feedback, ...result.blanks.map((b, i) =>
-        h("div", { class: b.kind === "correct" ? "good" : "bad" }, `第 ${i + 1} 空：${KIND_TEXT[b.kind]}`)));
+        h("div", { class: b.kind === "correct" ? "good" : "bad" }, `Blank ${i + 1}: ${KIND_TEXT[b.kind]}`)));
       answeringActions();
       (inputs.find((i) => !i.classList.contains("correct")) || inputs[0]).focus();
     }
@@ -270,7 +272,7 @@ async function clozeView() {
 
     async function never() {
       await api("POST", "cloze/mark", { id: q.id, outcome: "never" });
-      toast("这道题不会再出现");
+      toast("This question won't appear again");
       loadQuestion();
     }
 
@@ -279,24 +281,24 @@ async function clozeView() {
       speak(result.sentence);
       fill(feedback, 
         h("div", { class: firstTry ? "good" : "bad" },
-          firstTry ? "答对了。" : "这道题会在今天再出现，之后按间隔重做。"),
+          firstTry ? "Correct." : "This question comes back later today, then at growing intervals."),
         h("div", { class: "answer" }, result.sentence,
           h("button", { class: "link", type: "button", onclick: () => speak(result.sentence) }, "🔊")),
       );
-      const next = h("button", { class: "primary", type: "button", onclick: loadQuestion }, "下一题");
+      const next = h("button", { class: "primary", type: "button", onclick: loadQuestion }, "Next");
       const guessed = h("button", { type: "button", onclick: async () => {
         await api("POST", "cloze/mark", { id: q.id, outcome: "guessed" });
         guessed.disabled = true;
-        toast("已加入重做");
-      } }, "其实是蒙对的");
+        toast("Added to the redo queue");
+      } }, "I actually guessed");
       fill(actions, 
         next,
         firstTry ? guessed : null,
         h("button", { type: "button", onclick: () => {
           prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }] };
           location.hash = "#add";
-        } }, "加入生词"),
-        h("button", { class: "link", type: "button", onclick: never }, "永不出现"),
+        } }, "Add to word bank"),
+        h("button", { class: "link", type: "button", onclick: never }, "Never show again"),
       );
       next.focus();
     }
@@ -312,16 +314,16 @@ async function clozeView() {
 async function wrongbookView() {
   const { items } = await api("GET", "cloze/wrongbook");
   show(
-    h("h1", {}, `错题集（${items.length}）`),
+    h("h1", {}, `Wrong book (${items.length})`),
     items.length
       ? h("div", { class: "row", style: "margin-bottom:16px" },
           h("button", { class: "primary", type: "button", onclick: () => {
             Object.assign(clozeFilters, { pos: "", scene: "", level: "", mode: "wrongbook" });
             location.hash = "#cloze";
-          } }, "全部重做一遍"))
-      : h("div", { class: "card" }, "还没有错题。"),
+          } }, "Redo them all"))
+      : h("div", { class: "card" }, "No wrong answers yet."),
     items.map((item) => h("div", { class: "card" },
-      h("div", { class: "muted" }, item.zh, `　错 ${item.wrong} 次`),
+      h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
       h("div", { class: "answer" }, item.sentence,
         h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊")))),
   );
@@ -342,12 +344,12 @@ function cardDetails(word) {
 
 async function reviewView() {
   const { word, counts } = await api("GET", "words/next");
-  const header = h("h1", {}, "背单词");
+  const header = h("h1", {}, "Review words");
   const info = h("div", { class: "muted", style: "margin-bottom:12px" },
-    `待复习 ${counts.due}　今天还可学新词 ${counts.new_today_left}　单词本共 ${counts.total}`);
+    `Due ${counts.due} · New left today ${counts.new_today_left} · In word bank ${counts.total}`);
   if (!word) {
     show(header, info, h("div", { class: "card" },
-      counts.total ? "今天的单词都背完了。" : "单词本还是空的，先去「添加 / 积累」加几个词。"));
+      counts.total ? "All done for today." : "Your word bank is empty. Add a few words in Add / Capture first."));
     return;
   }
   const back = h("div", {});
@@ -357,24 +359,24 @@ async function reviewView() {
     reviewView();
   };
   const reveal = () => {
-    const mine = h("input", { class: "wide", placeholder: "自己写一个例句，回车保存" });
+    const mine = h("input", { class: "wide", placeholder: "Write your own example and press Enter to save" });
     mine.addEventListener("keydown", async (e) => {
       if (e.key !== "Enter" || !mine.value.trim()) return;
       word.my_examples.push(mine.value.trim());
       await api("PUT", "words/" + word.id, { my_examples: word.my_examples });
       mine.value = "";
-      toast("例句已保存");
+      toast("Example saved");
     });
     fill(back, ...cardDetails(word).flat().filter(Boolean), mine);
-    const forget = h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "忘记");
+    const forget = h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "Forgot");
     fill(actions, 
       forget,
-      h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "模糊"),
-      h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "记住"),
-      h("button", { class: "link", type: "button", onclick: () => rate("never") }, "永不再出现"),
+      h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "Fuzzy"),
+      h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "Remembered"),
+      h("button", { class: "link", type: "button", onclick: () => rate("never") }, "Never show again"),
     );
   };
-  const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "显示答案");
+  const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "Show answer");
   actions.append(showButton);
   show(header, info, h("div", { class: "card" },
     h("div", { class: "term" }, word.term, speakButtons(word.term)), back, actions));
@@ -387,10 +389,10 @@ function addView() {
   const draft = prefill || {};
   prefill = null;
   const field = (attrs) => h("input", { class: "wide", ...attrs });
-  const sentence = h("textarea", { rows: 2, placeholder: "粘贴听到或看到的句子，残缺的也可以（可不填）" });
-  const focus = field({ placeholder: "哪里不懂？单词、词组或句式（不填就是整句）" });
+  const sentence = h("textarea", { rows: 2, placeholder: "Paste the sentence you heard or read. A fragment is fine (optional)" });
+  const focus = field({ placeholder: "Which part don't you understand? A word, phrase or pattern (blank = the whole sentence)" });
   const term = field({ value: draft.term || "" });
-  const respelling = field({ placeholder: "例如 post-POHN" });
+  const respelling = field({ placeholder: "e.g. post-POHN" });
   const definition = field({});
   const note = h("textarea", { rows: 3 });
   const examplesBox = h("div", {});
@@ -398,8 +400,8 @@ function addView() {
   const aiStatus = h("span", { class: "muted" });
 
   const addExample = (ex = {}) => examplesBox.append(h("div", { class: "row example-row", style: "margin-bottom:6px" },
-    h("input", { style: "flex:2", placeholder: "英文例句", value: ex.en || "" }),
-    h("input", { style: "flex:1", placeholder: "中文", value: ex.zh || "" })));
+    h("input", { style: "flex:2", placeholder: "English example", value: ex.en || "" }),
+    h("input", { style: "flex:1", placeholder: "Chinese", value: ex.zh || "" })));
   const setExamples = (list) => {
     fill(examplesBox);
     list.forEach(addExample);
@@ -408,7 +410,7 @@ function addView() {
   setExamples(draft.examples || []);
 
   async function explain() {
-    aiStatus.textContent = "AI 正在解释…";
+    aiStatus.textContent = "Asking the AI…";
     try {
       const r = await api("POST", "ai/explain", { sentence: sentence.value, focus: focus.value });
       term.value = r.term;
@@ -417,7 +419,7 @@ function addView() {
       const mine = r.sentence ? [{ en: r.sentence, zh: r.sentence_zh }] : [];
       setExamples([...mine, ...r.examples]);
       fill(notesBox, 
-        h("label", {}, "AI 解释（勾选的会放进备注）"),
+        h("label", {}, "AI notes (ticked ones go into the note)"),
         ...r.notes.map((n) => h("div", {}, h("label", { style: "color:inherit;font-size:16px;margin:4px 0" },
           h("input", { type: "checkbox", value: n }), " " + n))));
       aiStatus.textContent = "";
@@ -437,7 +439,7 @@ function addView() {
         term: term.value, respelling: respelling.value, definition: definition.value,
         examples, note: [...picked, note.value.trim()].filter(Boolean).join("\n"),
       });
-      toast(r.duplicate ? "这个词已经在单词本里，新例句已合并进去" : "已加入单词本");
+      toast(r.duplicate ? "Already in your word bank. New examples were merged in" : "Added to your word bank");
       addView();
     } catch (e) {
       toast(e.message);
@@ -445,22 +447,22 @@ function addView() {
   }
 
   show(
-    h("h1", {}, "添加 / 日常积累"),
+    h("h1", {}, "Add / Capture"),
     h("div", { class: "card" },
-      h("label", {}, "原句"), sentence,
-      h("label", {}, "不懂的部分"), focus,
+      h("label", {}, "Original sentence"), sentence,
+      h("label", {}, "The part you don't understand"), focus,
       h("div", { class: "row", style: "margin-top:12px" },
-        h("button", { type: "button", onclick: explain }, "让 AI 解释并填好卡片"), aiStatus)),
+        h("button", { type: "button", onclick: explain }, "Explain with AI and fill in the card"), aiStatus)),
     h("div", { class: "card" },
-      h("label", {}, "单词 / 词组 / 句式"), term,
-      h("label", {}, "拼读注音"), respelling,
-      h("label", {}, "英文释义"), definition,
-      h("label", {}, "例句"), examplesBox,
-      h("button", { class: "link", type: "button", onclick: () => addExample() }, "+ 加一行例句"),
+      h("label", {}, "Word / phrase / pattern"), term,
+      h("label", {}, "Pronunciation respelling"), respelling,
+      h("label", {}, "English definition"), definition,
+      h("label", {}, "Examples"), examplesBox,
+      h("button", { class: "link", type: "button", onclick: () => addExample() }, "+ Add an example"),
       notesBox,
-      h("label", {}, "备注"), note,
+      h("label", {}, "Note"), note,
       h("div", { class: "row", style: "margin-top:12px" },
-        h("button", { class: "primary", type: "button", onclick: save }, "保存到单词本"))),
+        h("button", { class: "primary", type: "button", onclick: save }, "Save to word bank"))),
   );
 }
 
@@ -472,16 +474,16 @@ async function wordsView() {
     .map((w) => h("tr", {},
       h("td", {}, h("b", {}, w.term), h("div", { class: "muted" }, w.respelling)),
       h("td", {}, w.definition, w.examples[0] ? h("div", { class: "muted" }, w.examples[0].en) : null),
-      h("td", { class: "muted" }, w.srs.never ? "永不出现" : w.srs.due ? "下次 " + w.srs.due : "新词"),
+      h("td", { class: "muted" }, w.srs.never ? "Hidden" : w.srs.due ? "Next " + w.srs.due : "New"),
       h("td", {}, h("button", { class: "link", type: "button", onclick: async () => {
-        if (!confirm(`删除「${w.term}」？`)) return;
+        if (!confirm(`Delete "${w.term}"?`)) return;
         await api("DELETE", "words/" + w.id);
         wordsView();
-      } }, "删除")))));
+      } }, "Delete")))));
   draw("");
   show(
-    h("h1", {}, `单词本（${words.length}）`),
-    h("input", { class: "wide", placeholder: "搜索", oninput: (e) => draw(e.target.value.trim()), style: "margin-bottom:12px" }),
+    h("h1", {}, `Word bank (${words.length})`),
+    h("input", { class: "wide", placeholder: "Search", oninput: (e) => draw(e.target.value.trim()), style: "margin-bottom:12px" }),
     h("div", { class: "card" }, h("table", {}, body)),
   );
 }
@@ -495,6 +497,16 @@ function cancelRecording() {
     recorder.cancelled = true;
     recorder.stop();
   }
+}
+
+// The Chinese version of an instruction, hidden until asked for.
+function chineseToggle(text) {
+  const body = h("div", { class: "muted", hidden: true }, text);
+  const link = h("button", { class: "link", type: "button", onclick: () => {
+    body.hidden = !body.hidden;
+    link.textContent = body.hidden ? "Show Chinese" : "Hide Chinese";
+  } }, "Show Chinese");
+  return h("div", {}, link, body);
 }
 
 function clock(seconds) {
@@ -524,13 +536,13 @@ async function practiceView(module) {
 
   const trackButtons = meta.tracks.map((t) => h("button", {
     type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
-    title: t.locked ? "完成上一级后解锁" : `做过 ${t.done} / ${t.count} 题`,
+    title: t.locked ? "Unlocks after the level below" : `${t.done} / ${t.count} prompts done`,
     onclick: () => { practiceTrack[module] = t.id; practiceView(module); },
   }, (t.locked ? "🔒 " : "") + t.name));
   const next = meta.tracks[meta.tracks.indexOf(track) + 1];
   const ladderNote = meta.ladder && next && next.locked
-    ? `本级再完成 ${Math.max(0, meta.unlock_sessions - track.good)} 次合格练习，解锁「${next.name}」`
-    : `本组做过 ${track.done} / ${track.count} 题`;
+    ? `${Math.max(0, meta.unlock_sessions - track.good)} more good sessions on this level unlock "${next.name}"`
+    : `${track.done} / ${track.count} prompts done in this group`;
 
   show(
     h("h1", {}, meta.name),
@@ -542,7 +554,7 @@ async function practiceView(module) {
   async function loadPrompt(same) {
     const prompt = same || (await api("GET", `practice/next?module=${module}&track=${track.id}`)).prompt;
     if (!prompt) {
-      fill(box, h("div", { class: "card" }, "这一组还没有题目。"));
+      fill(box, h("div", { class: "card" }, "This group has no prompts yet."));
       return;
     }
     const work = h("div", {});
@@ -550,7 +562,10 @@ async function practiceView(module) {
       h("div", { class: "answer" }, prompt.task),
       prompt.say ? h("div", { class: "en", style: "font-size:20px;line-height:1.6" }, "“" + prompt.say + "”",
         h("button", { class: "link", type: "button", onclick: () => speak(prompt.say) }, "🔊")) : null,
-      h("div", { class: "muted" }, prompt.zh),
+      // For translation prompts the Chinese is the sentence to translate, so it stays visible;
+      // otherwise it is only a translation of the instruction.
+      prompt.task.startsWith("Translate") ? h("div", { class: "zh" }, prompt.zh)
+        : prompt.zh ? chineseToggle(prompt.zh) : null,
       work));
     if (prompt.say) speak(prompt.say);
     if (voice) voiceInput(prompt, work); else textInput(prompt, work);
@@ -558,25 +573,25 @@ async function practiceView(module) {
 
   function textInput(prompt, work) {
     let startedAt = null;
-    const area = h("textarea", { rows: 8, placeholder: "直接写英文。不会的词可以先写中文，反馈时会告诉你怎么说。" });
-    const counter = h("span", { class: "muted" }, "0 词");
+    const area = h("textarea", { rows: 8, placeholder: "Write in English. If you don't know a word, write it in Chinese and the feedback will tell you the English." });
+    const counter = h("span", { class: "muted" }, "0 words");
     const timer = setInterval(() => {
       if (!area.isConnected) return clearInterval(timer);
       const words = (area.value.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) || []).length;
-      counter.textContent = `${words} 词　${startedAt ? clock((Date.now() - startedAt) / 1000) : "0:00"}`;
+      counter.textContent = `${words} words · ${startedAt ? clock((Date.now() - startedAt) / 1000) : "0:00"}`;
     }, 500);
     area.addEventListener("input", () => { startedAt = startedAt || Date.now(); });
     const send = () => {
-      if (!area.value.trim()) return toast("先写点什么");
+      if (!area.value.trim()) return toast("Write something first");
       submit(prompt, area.value, startedAt ? (Date.now() - startedAt) / 1000 : 0, "write", 0);
     };
     area.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); });
     fill(work, 
       h("div", { style: "margin-top:12px" }, area),
       h("div", { class: "row", style: "margin-top:10px" },
-        h("button", { class: "primary", type: "button", onclick: send }, "提交（⌘ + Enter）"),
-        h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "换一题"),
-        module !== "write" ? h("button", { class: "link", type: "button", onclick: () => { voice = true; loadPrompt(prompt); } }, "改用说的") : null,
+        h("button", { class: "primary", type: "button", onclick: send }, "Submit (⌘ + Enter)"),
+        h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "Skip"),
+        module !== "write" ? h("button", { class: "link", type: "button", onclick: () => { voice = true; loadPrompt(prompt); } }, "Speak instead") : null,
         counter));
     area.focus();
   }
@@ -590,14 +605,14 @@ async function practiceView(module) {
     let startedAt = null;
     let ticker = null;
 
-    const startButton = h("button", { class: "primary", type: "button", onclick: start }, "开始说");
+    const startButton = h("button", { class: "primary", type: "button", onclick: start }, "Start speaking");
     const controls = h("div", { class: "row", style: "margin-top:12px" },
       startButton,
-      h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "换一题"),
-      h("button", { class: "link", type: "button", onclick: () => { voice = false; loadPrompt(prompt); } }, "改用打字"),
+      h("button", { class: "link", type: "button", onclick: () => loadPrompt() }, "Skip"),
+      h("button", { class: "link", type: "button", onclick: () => { voice = false; loadPrompt(prompt); } }, "Type instead"),
       status);
     fill(work, controls);
-    if (!settings.has_key) status.textContent = "没有设置 OpenAI key：只会记录说话时长，没有文字和反馈。";
+    if (!settings.has_key) status.textContent = "No OpenAI key: only your speaking time is recorded, with no transcript or feedback.";
     startButton.focus();
 
     async function start() {
@@ -605,7 +620,7 @@ async function practiceView(module) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e) {
-        status.textContent = "无法使用麦克风：" + e.message;
+        status.textContent = "Cannot use the microphone: " + e.message;
         return;
       }
       const chunks = [];
@@ -625,8 +640,8 @@ async function practiceView(module) {
         const s = (Date.now() - startedAt) / 1000;
         time.textContent = clock(s);
         if (green) {
-          const [text, color] = s >= red ? ["红灯：该收尾了", "var(--bad)"]
-            : s >= yellow ? ["黄灯", "var(--warn)"] : s >= green ? ["绿灯：时间够了", "var(--good)"] : ["", ""];
+          const [text, color] = s >= red ? ["Red: wrap up now", "var(--bad)"]
+            : s >= yellow ? ["Yellow", "var(--warn)"] : s >= green ? ["Green: minimum time reached", "var(--good)"] : ["", ""];
           light.textContent = text;
           light.style.color = light.style.borderColor = color;
           light.style.visibility = text ? "visible" : "hidden";
@@ -635,81 +650,81 @@ async function practiceView(module) {
       light.style.visibility = "hidden";
       const stuckButton = h("button", { class: "warn", type: "button", onclick: () => {
         stuck += 1;
-        stuckButton.textContent = `卡壳了（${stuck}）`;
-      } }, "卡壳了（0）");
-      const stop = h("button", { class: "primary", type: "button", onclick: () => recorder && recorder.stop() }, "说完了");
+        stuckButton.textContent = `Stuck (${stuck})`;
+      } }, "Stuck (0)");
+      const stop = h("button", { class: "primary", type: "button", onclick: () => recorder && recorder.stop() }, "Done");
       fill(work, 
         h("div", { class: "row", style: "margin-top:12px" }, time, light),
-        h("div", { class: "muted" }, "别停。想不起来的词直接说中文，或者点「卡壳了」，然后接着说。"),
+        h("div", { class: "muted" }, "Keep going. If a word won't come, say it in Chinese or press Stuck, then carry on."),
         h("div", { class: "row", style: "margin-top:10px" }, stop, stuckButton));
       stop.focus();
     }
 
     async function finish(blob, seconds) {
       if (!settings.has_key) return submit(prompt, "", seconds, "speak", stuck);
-      fill(work, h("div", { class: "muted", style: "margin-top:12px" }, "正在把录音转成文字…"));
+      fill(work, h("div", { class: "muted", style: "margin-top:12px" }, "Transcribing your recording…"));
       try {
         const { text } = await api("POST", "practice/transcribe", { audio_b64: await blobToBase64(blob), mime: blob.type });
         submit(prompt, text, seconds, "speak", stuck);
       } catch (e) {
         fill(work, 
-          h("p", { class: "feedback" }, h("span", { class: "bad" }, "转文字失败：" + e.message)),
+          h("p", { class: "feedback" }, h("span", { class: "bad" }, "Transcription failed: " + e.message)),
           h("div", { class: "row" },
-            h("button", { type: "button", onclick: () => finish(blob, seconds) }, "重试"),
-            h("button", { type: "button", onclick: () => submit(prompt, "", seconds, "speak", stuck) }, "只记录时长")));
+            h("button", { type: "button", onclick: () => finish(blob, seconds) }, "Retry"),
+            h("button", { type: "button", onclick: () => submit(prompt, "", seconds, "speak", stuck) }, "Record the time only")));
       }
     }
   }
 
   async function submit(prompt, text, seconds, mode, stuck) {
-    fill(box, h("div", { class: "card muted" }, "正在看你的内容…"));
+    fill(box, h("div", { class: "card muted" }, "Reading your answer…"));
     let r;
     try {
       r = await api("POST", "practice/submit", { prompt_id: prompt.id, text, seconds, mode, stuck });
     } catch (e) {
-      fill(box, h("div", { class: "card" }, "提交失败：" + e.message,
+      fill(box, h("div", { class: "card" }, "Submit failed: " + e.message,
         h("pre", {}, text),
-        h("button", { type: "button", onclick: () => submit(prompt, text, seconds, mode, stuck) }, "重试")));
+        h("button", { type: "button", onclick: () => submit(prompt, text, seconds, mode, stuck) }, "Retry")));
       return;
     }
     const s = r.session;
     const f = r.feedback;
-    const facts = [`${s.words} 词`, clock(s.seconds)];
-    if (s.seconds >= 30 && s.words) facts.push(`${Math.round(s.words / (s.seconds / 60))} 词/分钟`);
-    if (mode === "speak") facts.push(`卡壳 ${s.stuck} 次`, `口头禅 ${s.fillers} 次`);
-    facts.push(`+${s.xp} 经验`, `总等级 ${r.rank.level}`);
-    const nextButton = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "下一题");
+    const facts = [`${s.words} words`, clock(s.seconds)];
+    if (s.seconds >= 30 && s.words) facts.push(`${Math.round(s.words / (s.seconds / 60))} words/min`);
+    if (mode === "speak") facts.push(`stuck ${s.stuck}×`, `fillers ${s.fillers}×`);
+    facts.push(`+${s.xp} XP`, `rank ${r.rank.level}`);
+    const nextButton = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "Next");
     fill(box, 
       h("div", { class: "card" },
-        s.leveled_up ? h("p", { class: "feedback" }, h("b", { class: "good" }, `升级了，解锁 L${s.leveled_up}。`)) : null,
-        h("div", { class: "muted" }, facts.join("　")),
+        s.leveled_up ? h("p", { class: "feedback" }, h("b", { class: "good" }, `Level up: L${s.leveled_up} unlocked.`)) : null,
+        h("div", { class: "muted" }, facts.join(" · ")),
         f && f.score ? h("div", {}, "★".repeat(f.score) + "☆".repeat(5 - f.score)) : null,
         f ? h("p", {}, f.comment) : null,
-        r.ai_error ? h("p", { class: "feedback" }, h("span", { class: "bad" }, "没有拿到 AI 反馈：" + r.ai_error)) : null,
-        !f && !r.ai_error && text ? h("p", { class: "muted" }, "没有设置 OpenAI key，所以只做了统计。") : null,
+        r.ai_error ? h("p", { class: "feedback" }, h("span", { class: "bad" }, "No AI feedback: " + r.ai_error)) : null,
+        !f && !r.ai_error && text ? h("p", { class: "muted" }, "No OpenAI key, so only the stats were recorded.") : null,
         h("div", { class: "row", style: "margin-top:10px" },
           nextButton,
-          h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "同一题再来一遍"))),
+          h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "Same prompt again"))),
       text ? h("div", { class: "card" },
-        h("label", {}, mode === "speak" ? "你说的（自动转写）" : "你写的"), h("div", {}, text),
-        f && f.natural ? [h("label", {}, "更自然的说法"),
+        h("label", {}, mode === "speak" ? "What you said (transcribed)" : "What you wrote"), h("div", {}, text),
+        f && f.natural ? [h("label", {}, "A more natural way to say it"),
           h("div", { class: "answer" }, f.natural,
             h("button", { class: "link", type: "button", onclick: () => speak(f.natural) }, "🔊"))] : null) : null,
       f && f.issues.length ? h("div", { class: "card" },
-        h("label", {}, "最值得改的地方"),
+        h("label", {}, "What to fix first"),
         f.issues.map((i) => h("div", { class: "example" },
           h("span", { class: "bad", style: "color:var(--bad)" }, i.original), " → ",
           h("b", {}, i.better), h("span", { class: "muted" }, i.why)))) : null,
       f && f.vocab.length ? h("div", { class: "card" },
-        h("label", {}, "可以收进生词本的表达"),
+        h("label", {}, "Expressions worth saving"),
         f.vocab.map((v) => {
           const add = h("button", { class: "link", type: "button", onclick: async () => {
             const res = await api("POST", "words", { term: v.term, note: v.zh,
               examples: v.example ? [{ en: v.example, zh: "" }] : [] });
             add.disabled = true;
-            add.textContent = res.duplicate ? "已在生词本" : "已加入";
-          } }, "+ 加入生词");
-          return h("div", { class: "example" }, h("b", {}, v.term), "　" + v.zh, add,
+            add.textContent = res.duplicate ? "Already saved" : "Saved";
+          } }, "+ Add to word bank");
+          return h("div", { class: "example" }, h("b", {}, v.term), " " + v.zh, add,
             h("span", { class: "muted" }, v.example));
         })) : null,
     );
@@ -725,40 +740,40 @@ async function statsView() {
   const sp = s.modules.spoken;
   const dash = (v, unit = "") => (v === null || v === undefined ? "—" : v + unit);
   const row = (label, ...cells) => h("tr", {}, h("td", { class: "muted" }, label), cells.map((c) => h("td", {}, String(c))));
-  const names = { write: "一直写", speak: "一直说", improv: "Improv", toast: "Toastmasters" };
+  const names = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters" };
   show(
-    h("h1", {}, "统计"),
+    h("h1", {}, "Stats"),
     h("div", { class: "grid" },
-      h("div", { class: "card stat" }, h("b", {}, String(s.rank.level)), `总等级（${s.rank.xp} / ${s.rank.next_at} 经验）`),
-      h("div", { class: "card stat" }, h("b", {}, String(s.streak)), "天连续练习"),
-      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.write), "一直写 已解锁"),
-      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.speak), "一直说 已解锁")),
+      h("div", { class: "card stat" }, h("b", {}, String(s.rank.level)), `Rank (${s.rank.xp} / ${s.rank.next_at} XP)`),
+      h("div", { class: "card stat" }, h("b", {}, String(s.streak)), "day streak"),
+      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.write), "Keep writing unlocked"),
+      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.speak), "Keep speaking unlocked")),
     h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "写"), h("th", {}, "今天"), h("th", {}, "近 7 天"), h("th", {}, "前 7 天"), h("th", {}, "累计"))),
+      h("thead", {}, h("tr", {}, h("th", {}, "Writing"), h("th", {}, "Today"), h("th", {}, "Last 7 days"), h("th", {}, "7 days before"), h("th", {}, "All time"))),
       h("tbody", {},
-        row("词数", w.today.words, w.this_week.words, w.last_week.words, w.all.words),
-        row("时长（分钟）", w.today.minutes, w.this_week.minutes, w.last_week.minutes, w.all.minutes),
-        row("打字速度（词/分钟）", dash(w.today.wpm), dash(w.this_week.wpm), dash(w.last_week.wpm), dash(w.all.wpm)),
-        row("每 100 词的问题数", dash(w.today.issues_per_100), dash(w.this_week.issues_per_100), dash(w.last_week.issues_per_100), dash(w.all.issues_per_100)),
-        row("平均得分", dash(w.today.avg_score), dash(w.this_week.avg_score), dash(w.last_week.avg_score), dash(w.all.avg_score)),
-        row("用过的不同单词", "", "", "", w.unique_words),
-        row("单次最多词数", "", "", "", w.all.most_words)))),
+        row("Words", w.today.words, w.this_week.words, w.last_week.words, w.all.words),
+        row("Minutes", w.today.minutes, w.this_week.minutes, w.last_week.minutes, w.all.minutes),
+        row("Typing speed (words/min)", dash(w.today.wpm), dash(w.this_week.wpm), dash(w.last_week.wpm), dash(w.all.wpm)),
+        row("Issues per 100 words", dash(w.today.issues_per_100), dash(w.this_week.issues_per_100), dash(w.last_week.issues_per_100), dash(w.all.issues_per_100)),
+        row("Average score", dash(w.today.avg_score), dash(w.this_week.avg_score), dash(w.last_week.avg_score), dash(w.all.avg_score)),
+        row("Different words used", "", "", "", w.unique_words),
+        row("Most words in one session", "", "", "", w.all.most_words)))),
     h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "说（含 Improv、Toastmasters）"), h("th", {}, "今天"), h("th", {}, "近 7 天"), h("th", {}, "前 7 天"), h("th", {}, "累计"))),
+      h("thead", {}, h("tr", {}, h("th", {}, "Speaking (incl. Improv, Toastmasters)"), h("th", {}, "Today"), h("th", {}, "Last 7 days"), h("th", {}, "7 days before"), h("th", {}, "All time"))),
       h("tbody", {},
-        row("开口时长（分钟）", sp.today.minutes, sp.this_week.minutes, sp.last_week.minutes, sp.all.minutes),
-        row("说出的词数", sp.today.words, sp.this_week.words, sp.last_week.words, sp.all.words),
-        row("语速（词/分钟）", dash(sp.today.wpm), dash(sp.this_week.wpm), dash(sp.last_week.wpm), dash(sp.all.wpm)),
-        row("卡壳次数", sp.today.stuck, sp.this_week.stuck, sp.last_week.stuck, sp.all.stuck),
-        row("口头禅次数", sp.today.fillers, sp.this_week.fillers, sp.last_week.fillers, sp.all.fillers),
-        row("每 100 词的问题数", dash(sp.today.issues_per_100), dash(sp.this_week.issues_per_100), dash(sp.last_week.issues_per_100), dash(sp.all.issues_per_100)),
-        row("用过的不同单词", "", "", "", sp.unique_words),
-        row("单次最长（分钟）", "", "", "", (sp.all.longest_seconds / 60).toFixed(1))))),
+        row("Minutes speaking", sp.today.minutes, sp.this_week.minutes, sp.last_week.minutes, sp.all.minutes),
+        row("Words spoken", sp.today.words, sp.this_week.words, sp.last_week.words, sp.all.words),
+        row("Speaking speed (words/min)", dash(sp.today.wpm), dash(sp.this_week.wpm), dash(sp.last_week.wpm), dash(sp.all.wpm)),
+        row("Times stuck", sp.today.stuck, sp.this_week.stuck, sp.last_week.stuck, sp.all.stuck),
+        row("Filler words", sp.today.fillers, sp.this_week.fillers, sp.last_week.fillers, sp.all.fillers),
+        row("Issues per 100 words", dash(sp.today.issues_per_100), dash(sp.this_week.issues_per_100), dash(sp.last_week.issues_per_100), dash(sp.all.issues_per_100)),
+        row("Different words used", "", "", "", sp.unique_words),
+        row("Longest session (minutes)", "", "", "", (sp.all.longest_seconds / 60).toFixed(1))))),
     h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "模块"), h("th", {}, "练习次数"), h("th", {}, "词数"), h("th", {}, "分钟"))),
+      h("thead", {}, h("tr", {}, h("th", {}, "Module"), h("th", {}, "Sessions"), h("th", {}, "Words"), h("th", {}, "Minutes"))),
       h("tbody", {}, Object.entries(s.by_module).map(([m, v]) => row(names[m] || m, v.sessions, v.words, v.minutes))))),
     h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "最近 14 天"), h("th", {}, "写（词）"), h("th", {}, "说（分钟）"), h("th", {}, "经验"))),
+      h("thead", {}, h("tr", {}, h("th", {}, "Last 14 days"), h("th", {}, "Written (words)"), h("th", {}, "Spoken (minutes)"), h("th", {}, "XP"))),
       h("tbody", {}, [...s.days].reverse().map((d) => row(d.date, d.write_words, d.spoken_minutes, d.xp))))),
   );
 }
@@ -767,22 +782,22 @@ async function statsView() {
 async function settingsView() {
   settings = await api("GET", "settings");
   const key = h("input", { class: "wide", type: "password", autocomplete: "off",
-    placeholder: settings.has_key ? "已设置（留空表示不修改）" : "sk-…" });
+    placeholder: settings.has_key ? "Saved (leave empty to keep it)" : "sk-…" });
   const model = h("input", { class: "wide", value: settings.model });
   const accent = h("select", {},
-    h("option", { value: "us", selected: settings.accent === "us" }, "美式"),
-    h("option", { value: "uk", selected: settings.accent === "uk" }, "英式"));
+    h("option", { value: "us", selected: settings.accent === "us" }, "American"),
+    h("option", { value: "uk", selected: settings.accent === "uk" }, "British"));
   const perDay = h("input", { type: "number", min: "0", max: "500", value: String(settings.new_per_day) });
   const option = (value, text, current) => h("option", { value, selected: value === current }, text);
   const engine = h("select", {},
-    option("openai", "OpenAI 自然语音（需要 key，每句只生成一次）", settings.tts),
-    option("browser", "浏览器自带语音（免费，较生硬）", settings.tts));
+    option("openai", "OpenAI natural voice (needs a key; each sentence is generated once)", settings.tts),
+    option("browser", "Browser voice (free, more robotic)", settings.tts));
   const voice = h("select", {}, settings.voices.map((v) =>
-    option(v, v === "marin" || v === "cedar" ? `${v}（推荐）` : v, settings.voice)));
-  const pace = h("select", {}, option("normal", "正常", settings.pace), option("slow", "稍慢", settings.pace));
+    option(v, v === "marin" || v === "cedar" ? `${v} (recommended)` : v, settings.voice)));
+  const pace = h("select", {}, option("normal", "Normal", settings.pace), option("slow", "A little slower", settings.pace));
   const ttsModel = h("select", {},
-    option("gpt-4o-mini-tts", "gpt-4o-mini-tts（便宜；2027-01-06 停用后自动改用下一个）", settings.tts_model),
-    option("gpt-audio-1.5", "gpt-audio-1.5（贵约 5 倍，没有停用日期）", settings.tts_model));
+    option("gpt-4o-mini-tts", "gpt-4o-mini-tts (cheap; after its shutdown on 2027-01-06 the next one is used automatically)", settings.tts_model),
+    option("gpt-audio-1.5", "gpt-audio-1.5 (about 5× the price, no shutdown date)", settings.tts_model));
   const preview = () => speak("Hey, sorry I'm running a bit late. Can we push the meeting back ten minutes?",
     accent.value, { tts: engine.value, voice: voice.value, pace: pace.value });
   const save = async () => {
@@ -791,49 +806,49 @@ async function settingsView() {
     if (key.value.trim()) body.openai_key = key.value.trim();
     try {
       settings = await api("PUT", "settings", body);
-      toast("已保存");
+      toast("Saved");
       settingsView();
     } catch (e) {
       toast(e.message);
     }
   };
   show(
-    h("h1", {}, "设置"),
+    h("h1", {}, "Settings"),
     h("div", { class: "card" },
-      h("label", {}, "OpenAI key（只保存在本机的 config.local.json，不会被同步上传）"), key,
-      h("label", {}, "AI 模型"), model,
-      h("label", {}, "每天新词上限"), perDay,
+      h("label", {}, "OpenAI key (kept only in config.local.json on this computer, never uploaded by Sync)"), key,
+      h("label", {}, "AI model"), model,
+      h("label", {}, "New words per day"), perDay,
       h("div", { class: "row", style: "margin-top:16px" },
-        h("button", { class: "primary", type: "button", onclick: save }, "保存"))),
+        h("button", { class: "primary", type: "button", onclick: save }, "Save"))),
     h("div", { class: "card" },
-      h("label", {}, "朗读语音"), engine,
-      h("label", {}, "口音"), accent,
-      h("label", {}, "声音"), voice,
-      h("label", {}, "语速"), pace,
-      h("label", {}, "语音模型"), ttsModel,
-      h("p", { class: "muted" }, "自然语音：每句第一次播放时生成（约 1 秒），之后从本机缓存播放，不再花钱。没有 key 或生成失败时自动改用浏览器语音。"),
+      h("label", {}, "Read-aloud voice"), engine,
+      h("label", {}, "Accent"), accent,
+      h("label", {}, "Voice"), voice,
+      h("label", {}, "Pace"), pace,
+      h("label", {}, "Speech model"), ttsModel,
+      h("p", { class: "muted" }, "Natural voice: each sentence is generated the first time it plays (about 1 second), then played from the local cache at no cost. Without a key, or if generation fails, the browser voice is used."),
       h("div", { class: "row", style: "margin-top:12px" },
-        h("button", { type: "button", onclick: preview }, "试听当前选择"),
-        h("button", { class: "primary", type: "button", onclick: save }, "保存"))),
+        h("button", { type: "button", onclick: preview }, "Preview this choice"),
+        h("button", { class: "primary", type: "button", onclick: save }, "Save"))),
   );
 }
 
 document.getElementById("sync").addEventListener("click", async (e) => {
   const button = e.currentTarget;
   button.disabled = true;
-  button.textContent = "同步中…";
+  button.textContent = "Syncing…";
   try {
     const r = await api("POST", "sync", {});
     toast(r.message);
     if (!r.ok) {
-      show(h("h1", {}, "同步没有完成"), h("div", { class: "card" }, h("p", {}, r.message),
+      show(h("h1", {}, "Sync did not finish"), h("div", { class: "card" }, h("p", {}, r.message),
         h("pre", {}, r.steps.map((s) => `$ ${s.cmd}\n${s.output}`).join("\n\n"))));
     }
   } catch (err) {
     toast(err.message);
   } finally {
     button.disabled = false;
-    button.textContent = "同步";
+    button.textContent = "Sync";
   }
 });
 
@@ -853,10 +868,10 @@ async function render() {
   try {
     await (routes[name] || homeView)();
   } catch (e) {
-    show(h("div", { class: "card" }, "出错了：" + e.message));
+    show(h("div", { class: "card" }, "Something went wrong: " + e.message));
   }
 }
 
-window.addEventListener("unhandledrejection", (e) => toast("出错了：" + (e.reason?.message || e.reason)));
+window.addEventListener("unhandledrejection", (e) => toast("Something went wrong: " + (e.reason?.message || e.reason)));
 window.addEventListener("hashchange", render);
 api("GET", "settings").then((s) => { settings = s; }).catch(() => {}).finally(render);

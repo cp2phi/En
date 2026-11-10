@@ -54,10 +54,10 @@ def _post(payload: dict, api_key: str, timeout: float = 60) -> dict:
 def explain(focus: str, sentence: str, api_key: str, model: str = DEFAULT_MODEL, post=_post) -> dict:
     """Explain `focus` (the part the learner does not understand) in `sentence`."""
     if not api_key:
-        raise AIError("还没有设置 OpenAI key，请先到「设置」里填写。")
+        raise AIError("No OpenAI key yet. Add it in Settings.")
     focus, sentence = focus.strip(), sentence.strip()
     if not focus and not sentence:
-        raise AIError("请输入句子或单词。")
+        raise AIError("Enter a sentence or a word.")
     user = f"Sentence: {sentence or '(none)'}\nWhat I do not understand: {focus or sentence}"
     body = post(
         {
@@ -73,9 +73,9 @@ def explain(focus: str, sentence: str, api_key: str, model: str = DEFAULT_MODEL,
     try:
         data = json.loads(body["choices"][0]["message"]["content"])
     except (KeyError, IndexError, TypeError, ValueError) as e:
-        raise AIError("AI 返回的内容无法解析，请重试。") from e
+        raise AIError("Could not read the AI reply. Please try again.") from e
     if not isinstance(data, dict):
-        raise AIError("AI 返回的内容无法解析，请重试。")
+        raise AIError("Could not read the AI reply. Please try again.")
     examples = [
         {"en": str(ex.get("en", "")), "zh": str(ex.get("zh", ""))}
         for ex in data.get("examples") or []
@@ -125,7 +125,7 @@ MODULE_FOCUS = {
 
 def _chat_json(system: str, user: str, api_key: str, model: str, post) -> dict:
     if not api_key:
-        raise AIError("还没有设置 OpenAI key，请先到「设置」里填写。")
+        raise AIError("No OpenAI key yet. Add it in Settings.")
     body = post(
         {
             "model": model or DEFAULT_MODEL,
@@ -137,9 +137,9 @@ def _chat_json(system: str, user: str, api_key: str, model: str, post) -> dict:
     try:
         data = json.loads(body["choices"][0]["message"]["content"])
     except (KeyError, IndexError, TypeError, ValueError) as e:
-        raise AIError("AI 返回的内容无法解析，请重试。") from e
+        raise AIError("Could not read the AI reply. Please try again.") from e
     if not isinstance(data, dict):
-        raise AIError("AI 返回的内容无法解析，请重试。")
+        raise AIError("Could not read the AI reply. Please try again.")
     return data
 
 
@@ -204,9 +204,9 @@ def _post_audio(body: bytes, content_type: str, api_key: str, timeout: float = 1
 
 def transcribe(audio: bytes, mime: str, api_key: str, post=_post_audio) -> str:
     if not api_key:
-        raise AIError("还没有设置 OpenAI key，无法把录音转成文字。")
+        raise AIError("No OpenAI key yet, so the recording cannot be transcribed.")
     if not audio:
-        raise AIError("录音是空的。")
+        raise AIError("The recording is empty.")
     subtype = mime.split(";")[0].split("/")[-1].strip().lower()
     extension = AUDIO_EXTENSIONS.get(subtype, "webm")
     clean_mime = mime.split(";")[0].strip() or "audio/webm"
@@ -273,17 +273,17 @@ def _speech_chat(text: str, voice: str, style: str, api_key: str, post) -> bytes
     try:
         return base64.b64decode(body["choices"][0]["message"]["audio"]["data"])
     except (KeyError, IndexError, TypeError, ValueError) as e:
-        raise AIError("AI 返回的语音无法解析。") from e
+        raise AIError("Could not read the audio returned by the AI.") from e
 
 
 def speech(text: str, voice: str, accent: str, pace: str, api_key: str, model: str = TTS_MODEL,
            post_speech=_post_speech, post=_post) -> tuple[bytes, str]:
     """Return (mp3 bytes, model actually used)."""
     if not api_key:
-        raise AIError("还没有设置 OpenAI key。")
+        raise AIError("No OpenAI key yet.")
     text = " ".join(text.split())[:MAX_TTS_CHARS]
     if not text:
-        raise AIError("没有要朗读的内容。")
+        raise AIError("Nothing to read aloud.")
     voice = voice if voice in TTS_VOICES else TTS_VOICES[0]
     style = _style(accent, pace)
     if model == TTS_MODEL:

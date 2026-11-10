@@ -11,28 +11,28 @@ python3 run.py          # opens http://127.0.0.1:8765
 python3 -m unittest discover -s tests -t .   # runs the tests
 ```
 
-On first use, enter your OpenAI key in **Settings (设置)**. The key is used for AI explanations, writing and speaking feedback, speech-to-text and the natural read-aloud voice. Without a key you can still practise: there is no feedback, speaking sessions record time only, and read-aloud uses the browser's built-in voice.
+On first use, enter your OpenAI key in **Settings**. The key is used for AI explanations, writing and speaking feedback, speech-to-text and the natural read-aloud voice. Without a key you can still practise: there is no feedback, speaking sessions record time only, and read-aloud uses the browser's built-in voice.
 
 ## Features
 
-The interface is in Chinese; each page's label is shown in brackets.
+The interface is in English. Chinese appears only as learning support: the sentence to translate in cloze and in writing L1, faint translations under example sentences, and a **Show Chinese** link under each practice instruction.
 
 | Page | What it does |
 |---|---|
-| Cloze (填空) | Chinese → English fill-in-the-blank, served continuously. Filter by word class (or grammar topic), scene and level. An answer counts only if the word, its form and its spelling are all right. |
-| Wrong book (错题集) | Every question you have missed, as Chinese/English pairs to read through, or redo them all. |
-| Keep writing (一直写) | A six-level ladder, L1–L6: one-sentence translation → chat message → email → story or opinion → multi-paragraph piece → speech script. Five good sessions on a level unlock the next. You can write a Chinese word where you don't know the English. After you submit you get a natural rewrite, at most three issues that matter, and expressions you can save to the word bank with one click. |
-| Keep speaking (一直说) | A six-level ladder, L1–L6: repeat a sentence → 30 seconds → an experience → an opinion → improvised story or rebuttal → impromptu speech. Recording, a timer and a "stuck" button; your speech is transcribed and you get feedback. |
+| Cloze | Chinese → English fill-in-the-blank, served continuously. Filter by word class (or grammar topic), scene and level. An answer counts only if the word, its form and its spelling are all right. |
+| Wrong book | Every question you have missed, as Chinese/English pairs to read through, or redo them all. |
+| Keep writing | A six-level ladder, L1–L6: one-sentence translation → chat message → email → story or opinion → multi-paragraph piece → speech script. Five good sessions on a level unlock the next. You can write a Chinese word where you don't know the English. After you submit you get a natural rewrite, at most three issues that matter, and expressions you can save to the word bank with one click. |
+| Keep speaking | A six-level ladder, L1–L6: repeat a sentence → 30 seconds → an experience → an opinion → improvised story or rebuttal → impromptu speech. Recording, a timer and a "stuck" button; your speech is transcribed and you get feedback. |
 | Improv | Grouped by the Improv 101 lessons: "Yes, and", spontaneity, storytelling, status, justification, scene set-ups, understanding game rules, and rescue phrases. |
 | Toastmasters | Table Topics (with green/yellow/red timing lights), Ice Breaker, evaluations, and meeting-role language. |
-| Stats (统计) | Rank and XP, streak, words written, typing speed, error rate, speaking time, speaking speed, stuck count, filler words, today vs. the last 7 days vs. the 7 days before, and the last 14 days. |
-| Review words (背单词) | Forget / Fuzzy / Remember / Never show again. Due reviews come first, then new words. |
-| Add / Capture (添加 / 积累) | Paste a sentence and mark the part you don't understand; the AI explains it and fills in the card, and you tick which notes to keep. |
-| Word bank (单词本) | Browse, search and delete words. |
-| Settings (设置) | OpenAI key, AI model, daily new-word limit; read-aloud voice (OpenAI natural voice or browser voice), US or UK accent, voice, pace and speech model, with a preview before saving. |
-| Sync (同步) | Commits the whole repository (code, question banks, practice records, cached audio), pulls what other computers uploaded, and pushes to the git remote. On another computer, `git clone` or `git pull` and carry on. `config.local.json`, which holds the API key, is never uploaded. |
+| Stats | Rank and XP, streak, words written, typing speed, error rate, speaking time, speaking speed, stuck count, filler words, today vs. the last 7 days vs. the 7 days before, and the last 14 days. |
+| Review words | Forgot / Fuzzy / Remembered / Never show again. Due reviews come first, then new words. |
+| Add / Capture | Paste a sentence and mark the part you don't understand; the AI explains it and fills in the card, and you tick which notes to keep. |
+| Word bank | Browse, search and delete words. |
+| Settings | OpenAI key, AI model, daily new-word limit; read-aloud voice (OpenAI natural voice or browser voice), US or UK accent, voice, pace and speech model, with a preview before saving. |
+| Sync | Commits the whole repository (code, question banks, practice records, cached audio), pulls what other computers uploaded, and pushes to the git remote. On another computer, `git clone` or `git pull` and carry on. `config.local.json`, which holds the API key, is never uploaded. |
 
-Each practice module has its own question bank and does not draw on your word bank. When you meet an expression you don't know during practice, click **Add to word bank (加入生词)** to keep it.
+Each practice module has its own question bank and does not draw on your word bank. When you meet an expression you don't know during practice, click **Add to word bank** to keep it.
 
 ## Question banks
 
@@ -53,11 +53,11 @@ Practice prompts: keep writing 240, keep speaking 240, Improv 250, Toastmasters 
 
 ## Review rules
 
-- **Forget**: comes back at least 2 more times the same day, then the next day.
+- **Forgot**: comes back at least 2 more times the same day, then the next day.
 - **Fuzzy**: comes back at least once more the same day; the interval does not grow.
-- **Remember**: intervals of 1, 3, 7, 15, 30, 60, then 120 days.
-- **Cloze**: a question answered right the first time does not come back (click **I actually guessed (其实是蒙对的)** to put it in the redo queue). A question answered wrong, or whose answer you revealed, is treated as **Forget**. It passes once you keep getting it right until its interval reaches 15 days.
-- Both cloze questions and words can be set to **Never show again** (永不出现 in cloze, 永不再出现 in word review).
+- **Remembered**: intervals of 1, 3, 7, 15, 30, 60, then 120 days.
+- **Cloze**: a question answered right the first time does not come back (click **I actually guessed** to put it in the redo queue). A question answered wrong, or whose answer you revealed, is treated as **Forgot**. It passes once you keep getting it right until its interval reaches 15 days.
+- Both cloze questions and words can be set to **Never show again**.
 
 ## Layout
 

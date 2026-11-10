@@ -39,37 +39,37 @@ def sync(repo: Path, now: datetime | None = None) -> dict:
         return {"ok": False, "message": message, "steps": steps}
 
     if _git(repo, "rev-parse", "--is-inside-work-tree").returncode != 0:
-        return fail("这个目录不是 git 仓库。")
+        return fail("This folder is not a git repository.")
     tracked_secrets = [f for f in SECRET_FILES if _git(repo, "ls-files", "--error-unmatch", f).returncode == 0]
     if tracked_secrets:
-        return fail(f"{', '.join(tracked_secrets)} 已经被 git 跟踪，里面有 API key，为安全起见不同步。"
-                    f"请先运行 git rm --cached {' '.join(tracked_secrets)}。")
+        return fail(f"{', '.join(tracked_secrets)} is tracked by git and contains your API key, so sync stopped. "
+                    f"Run git rm --cached {' '.join(tracked_secrets)} first.")
 
     if run("add", "-A").returncode != 0:
-        return fail("git add 失败。")
+        return fail("git add failed.")
     # Unstage the key file in case .gitignore no longer covers it (it is not tracked, checked above).
     if _git(repo, "rm", "--cached", "--ignore-unmatch", "--quiet", "--", *SECRET_FILES).returncode != 0:
-        return fail("无法把 API key 文件排除在提交之外，已停止同步。")
+        return fail("Could not keep the API key file out of the commit, so sync stopped.")
     committed = False
     if _git(repo, "diff", "--cached", "--quiet").returncode != 0:
         stamp = (now or datetime.now()).strftime("%Y-%m-%d %H:%M")
         if run("commit", "-m", f"sync: {stamp}").returncode != 0:
-            return fail("git commit 失败。")
+            return fail("git commit failed.")
         committed = True
 
     if not _git(repo, "remote").stdout.strip():
-        return fail("已保存到本地提交，但仓库没有配置远程地址，无法上传。")
+        return fail("Committed locally, but the repository has no remote to upload to.")
 
     has_upstream = _git(repo, "rev-parse", "--abbrev-ref", "@{u}").returncode == 0
     if has_upstream:
         if run("pull", "--rebase", "--autostash").returncode != 0:
             _git(repo, "rebase", "--abort")
-            return fail("拉取云端内容时有冲突，已取消。请手动处理后再同步。")
+            return fail("Changes from the remote conflict with yours, so the pull was cancelled. Resolve it by hand, then sync again.")
         push = run("push")
     else:
         push = run("push", "-u", "origin", "HEAD")
     if push.returncode != 0:
-        return fail("上传失败，请检查网络或 git 登录状态。")
+        return fail("Upload failed. Check your network and git login.")
 
-    message = "已同步到云端。" if committed else "没有新的改动，已和云端保持一致。"
+    message = "Synced." if committed else "No new changes. Already up to date."
     return {"ok": True, "message": message, "steps": steps}

@@ -284,7 +284,7 @@ class SyncTest(unittest.TestCase):
     def test_nothing_to_sync(self):
         result = sync(self.repo)
         self.assertTrue(result["ok"], result)
-        self.assertIn("没有新的", result["message"])
+        self.assertIn("No new changes", result["message"])
 
     def test_commits_the_whole_repo_except_the_key(self):
         (self.repo / "data").mkdir()
@@ -311,7 +311,7 @@ class SyncTest(unittest.TestCase):
 
         again = sync(self.repo)
         self.assertTrue(again["ok"])
-        self.assertIn("没有新的", again["message"])
+        self.assertIn("No new changes", again["message"])
 
     def test_key_stays_local_even_if_gitignore_changes(self):
         (self.repo / ".gitignore").write_text("")
@@ -351,7 +351,7 @@ class SyncTest(unittest.TestCase):
         (self.repo / "data" / "words.json").write_text("{}\n")
         result = sync(self.repo)
         self.assertFalse(result["ok"])
-        self.assertIn("远程", result["message"])
+        self.assertIn("no remote", result["message"])
 
 
 if __name__ == "__main__":
