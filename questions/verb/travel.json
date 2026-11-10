@@ -1,0 +1,22 @@
+[
+{"id":"v-travel-01","level":2,"g":"passive","zh":"我们的航班被取消了。","en":"Our flight was {cancelled|canceled}."},
+{"id":"v-travel-02","level":2,"g":"passive","zh":"火车晚点了一个小时。","en":"The train was {delayed} by an hour."},
+{"id":"v-travel-03","level":1,"g":"perfect","zh":"我已经订好了酒店。","en":"I have {booked|reserved} the hotel."},
+{"id":"v-travel-04","level":1,"g":"past","zh":"我们早上六点到达了机场。","en":"We {arrived} at the airport at 6 a.m."},
+{"id":"v-travel-05","level":2,"g":"3sg","zh":"飞机十分钟后出发。","en":"The plane {leaves|departs} in ten minutes."},
+{"id":"v-travel-06","level":3,"g":"base","zh":"请系好安全带。","en":"Please {fasten} your seatbelt."},
+{"id":"v-travel-07","level":1,"g":"past","zh":"我错过了转机航班。","en":"I {missed} my connecting flight."},
+{"id":"v-travel-08","level":2,"g":"ing","zh":"她正在收拾行李箱。","en":"She is {packing} her suitcase."},
+{"id":"v-travel-09","level":2,"g":"past","zh":"我们租了一辆车环岛。","en":"We {rented|hired} a car to drive around the island."},
+{"id":"v-travel-10","level":3,"g":"base","zh":"你需要在这里换乘火车。","en":"You need to {change|switch} trains here."},
+{"id":"v-travel-11","level":1,"g":"past","zh":"他把车停在了酒店后面。","en":"He {parked} the car behind the hotel."},
+{"id":"v-travel-12","level":2,"g":"past","zh":"我们在湖边露营了两晚。","en":"We {camped} by the lake for two nights."},
+{"id":"v-travel-13","level":3,"g":"past","zh":"导游带我们参观了老城区。","en":"The guide {showed} us around the old town."},
+{"id":"v-travel-14","level":3,"g":"base","zh":"我想多住一晚（延长住宿）。","en":"I'd like to {extend} my stay by one night."},
+{"id":"v-travel-15","level":3,"g":"3sg","zh":"渡轮每天横渡海峡两次。","en":"The ferry {crosses} the strait twice a day."},
+{"id":"v-travel-16","level":2,"g":"past","zh":"我们徒步到了山顶。","en":"We {hiked|walked|climbed} to the top of the mountain."},
+{"id":"v-travel-17","level":2,"g":"past","zh":"海关检查了我的包。","en":"Customs {checked|inspected|searched} my bag."},
+{"id":"v-travel-18","level":3,"g":"3sg","zh":"这条路通向海滩。","en":"This road {leads|goes} to the beach."},
+{"id":"v-travel-19","level":1,"g":"perfect","zh":"她已经去过三十多个国家。","en":"She has {visited} more than thirty countries."},
+{"id":"v-travel-20","level":4,"g":"past","zh":"我们在第二个出口驶离了高速公路。","en":"We {exited|left} the motorway at the second exit."}
+]

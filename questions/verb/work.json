@@ -1,0 +1,22 @@
+[
+{"id":"v-work-01","level":2,"g":"3sg","zh":"她每周一主持团队例会。","en":"She {runs|chairs|leads} the team meeting every Monday."},
+{"id":"v-work-02","level":3,"g":"passive","zh":"会议被推迟到了周五。","en":"The meeting has been {postponed} to Friday."},
+{"id":"v-work-03","level":2,"g":"past","zh":"我们上周解决了这个问题。","en":"We {resolved|solved|fixed} the issue last week."},
+{"id":"v-work-04","level":2,"g":"ing","zh":"我正在处理这个工单。","en":"I'm {handling} this ticket at the moment."},
+{"id":"v-work-05","level":2,"g":"perfect","zh":"客户已经批准了预算。","en":"The client has {approved} the budget."},
+{"id":"v-work-06","level":3,"g":"past","zh":"他在会上提出了一个好问题。","en":"He {raised} a good question in the meeting."},
+{"id":"v-work-07","level":2,"g":"base","zh":"我们需要在周五前交付这个项目。","en":"We need to {deliver} the project by Friday."},
+{"id":"v-work-08","level":3,"g":"past","zh":"经理把这个任务分配给了我。","en":"My manager {assigned} this task to me."},
+{"id":"v-work-09","level":1,"g":"3sg","zh":"她管理着一个十人的团队。","en":"She {manages|leads} a team of ten people."},
+{"id":"v-work-10","level":2,"g":"past","zh":"我们去年招了三个新工程师。","en":"We {hired|recruited} three new engineers last year."},
+{"id":"v-work-11","level":1,"g":"base","zh":"我会在下班前回复你的邮件。","en":"I'll {reply|respond} to your email before I leave."},
+{"id":"v-work-12","level":3,"g":"past","zh":"他上个月辞职了。","en":"He {resigned|quit} last month."},
+{"id":"v-work-13","level":3,"g":"ing","zh":"我们正在考虑换一个供应商。","en":"We are {considering} switching to a new supplier."},
+{"id":"v-work-14","level":3,"g":"3sg","zh":"这份报告总结了我们的主要发现。","en":"This report {summarises|summarizes} our key findings."},
+{"id":"v-work-15","level":2,"g":"base","zh":"你能把会议安排在明天下午吗？","en":"Could you {schedule|arrange} the meeting for tomorrow afternoon?"},
+{"id":"v-work-16","level":1,"g":"past","zh":"我们错过了截止日期。","en":"We {missed} the deadline."},
+{"id":"v-work-17","level":1,"g":"perfect","zh":"她已经把合同发给客户了。","en":"She has {sent} the contract to the client."},
+{"id":"v-work-18","level":2,"g":"3sg","zh":"我们团队每个季度都会回顾目标。","en":"Our team {reviews} its goals every quarter."},
+{"id":"v-work-19","level":3,"g":"ing","zh":"他一直在拖延这个决定。","en":"He keeps {delaying|postponing} the decision."},
+{"id":"v-work-20","level":2,"g":"past","zh":"她把我介绍给了新同事。","en":"She {introduced} me to the new colleagues."}
+]

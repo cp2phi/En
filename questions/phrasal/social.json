@@ -1,0 +1,22 @@
+[
+{"id":"pv-social-01","level":1,"g":"base","zh":"我们找个时间约出来喝杯咖啡吧。","en":"We should {catch up|meet up|meet|get together|go out} for a coffee sometime."},
+{"id":"pv-social-02","level":2,"g":"base","zh":"我们以前每个周末都在海边一起玩。","en":"We used to {hang out|hang around|hang|meet up} at the beach every weekend."},
+{"id":"pv-social-03","level":2,"g":"base","zh":"你跟室友们合得来吗？","en":"Do you {get on with|get along with|like} your flatmates?"},
+{"id":"pv-social-04","level":4,"g":"past","zh":"他们因为钱闹翻了，从那以后再没说过话。","en":"They {fell out|argued|fought|split up|broke up|split} over money and haven't spoken since."},
+{"id":"pv-social-05","level":3,"g":"past","zh":"他们大吵了一架，但第二天就和好了。","en":"They had a big argument but {made up} the next day."},
+{"id":"pv-social-06","level":2,"g":"past","zh":"我姐姐上个月和男朋友分手了。","en":"My sister {broke up with|split up with|split with|dumped|left} her boyfriend last month."},
+{"id":"pv-social-07","level":3,"g":"base","zh":"我当时不在本地，只好谢绝了邀请。","en":"I had to {turn down|decline|refuse|say no to|reject} the invitation because I was away."},
+{"id":"pv-social-08","level":2,"g":"past","zh":"他自己的派对，他居然迟到一个小时才出现。","en":"He {showed up|turned up|arrived|came|rocked up} an hour late to his own party."},
+{"id":"pv-social-09","level":3,"g":"past","zh":"我在超市碰到了一位老同事。","en":"I {bumped into|ran into|met|saw} an old workmate at the supermarket."},
+{"id":"pv-social-10","level":3,"g":"ing","zh":"他们交往大概一年了。","en":"They've been {going out|dating|together|seeing each other} for about a year."},
+{"id":"pv-social-11","level":1,"g":"base","zh":"周六你想来我家吃晚饭吗？","en":"Do you want to {come over|come round|come around|come|pop over|pop round} for dinner on Saturday?"},
+{"id":"pv-social-12","level":1,"g":"base","zh":"欢迎带个朋友一起来。","en":"Feel free to {bring along|bring|invite} a friend."},
+{"id":"pv-social-13","level":4,"g":"perfect","zh":"我一直很敬佩我哥哥。","en":"I've always {looked up to|admired|respected} my older brother."},
+{"id":"pv-social-14","level":4,"g":"passive","zh":"没人来听我的演讲，我感到很失望。","en":"I felt {let down|disappointed|gutted|sad|hurt|upset} when nobody came to my talk."},
+{"id":"pv-social-15","level":5,"g":"passive","zh":"第一次约会她就被放鸽子了。","en":"She got {stood up} on her first date."},
+{"id":"pv-social-16","level":4,"g":"base","zh":"他过了好一阵子才愿意敞开心扉谈自己的感受。","en":"It took him a while to {open up|talk|speak} about his feelings."},
+{"id":"pv-social-17","level":3,"g":"past","zh":"朋友们一到，她就高兴起来了。","en":"She {cheered up|perked up|brightened up|relaxed|smiled} as soon as her friends arrived."},
+{"id":"pv-social-18","level":3,"g":"perfect","zh":"大学毕业以后我们一直保持着联系。","en":"We've {kept in touch|stayed in touch|kept in contact|stayed in contact|been friends} since university."},
+{"id":"pv-social-19","level":2,"g":"past","zh":"我们聊往事一直熬到凌晨两点。","en":"We {stayed up|sat up|were up} until two talking about old times."},
+{"id":"pv-social-20","level":2,"g":"3sg","zh":"圣诞节全家人都会聚在一起。","en":"The whole family {gets together|meets up|meets|comes together|catches up|gathers} at Christmas."}
+]

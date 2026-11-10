@@ -1,0 +1,22 @@
+[
+{"id":"adv-health-01","level":1,"g":"-","zh":"我昨晚睡得很差。","en":"I slept {badly|poorly|terribly} last night."},
+{"id":"adv-health-02","level":3,"g":"-","zh":"每日随餐服用一片。","en":"Take one tablet {daily|a day|every day|each day} with food."},
+{"id":"adv-health-03","level":2,"g":"-","zh":"你应该定期看牙医，而不是等到疼了才去。","en":"You should see a dentist {regularly}, not just when something hurts."},
+{"id":"adv-health-04","level":4,"g":"-","zh":"医生把我的膝盖彻底检查了一遍。","en":"The doctor examined my knee {thoroughly|carefully}."},
+{"id":"adv-health-05","level":1,"g":"-","zh":"我今天感觉好多了，谢谢。","en":"I'm feeling {much|a lot|far|way} better today, thanks."},
+{"id":"adv-health-06","level":2,"g":"-","zh":"我突然觉得头晕，只好坐下来。","en":"I {suddenly} felt dizzy and had to sit down."},
+{"id":"adv-health-07","level":1,"g":"-","zh":"只是感冒而已，不严重。","en":"It's {only|just} a cold, nothing serious."},
+{"id":"adv-health-08","level":2,"g":"-","zh":"我最近总觉得很累。","en":"I've been feeling tired {lately|recently}."},
+{"id":"adv-health-09","level":4,"g":"-","zh":"听说最近有一种很厉害的流感在传播。","en":"{Apparently}, there's a nasty flu going around."},
+{"id":"adv-health-10","level":1,"g":"-","zh":"用鼻子慢慢吸气。","en":"Breathe in {slowly} through your nose."},
+{"id":"adv-health-11","level":2,"g":"-","zh":"疼痛已经完全消失了。","en":"The pain has {completely|totally|entirely} gone."},
+{"id":"adv-health-12","level":3,"g":"-","zh":"他在一场车祸中受了重伤。","en":"He was {seriously|badly|severely} injured in a car accident."},
+{"id":"adv-health-13","level":3,"g":"-","zh":"希望我周一前能回去上班。","en":"{Hopefully}, I'll be back at work by Monday."},
+{"id":"adv-health-14","level":3,"g":"-","zh":"伤口愈合得很好。","en":"The wound is healing {nicely|well}."},
+{"id":"adv-health-15","level":4,"g":"-","zh":"因为咳嗽，我昨晚几乎没怎么睡。","en":"I {barely|hardly} slept last night because of my cough."},
+{"id":"adv-health-16","level":3,"g":"-","zh":"你绝对应该去检查一下那颗痣。","en":"You should {definitely|certainly|really} get that mole checked."},
+{"id":"adv-health-17","level":2,"g":"-","zh":"别担心，这个止痛药见效很快。","en":"Don't worry, this painkiller works {fast|quickly}."},
+{"id":"adv-health-18","level":5,"g":"-","zh":"您的检查结果正常。因此，不需要进一步治疗。","en":"Your test results were normal. {Therefore|So|Thus}, no further treatment is needed."},
+{"id":"adv-health-19","level":4,"g":"-","zh":"我身体总体上挺健康的，不过春天会得花粉症。","en":"I'm {generally|usually|normally|mostly} healthy, but I do get hay fever in spring."},
+{"id":"adv-health-20","level":3,"g":"-","zh":"我的膝盖疼，尤其是爬楼梯的时候。","en":"My knee hurts, {especially|particularly} when I climb stairs."}
+]

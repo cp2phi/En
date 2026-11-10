@@ -1,0 +1,22 @@
+[
+{"id":"adj-sports-01","level":2,"g":"-","zh":"跑完十公里后我筋疲力尽。","en":"I was {exhausted|shattered|knackered} after the ten-kilometre run."},
+{"id":"adj-sports-02","level":3,"g":"-","zh":"他非常好胜，连打乒乓球都讨厌输。","en":"He's very {competitive}; he hates losing, even at table tennis."},
+{"id":"adj-sports-03","level":2,"g":"-","zh":"她一周去四次健身房，所以身体非常好。","en":"She goes to the gym four times a week, so she's really {fit}."},
+{"id":"adj-sports-04","level":4,"g":"-","zh":"昨天徒步之后，我的腿很僵硬。","en":"My legs are {stiff|tight} after yesterday's hike."},
+{"id":"adj-sports-05","level":3,"g":"-","zh":"比分咬得很紧，我们只输了一分。","en":"It was a {close|tight} game; we only lost by one point."},
+{"id":"adj-sports-06","level":2,"g":"-","zh":"裁判对两支球队都很公平。","en":"The referee was {fair} to both teams."},
+{"id":"adj-sports-07","level":4,"g":"-","zh":"海上风浪太大，没法划皮划艇。","en":"The sea was too {rough|choppy} for kayaking."},
+{"id":"adj-sports-08","level":3,"g":"-","zh":"步道的最后一段非常陡。","en":"The last part of the track is really {steep}."},
+{"id":"adj-sports-09","level":3,"g":"-","zh":"下了那么多雨，球场一片泥泞。","en":"The field was {muddy} after all the rain."},
+{"id":"adj-sports-10","level":1,"g":"-","zh":"骑车上坡需要强壮的腿。","en":"You need {strong|powerful} legs for cycling uphill."},
+{"id":"adj-sports-11","level":3,"g":"-","zh":"我浑身是汗，吃晚饭前得冲个澡。","en":"I'm all {sweaty}; I need a shower before dinner."},
+{"id":"adj-sports-12","level":4,"g":"-","zh":"这只是个业余联赛，没人拿工资。","en":"It's just an {amateur} league; nobody gets paid."},
+{"id":"adj-sports-13","level":5,"g":"-","zh":"这支球队本赛季至今保持不败。","en":"The team is still {unbeaten|undefeated} this season."},
+{"id":"adj-sports-14","level":1,"g":"comparative","zh":"这些哑铃比我上周用的更重。","en":"These weights are {heavier} than the ones I used last week."},
+{"id":"adj-sports-15","level":3,"g":"-","zh":"自从开始游泳，我觉得精力充沛多了。","en":"I feel much more {energetic} since I started swimming."},
+{"id":"adj-sports-16","level":1,"g":"-","zh":"决赛非常精彩刺激，一直打到了加时赛。","en":"The final was really {exciting|thrilling}; it went to extra time."},
+{"id":"adj-sports-17","level":3,"g":"-","zh":"小心，球场湿的时候很滑。","en":"Be careful, the court is {slippery|slick} when it's wet."},
+{"id":"adj-sports-18","level":2,"g":"-","zh":"我们最好的球员受伤了，周六上不了场。","en":"Our best player is {injured|hurt}, so he can't play on Saturday."},
+{"id":"adj-sports-19","level":2,"g":"comparative","zh":"我的左手比右手弱得多。","en":"My left hand is much {weaker} than my right."},
+{"id":"adj-sports-20","level":2,"g":"-","zh":"我更喜欢徒步、冲浪这样的户外运动。","en":"I prefer {outdoor} sports like tramping and surfing."}
+]

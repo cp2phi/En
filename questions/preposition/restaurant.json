@@ -1,0 +1,22 @@
+[
+{"id":"prep-restaurant-01","level":1,"g":"-","zh":"我想要一张两人桌。","en":"I'd like a table {for} two, please."},
+{"id":"prep-restaurant-02","level":3,"g":"-","zh":"我们用“陈”这个名字订了位。","en":"We have a booking {under|in} the name Chen."},
+{"id":"prep-restaurant-03","level":2,"g":"-","zh":"我对花生过敏。","en":"I'm allergic {to} peanuts."},
+{"id":"prep-restaurant-04","level":2,"g":"-","zh":"今晚的晚饭我来付钱。","en":"Let me pay {for} dinner tonight."},
+{"id":"prep-restaurant-05","level":2,"g":"-","zh":"意面配一份沙拉。","en":"The pasta comes {with} a side salad."},
+{"id":"prep-restaurant-06","level":3,"g":"-","zh":"你需要提前订位。","en":"You need to book a table {in} advance."},
+{"id":"prep-restaurant-07","level":2,"g":"-","zh":"我要一个汉堡，不要洋葱。","en":"Can I have the burger {without|with no} onions, please?"},
+{"id":"prep-restaurant-08","level":3,"g":"-","zh":"不好意思，今晚鱼卖完了。","en":"Sorry, we're {out of} the fish tonight."},
+{"id":"prep-restaurant-09","level":3,"g":"-","zh":"我要汤，用它代替沙拉。","en":"I'll have the soup {instead of} the salad."},
+{"id":"prep-restaurant-10","level":1,"g":"-","zh":"我通常晚饭后喝咖啡。","en":"I usually have coffee {after} dinner."},
+{"id":"prep-restaurant-11","level":1,"g":"-","zh":"厨房九点关门。","en":"The kitchen closes {at} nine."},
+{"id":"prep-restaurant-12","level":2,"g":"-","zh":"我们坐在靠窗的位置。","en":"We sat {by|beside|next to|near|at} the window."},
+{"id":"prep-restaurant-13","level":3,"g":"-","zh":"服务员把酒倒进了我的杯子里。","en":"The waiter poured the wine {into|in} my glass."},
+{"id":"prep-restaurant-14","level":4,"g":"-","zh":"账单一共九十块。","en":"The bill came {to} ninety dollars."},
+{"id":"prep-restaurant-15","level":4,"g":"-","zh":"我们四个人平摊账单可以吗？","en":"Can we split the bill {between|among|amongst} the four of us?"},
+{"id":"prep-restaurant-16","level":2,"g":"-","zh":"你的咖啡里要加牛奶吗？","en":"Would you like milk {in|with} your coffee?"},
+{"id":"prep-restaurant-17","level":5,"g":"-","zh":"别担心，甜点是本店免费赠送的。","en":"Don't worry, the dessert is {on} the house."},
+{"id":"prep-restaurant-18","level":4,"g":"-","zh":"我不太喜欢吃辣的。","en":"I'm not keen {on} spicy food."},
+{"id":"prep-restaurant-19","level":3,"g":"-","zh":"他们家以炸鱼薯条出名。","en":"They're famous {for} their fish and chips."},
+{"id":"prep-restaurant-20","level":3,"g":"-","zh":"服务费已经包含在价格里了。","en":"The service charge is included {in} the price."}
+]

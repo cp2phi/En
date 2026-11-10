@@ -1,0 +1,22 @@
+[
+{"id":"pv-money-01","level":2,"g":"past","zh":"上个月我们终于还清了车贷。","en":"We finally {paid off|repaid|cleared|paid back} the car loan last month."},
+{"id":"pv-money-02","level":1,"g":"ing","zh":"我正在攒钱付房子的首付。","en":"I'm {saving up for|saving for} a house deposit."},
+{"id":"pv-money-03","level":2,"g":"perfect","zh":"他借的钱到现在还没还。","en":"He still hasn't {paid back|repaid|returned|given back} the money he borrowed."},
+{"id":"pv-money-04","level":3,"g":"base","zh":"现在只有一份收入，我们得缩减开支。","en":"We need to {cut back|cut down|save|budget|economise|economize} now that we're on one income."},
+{"id":"pv-money-05","level":3,"g":"past","zh":"他们办了房贷买了第一套房子。","en":"They {took out|got} a mortgage to buy their first home."},
+{"id":"pv-money-06","level":4,"g":"3sg","zh":"她每次发工资都留出一百块以备急用。","en":"She {sets aside|puts aside|puts away|saves|keeps} a hundred dollars every payday for emergencies."},
+{"id":"pv-money-07","level":1,"g":"perfect","zh":"今年房租又涨了。","en":"Rent has {gone up|increased|risen} again this year."},
+{"id":"pv-money-08","level":2,"g":"perfect","zh":"油价终于降了一点。","en":"Petrol prices have finally {come down|gone down|dropped|fallen|eased} a bit."},
+{"id":"pv-money-09","level":5,"g":"past","zh":"圣诞节期间他刷出了一大笔信用卡账单。","en":"He {ran up|racked up|built up|got} a huge credit card bill over Christmas."},
+{"id":"pv-money-10","level":3,"g":"base","zh":"在奥克兰靠一份收入很难过日子。","en":"It's hard to {get by|live|survive|manage|cope} on one income in Auckland."},
+{"id":"pv-money-11","level":2,"g":"passive","zh":"我们被那个出租车司机宰了。","en":"We got {ripped off|overcharged|cheated|scammed|robbed} by that taxi driver."},
+{"id":"pv-money-12","level":4,"g":"base","zh":"我不得不掏八百块钱换新轮胎。","en":"I had to {fork out|shell out|pay|cough up|spend|find} eight hundred dollars for new tyres."},
+{"id":"pv-money-13","level":3,"g":"3sg","zh":"我的雇主每个月都往我的KiwiSaver里存钱。","en":"My employer {pays into|contributes to} my KiwiSaver every month."},
+{"id":"pv-money-14","level":2,"g":"base","zh":"我在算我欠多少税。","en":"I'm trying to {work out|figure out|calculate|find out|see|check} how much tax I owe."},
+{"id":"pv-money-15","level":2,"g":"base","zh":"坐公交之前我得给我的Hop卡充值。","en":"I need to {top up|load|recharge|reload|put money on} my Hop card before I catch the bus."},
+{"id":"pv-money-16","level":4,"g":"base","zh":"我们不得不动用积蓄来修屋顶。","en":"We had to {dip into|use|spend|break into|draw on|tap into} our savings to fix the roof."},
+{"id":"pv-money-17","level":3,"g":"perfect","zh":"房东把房租每周涨了五十块。","en":"The landlord has {put up|raised|increased|lifted|bumped up|pushed up|hiked} the rent by fifty dollars a week."},
+{"id":"pv-money-18","level":3,"g":"past","zh":"保险公司一周之内就赔付了。","en":"The insurance company {paid out|paid up|paid|settled} within a week."},
+{"id":"pv-money-19","level":3,"g":"3sg","zh":"这个副业每个月能带来大约五百块的收入。","en":"The side business {brings in|makes|earns|generates|pulls in} about five hundred dollars a month."},
+{"id":"pv-money-20","level":1,"g":"base","zh":"我需要查一下机票多少钱。","en":"I need to {find out|check|see|know|work out|figure out|look up} how much the flight costs."}
+]

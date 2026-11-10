@@ -1,0 +1,22 @@
+[
+{"id":"c-mixed-01","level":2,"g":"past","zh":"我们错过了截止日期。","en":"We {missed} the {deadline}."},
+{"id":"c-mixed-02","level":3,"g":"past","zh":"他提了一个好建议。","en":"He {made} a good {suggestion}."},
+{"id":"c-mixed-03","level":2,"g":"past","zh":"她订了一张两人桌。","en":"She {booked|reserved} a {table} for two."},
+{"id":"c-mixed-04","level":2,"g":"past","zh":"服务员拿来了账单。","en":"The waiter {brought} the {bill|check}."},
+{"id":"c-mixed-05","level":2,"g":"past","zh":"他进了两个球。","en":"He {scored} two {goals}."},
+{"id":"c-mixed-06","level":2,"g":"passive","zh":"我们的航班延误了三个小时。","en":"Our {flight} was {delayed} by three hours."},
+{"id":"c-mixed-07","level":5,"g":"past","zh":"医生开了一些止痛药。","en":"The doctor {prescribed} some {painkillers}."},
+{"id":"c-mixed-08","level":4,"g":"past","zh":"房东涨了房租。","en":"The {landlord} {raised|increased} the rent."},
+{"id":"c-mixed-09","level":3,"g":"past","zh":"我昨天重置了密码。","en":"I {reset} my {password} yesterday."},
+{"id":"c-mixed-10","level":2,"g":"past","zh":"她用信用卡付了账单。","en":"She {paid} the bill by credit {card}."},
+{"id":"c-mixed-11","level":3,"g":"past","zh":"客户批准了预算。","en":"The {client|customer} {approved} the budget."},
+{"id":"c-mixed-12","level":3,"g":"base","zh":"我需要预约一下。","en":"I need to {make|book} an {appointment}."},
+{"id":"c-mixed-13","level":4,"g":"past","zh":"裁判吹了哨子。","en":"The {referee} {blew} the whistle."},
+{"id":"c-mixed-14","level":3,"g":"3sg","zh":"她每个月存下一部分工资。","en":"She {saves} part of her {salary|wages|pay} every month."},
+{"id":"c-mixed-15","level":2,"g":"past","zh":"我们签了合同。","en":"We {signed} the {contract}."},
+{"id":"c-mixed-16","level":4,"g":"past","zh":"他系上了安全带。","en":"He {fastened} his {seatbelt}."},
+{"id":"c-mixed-17","level":3,"g":"past","zh":"她打破了纪录。","en":"She {broke} the {record}."},
+{"id":"c-mixed-18","level":1,"g":"past","zh":"我收到了你的邮件。","en":"I {received|got} your {email}."},
+{"id":"c-mixed-19","level":3,"g":"past","zh":"他修好了水龙头。","en":"He {fixed|repaired} the {tap|faucet}."},
+{"id":"c-mixed-20","level":4,"g":"past","zh":"我们达成了协议。","en":"We {reached|made} an {agreement|deal}."}
+]

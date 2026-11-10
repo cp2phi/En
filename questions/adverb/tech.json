@@ -1,0 +1,22 @@
+[
+{"id":"adv-tech-01","level":2,"g":"-","zh":"服务器每晚自动重启。","en":"The server restarts {automatically} every night."},
+{"id":"adv-tech-02","level":3,"g":"-","zh":"昨晚备份没有正常运行。","en":"The backup didn't run {properly|correctly} last night."},
+{"id":"adv-tech-03","level":2,"g":"-","zh":"网站今天极其慢。","en":"The website is {extremely|incredibly|really|very|so} slow today."},
+{"id":"adv-tech-04","level":2,"g":"-","zh":"我最近把笔记本升级到了最新版本。","en":"I {recently} upgraded my laptop to the latest version."},
+{"id":"adv-tech-05","level":3,"g":"-","zh":"但愿这个补丁能解决登录问题。","en":"{Hopefully}, the patch will fix the login issue."},
+{"id":"adv-tech-06","level":4,"g":"-","zh":"从技术上讲是可行的，但要花好几个月。","en":"It's {technically|theoretically} possible, but it would take months."},
+{"id":"adv-tech-07","level":1,"g":"-","zh":"我重置了密码，但还是登录不了。","en":"I've reset my password, but I {still} can't log in."},
+{"id":"adv-tech-08","level":3,"g":"-","zh":"如果你再看到那个报错，马上给我打电话。","en":"If you see that error again, call me {immediately|right away|straight away}."},
+{"id":"adv-tech-09","level":3,"g":"-","zh":"我不小心删错了文件夹。","en":"I {accidentally|mistakenly} deleted the wrong folder."},
+{"id":"adv-tech-10","level":4,"g":"-","zh":"我们只能手动安装更新。","en":"We had to install the update {manually}."},
+{"id":"adv-tech-11","level":1,"g":"-","zh":"我的手机快没电了。","en":"My phone is {almost|nearly} out of battery."},
+{"id":"adv-tech-12","level":3,"g":"-","zh":"你可以在家远程访问服务器。","en":"You can access the server {remotely} from home."},
+{"id":"adv-tech-13","level":4,"g":"-","zh":"这显然是网络问题，因为谁都连不上。","en":"It's {obviously|clearly} a network problem, because nobody can connect."},
+{"id":"adv-tech-14","level":3,"g":"-","zh":"系统老是不停地要我改密码。","en":"The system is {constantly|always|continually} asking me to change my password."},
+{"id":"adv-tech-15","level":2,"g":"-","zh":"这个应用没有网络时能离线使用吗？","en":"Does this app work {offline} when there's no internet?"},
+{"id":"adv-tech-16","level":4,"g":"-","zh":"你的数据被安全地存储在云端。","en":"Your data is stored {securely|safely} in the cloud."},
+{"id":"adv-tech-17","level":3,"g":"-","zh":"网站宕机了大概两个小时。","en":"The site was down for {roughly|about|around|approximately} two hours."},
+{"id":"adv-tech-18","level":2,"g":"-","zh":"我们没买新服务器，而是把所有东西都迁到了云上。","en":"We didn't buy new servers. We moved everything to the cloud {instead}."},
+{"id":"adv-tech-19","level":1,"g":"-","zh":"我以前从没用过这个软件。","en":"I've {never} used this software before."},
+{"id":"adv-tech-20","level":5,"g":"-","zh":"旧系统下个月将被永久关闭。","en":"The old system will be switched off {permanently|for good} next month."}
+]

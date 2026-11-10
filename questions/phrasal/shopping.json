@@ -1,0 +1,22 @@
+[
+{"id":"pv-shopping-01","level":1,"g":"base","zh":"我能试穿一下这条牛仔裤吗？","en":"Can I {try on|try} these jeans?"},
+{"id":"pv-shopping-02","level":3,"g":"perfect","zh":"你去那家新开的奥特莱斯逛过了吗？","en":"Have you {checked out|been to|seen|visited|tried} that new outlet store yet?"},
+{"id":"pv-shopping-03","level":2,"g":"past","zh":"演唱会门票十分钟就卖光了。","en":"The concert tickets {sold out|sold|went} in ten minutes."},
+{"id":"pv-shopping-04","level":2,"g":"past","zh":"鞋子太小了，所以我拿去退了。","en":"I {took back|returned|sent back|brought back} the shoes because they were too small."},
+{"id":"pv-shopping-05","level":3,"g":"ing","zh":"买新手机之前，值得多逛几家比比价。","en":"It's worth {shopping around|looking around} before you buy a new phone."},
+{"id":"pv-shopping-06","level":3,"g":"past","zh":"她给妈妈挑了一件很可爱的礼物。","en":"She {picked out|chose|picked|found|bought|got|selected} a lovely present for her mum."},
+{"id":"pv-shopping-07","level":1,"g":"ing","zh":"我在找一件防水夹克。","en":"I'm {looking for|after|hunting for|shopping for} a waterproof jacket."},
+{"id":"pv-shopping-08","level":1,"g":"past","zh":"上周的日用品是谁付的钱？","en":"Who {paid for|bought|got} the groceries last week?"},
+{"id":"pv-shopping-09","level":3,"g":"base","zh":"这些小额消费一个月下来加起来真不少。","en":"These small purchases really {add up|mount up} over a month."},
+{"id":"pv-shopping-10","level":2,"g":"3sg","zh":"您一共是四十五块。","en":"Your total {comes to|is} forty-five dollars."},
+{"id":"pv-shopping-11","level":5,"g":"past","zh":"收银员录错了价格。","en":"The cashier {rang up|charged|entered|put through|scanned|typed in|keyed in} the wrong price."},
+{"id":"pv-shopping-12","level":2,"g":"past","zh":"队排得太长，我就把巧克力放回去了。","en":"I {put back|left|put down} the chocolate because the queue was too long."},
+{"id":"pv-shopping-13","level":3,"g":"past","zh":"夏天来之前我们囤了很多防晒霜。","en":"We {stocked up on|loaded up on|bought} sunscreen before summer."},
+{"id":"pv-shopping-14","level":4,"g":"past","zh":"因为盒子破了，他们给便宜了百分之十。","en":"They {knocked off|took off} ten percent because the box was damaged."},
+{"id":"pv-shopping-15","level":4,"g":"base","zh":"新靴子要穿几个星期才能磨合好。","en":"It takes a few weeks to {break in|wear in} new boots."},
+{"id":"pv-shopping-16","level":2,"g":"base","zh":"这件衬衫配这条裤子吗？","en":"Does this shirt {go with|match|work with} these trousers?"},
+{"id":"pv-shopping-17","level":3,"g":"perfect","zh":"孩子们的校鞋已经穿不下了。","en":"The kids have already {grown out of|outgrown} their school shoes."},
+{"id":"pv-shopping-18","level":2,"g":"ing","zh":"我只是随便看看，谢谢。","en":"I'm just {looking around|browsing|looking|having a look}, thanks."},
+{"id":"pv-shopping-19","level":4,"g":"past","zh":"上周末我们狠下心花大钱买了一张新沙发。","en":"Last weekend we {splashed out on|splurged on} a new couch."},
+{"id":"pv-shopping-20","level":4,"g":"base","zh":"你能帮我留一双九码的吗？","en":"Could you {put aside|set aside|hold|keep|save|put away|reserve} a pair in size nine for me?"}
+]

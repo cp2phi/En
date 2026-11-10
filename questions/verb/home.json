@@ -1,0 +1,22 @@
+[
+{"id":"v-home-01","level":1,"g":"base","zh":"我每周六打扫房子。","en":"I {clean} the house every Saturday."},
+{"id":"v-home-02","level":2,"g":"past","zh":"他修好了漏水的水龙头。","en":"He {fixed|repaired} the leaking tap."},
+{"id":"v-home-03","level":3,"g":"ing","zh":"她正在熨衬衫。","en":"She is {ironing} a shirt."},
+{"id":"v-home-04","level":3,"g":"base","zh":"你能把垃圾桶倒空吗？","en":"Could you {empty} the bin?"},
+{"id":"v-home-05","level":1,"g":"past","zh":"我们上个月搬进了新公寓。","en":"We {moved} into a new flat last month."},
+{"id":"v-home-06","level":1,"g":"base","zh":"出门的时候把门锁上。","en":"{Lock} the door when you leave."},
+{"id":"v-home-07","level":2,"g":"past","zh":"他给植物浇了水。","en":"He {watered} the plants."},
+{"id":"v-home-08","level":4,"g":"past","zh":"我把洗好的衣服挂在外面晾干。","en":"I {hung} the washing outside to dry."},
+{"id":"v-home-09","level":4,"g":"past","zh":"她用吸尘器吸了地毯。","en":"She {vacuumed} the carpet."},
+{"id":"v-home-10","level":1,"g":"past","zh":"我们把墙刷成了白色。","en":"We {painted} the walls white."},
+{"id":"v-home-11","level":4,"g":"past","zh":"他修剪了草坪。","en":"He {mowed|cut} the lawn."},
+{"id":"v-home-12","level":5,"g":"past","zh":"水管昨晚爆了。","en":"The pipe {burst} last night."},
+{"id":"v-home-13","level":3,"g":"past","zh":"我把床单叠好了。","en":"I {folded} the sheets."},
+{"id":"v-home-14","level":3,"g":"past","zh":"她擦了桌子。","en":"She {wiped|cleaned} the table."},
+{"id":"v-home-15","level":3,"g":"passive","zh":"灯泡需要更换了。","en":"The light bulb needs to be {replaced|changed}."},
+{"id":"v-home-16","level":2,"g":"perfect","zh":"我们租这套房子两年了。","en":"We have {rented} this house for two years."},
+{"id":"v-home-17","level":4,"g":"past","zh":"他自己把书架组装好了。","en":"He {assembled|built} the bookshelf himself."},
+{"id":"v-home-18","level":4,"g":"past","zh":"我扫了厨房的地。","en":"I {swept} the kitchen floor."},
+{"id":"v-home-19","level":2,"g":"past","zh":"她拉上了窗帘。","en":"She {closed|drew|shut} the curtains."},
+{"id":"v-home-20","level":3,"g":"past","zh":"房东涨了房租。","en":"The landlord {raised|increased} the rent."}
+]

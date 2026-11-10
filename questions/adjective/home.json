@@ -1,0 +1,22 @@
+[
+{"id":"adj-home-01","level":2,"g":"-","zh":"不好意思，公寓有点乱，我还没收拾。","en":"Sorry, the flat is a bit {messy|untidy}; I haven't cleaned up."},
+{"id":"adj-home-02","level":3,"g":"-","zh":"客厅虽然小，但非常温馨舒适。","en":"The lounge is small but really {cosy|cozy|snug}."},
+{"id":"adj-home-03","level":2,"g":"-","zh":"他把自己的房间保持得很整洁。","en":"He keeps his room very {tidy|neat|clean}."},
+{"id":"adj-home-04","level":4,"g":"-","zh":"新西兰的老房子往往又冷又潮。","en":"Older houses in New Zealand are often cold and {damp}."},
+{"id":"adj-home-05","level":1,"g":"-","zh":"邻居晚上真的很吵。","en":"The neighbours are really {noisy|loud} at night."},
+{"id":"adj-home-06","level":3,"g":"-","zh":"我父母来的时候睡在空着的那间客房。","en":"My parents sleep in the {spare|guest} room when they visit."},
+{"id":"adj-home-07","level":3,"g":"-","zh":"那个漏水的水龙头让我一整晚没睡着。","en":"The {leaky|leaking|dripping} tap kept me awake all night."},
+{"id":"adj-home-08","level":3,"g":"-","zh":"公寓带全套家具，你只需要带衣服来。","en":"The flat is fully {furnished}, so you only need to bring your clothes."},
+{"id":"adj-home-09","level":1,"g":"-","zh":"厨房早上阳光很好。","en":"The kitchen is nice and {sunny|bright} in the morning."},
+{"id":"adj-home-10","level":3,"g":"-","zh":"架子上积满了灰，好几个月没人擦过。","en":"The shelves are {dusty}; nobody has wiped them for months."},
+{"id":"adj-home-11","level":1,"g":"-","zh":"洗碗机坏了，所以我们在用手洗碗。","en":"The dishwasher is {broken|faulty}, so we're washing up by hand."},
+{"id":"adj-home-12","level":5,"g":"-","zh":"这个房间漏风，冷风从门底下钻进来。","en":"This room is {draughty|drafty}; cold air comes in under the door."},
+{"id":"adj-home-13","level":4,"g":"-","zh":"这里面好闷，能开个窗吗？","en":"It's {stuffy} in here; can we open a window?"},
+{"id":"adj-home-14","level":2,"g":"comparative","zh":"自从装了保温层，房子暖和多了。","en":"The house is much {warmer} since we put in insulation."},
+{"id":"adj-home-15","level":4,"g":"-","zh":"浴室的天花板发霉了。","en":"The bathroom ceiling has gone {mouldy|moldy}."},
+{"id":"adj-home-16","level":2,"g":"-","zh":"我们每个房间都是木地板。","en":"We have {wooden|timber} floors in every room."},
+{"id":"adj-home-17","level":2,"g":"-","zh":"小心，那把刀非常锋利。","en":"Careful, that knife is really {sharp}."},
+{"id":"adj-home-18","level":3,"g":"-","zh":"台面黏黏的，有人把果汁洒在上面了。","en":"The bench is {sticky}; someone spilt juice on it."},
+{"id":"adj-home-19","level":4,"g":"-","zh":"她打扫了好几个小时，现在厨房一尘不染。","en":"She cleaned for hours and now the kitchen is {spotless|immaculate}."},
+{"id":"adj-home-20","level":1,"g":"-","zh":"这是一条安静的街道，几乎没有车。","en":"It's a {quiet} street with hardly any traffic."}
+]

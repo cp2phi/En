@@ -1,0 +1,6 @@
+{"name": "Toastmasters", "ladder": false, "tracks": {
+ "table_topics": {"name": "Table Topics 即兴演讲", "green": 60, "yellow": 90, "red": 120},
+ "icebreaker": {"name": "Ice Breaker 自我介绍演讲", "green": 60, "yellow": 90, "red": 120},
+ "evaluation": {"name": "Evaluation 点评", "green": 60, "yellow": 75, "red": 90},
+ "roles": {"name": "Roles 会议角色用语"}
+}}

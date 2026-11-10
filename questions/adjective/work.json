@@ -1,0 +1,22 @@
+[
+{"id":"adj-work-01","level":2,"g":"-","zh":"这个请求很紧急，客户今天就要答复。","en":"This request is {urgent}; the client needs an answer today."},
+{"id":"adj-work-02","level":3,"g":"-","zh":"我们的截止日期非常紧。","en":"We're working to a very {tight} deadline."},
+{"id":"adj-work-03","level":3,"g":"-","zh":"你能给我一个粗略的成本估计吗？","en":"Can you give me a {rough|ballpark} estimate of the cost?"},
+{"id":"adj-work-04","level":2,"g":"-","zh":"她非常可靠，答应的事总能做到。","en":"She's very {reliable|dependable}; she always does what she promises."},
+{"id":"adj-work-05","level":2,"g":"-","zh":"我的工作时间比较灵活，所以可以晚点开始。","en":"My working hours are quite {flexible}, so I can start late."},
+{"id":"adj-work-06","level":1,"g":"-","zh":"抱歉，我这周真的很忙。","en":"Sorry, I'm really {busy|swamped} this week."},
+{"id":"adj-work-07","level":3,"g":"-","zh":"他是团队里级别最高的工程师。","en":"He's the most {senior} engineer in the team."},
+{"id":"adj-work-08","level":1,"g":"-","zh":"你三点有空打个简短的电话吗？","en":"Are you {available|free} for a quick call at three?"},
+{"id":"adj-work-09","level":2,"g":"-","zh":"她就那次故障写了一份非常详细的报告。","en":"She wrote a very {detailed|thorough} report on the outage."},
+{"id":"adj-work-10","level":3,"g":"-","zh":"我在家办公时工作效率高得多。","en":"I'm much more {productive|efficient} when I work from home."},
+{"id":"adj-work-11","level":4,"g":"-","zh":"这张发票已经逾期两周了。","en":"The invoice is two weeks {overdue|late}."},
+{"id":"adj-work-12","level":2,"g":"-","zh":"我有信心我们能按时完成。","en":"I'm {confident|sure|certain} that we can finish on time."},
+{"id":"adj-work-13","level":3,"g":"-","zh":"这只是一份为期六个月的临时合同。","en":"It's only a {temporary|short-term} contract for six months."},
+{"id":"adj-work-14","level":3,"g":"-","zh":"一年后，他们给了我一个长期正式的职位。","en":"After a year, they offered me a {permanent} role."},
+{"id":"adj-work-15","level":2,"g":"-","zh":"请让你的邮件保持简短、专业。","en":"Please keep your emails short and {professional}."},
+{"id":"adj-work-16","level":2,"g":"-","zh":"上线前的最后一个月压力真的很大。","en":"The last month before go-live was really {stressful}."},
+{"id":"adj-work-17","level":4,"g":"-","zh":"你这一点说得有道理，我之前没想到。","en":"That's a {fair|good|valid} point; I hadn't thought of that."},
+{"id":"adj-work-18","level":3,"g":"-","zh":"这是一份很有挑战性的工作，但我学到了很多。","en":"It's a {challenging|demanding|tough} job, but I'm learning a lot."},
+{"id":"adj-work-19","level":5,"g":"-","zh":"公司重组时，有五十人被裁员了。","en":"Fifty people were made {redundant} when the company restructured."},
+{"id":"adj-work-20","level":4,"g":"-","zh":"我很想承担更多的责任。","en":"I'm {keen|eager} to take on more responsibility."}
+]

@@ -1,0 +1,22 @@
+[
+{"id":"prep-travel-01","level":2,"g":"-","zh":"我们深夜抵达了奥克兰。","en":"We arrived {in} Auckland late at night."},
+{"id":"prep-travel-02","level":1,"g":"-","zh":"我们明天飞去惠灵顿。","en":"We're flying {to} Wellington tomorrow."},
+{"id":"prep-travel-03","level":1,"g":"-","zh":"我七月份去度假。","en":"I'm going on holiday {in} July."},
+{"id":"prep-travel-04","level":2,"g":"-","zh":"我们在错的车站下了火车。","en":"We got {off} the train at the wrong station."},
+{"id":"prep-travel-05","level":3,"g":"-","zh":"我们穿过公园走到了酒店。","en":"We walked {through|across} the park to the hotel."},
+{"id":"prep-travel-06","level":3,"g":"-","zh":"朝着那座塔走，你就会看到车站。","en":"Walk {towards|toward} the tower and you'll see the station."},
+{"id":"prep-travel-07","level":3,"g":"-","zh":"经过教堂以后左转。","en":"Go {past} the church and turn left."},
+{"id":"prep-travel-08","level":3,"g":"-","zh":"我们开车过了海港大桥。","en":"We drove {across|over} the Harbour Bridge."},
+{"id":"prep-travel-09","level":3,"g":"-","zh":"我们刚好及时赶到机场。","en":"We got to the airport just {in} time."},
+{"id":"prep-travel-10","level":2,"g":"-","zh":"公交车站就在酒店正前方。","en":"The bus stop is right {in front of|outside} the hotel."},
+{"id":"prep-travel-11","level":1,"g":"-","zh":"我们是坐火车去的。","en":"We went there {by} train."},
+{"id":"prep-travel-12","level":3,"g":"-","zh":"我担心赶不上转机的航班。","en":"I'm worried {about} missing my connecting flight."},
+{"id":"prep-travel-13","level":4,"g":"-","zh":"我很期待这次旅行。","en":"I'm really looking forward {to} the trip."},
+{"id":"prep-travel-14","level":4,"g":"-","zh":"我们天一亮就出发了。","en":"We set off {at} dawn."},
+{"id":"prep-travel-15","level":2,"g":"-","zh":"我们旅行期间下了很多雨。","en":"It rained a lot {during|on} our trip."},
+{"id":"prep-travel-16","level":4,"g":"-","zh":"酒店离海滩很近，走路就能到。","en":"The hotel is {within} walking distance of the beach."},
+{"id":"prep-travel-17","level":2,"g":"-","zh":"我们在基督城住在朋友家。","en":"We're staying {with} friends in Christchurch."},
+{"id":"prep-travel-18","level":5,"g":"-","zh":"我们喜欢去游客少、偏僻的地方徒步。","en":"We love hiking {off} the beaten track."},
+{"id":"prep-travel-19","level":2,"g":"-","zh":"她在休假，周一才回来。","en":"She's {on} holiday until Monday."},
+{"id":"prep-travel-20","level":3,"g":"-","zh":"我们十点钟退了房，离开了酒店。","en":"We checked {out of} the hotel at ten."}
+]

@@ -1,0 +1,22 @@
+[
+{"id":"pv-travel-01","level":1,"g":"base","zh":"我们需要在起飞前两小时办理登机手续。","en":"We need to {check in} two hours before the flight."},
+{"id":"pv-travel-02","level":2,"g":"base","zh":"我们得在十点前退房。","en":"We have to {check out of|leave} the hotel by ten."},
+{"id":"pv-travel-03","level":1,"g":"past","zh":"飞机晚了四十分钟才起飞。","en":"The plane {took off|left|departed} forty minutes late."},
+{"id":"pv-travel-04","level":1,"g":"base","zh":"周日你能去机场接我父母吗？","en":"Can you {pick up|collect|get|fetch|meet} my parents from the airport on Sunday?"},
+{"id":"pv-travel-05","level":2,"g":"past","zh":"出租车司机把我们的行李送到了错的酒店。","en":"The taxi driver {dropped off|dropped|left} our bags at the wrong hotel."},
+{"id":"pv-travel-06","level":3,"g":"past","zh":"今天早上我们六点就出发了，好避开堵车。","en":"This morning we {set off|left|headed off|set out|took off|headed out} at six to beat the traffic."},
+{"id":"pv-travel-07","level":2,"g":"past","zh":"我们上错了公交车，结果到了新市场。","en":"We {got on|caught|took|hopped on|jumped on|boarded} the wrong bus and ended up in Newmarket."},
+{"id":"pv-travel-08","level":2,"g":"base","zh":"你得在下一站下车。","en":"You need to {get off|hop off|get out|jump off} at the next stop."},
+{"id":"pv-travel-09","level":2,"g":"ing","zh":"我特别期待我们的皇后镇之旅。","en":"I'm really {looking forward to|excited about} our trip to Queenstown."},
+{"id":"pv-travel-10","level":3,"g":"base","zh":"我们希望复活节能出去玩几天。","en":"We're hoping to {get away|go away|escape|travel} for a few days over Easter."},
+{"id":"pv-travel-11","level":3,"g":"past","zh":"去伦敦的路上，我们在新加坡中途停留了一晚。","en":"We {stopped over|stayed|stopped|stopped off} in Singapore for a night on the way to London."},
+{"id":"pv-travel-12","level":3,"g":"passive","zh":"我们在海关被耽搁了一个小时。","en":"We were {held up|delayed|stuck|stopped|kept} at customs for an hour."},
+{"id":"pv-travel-13","level":2,"g":"ing","zh":"我们周日晚上回奥克兰。","en":"We're {heading back|going back|coming back|flying back|driving back|returning|heading} to Auckland on Sunday night."},
+{"id":"pv-travel-14","level":3,"g":"base","zh":"在惠灵顿没有车出行也很方便。","en":"It's easy to {get around|get round|travel around|go around} Wellington without a car."},
+{"id":"pv-travel-15","level":4,"g":"past","zh":"司机靠边停了车，让救护车过去。","en":"The driver {pulled over|pulled in|stopped|moved over} to let the ambulance pass."},
+{"id":"pv-travel-16","level":3,"g":"base","zh":"出城之前我们先把油加满吧，越往南油越贵。","en":"Let's {fill up|refuel|top up|gas up} before we leave town. Petrol costs more further south."},
+{"id":"pv-travel-17","level":3,"g":"past","zh":"我们租的车在去陶波的半路上抛锚了。","en":"Our rental car {broke down|died|stopped} halfway to Taupo."},
+{"id":"pv-travel-18","level":4,"g":"past","zh":"我们午夜刚过就降落在了基督城。","en":"We {touched down|landed|arrived} in Christchurch just after midnight."},
+{"id":"pv-travel-19","level":4,"g":"past","zh":"因为订满了，我们没赶上萤火虫洞之旅。","en":"We {missed out on|missed} the glow-worm tour because it was fully booked."},
+{"id":"pv-travel-20","level":5,"g":"past","zh":"上飞机前我们挤出时间去了一趟霍比屯。","en":"We {squeezed in|fitted in|fit in|managed} a quick trip to Hobbiton before our flight."}
+]

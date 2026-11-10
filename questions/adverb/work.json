@@ -1,0 +1,22 @@
+[
+{"id":"adv-work-01","level":1,"g":"-","zh":"我通常八点半开始上班。","en":"I {usually|normally|generally|typically} start work at half past eight."},
+{"id":"adv-work-02","level":2,"g":"-","zh":"请在签字前仔细阅读合同。","en":"Please read the contract {carefully|thoroughly|closely} before you sign it."},
+{"id":"adv-work-03","level":3,"g":"-","zh":"其实，我觉得我们应该把截止日期往后推一周。","en":"{Actually}, I think we should push the deadline back a week."},
+{"id":"adv-work-04","level":3,"g":"-","zh":"很遗憾，我们没有拿下那份合同。","en":"{Unfortunately|Sadly}, we didn't win the contract."},
+{"id":"adv-work-05","level":2,"g":"-","zh":"我目前正在做季度报告。","en":"I'm {currently} working on the quarterly report."},
+{"id":"adv-work-06","level":3,"g":"-","zh":"会议稍微超时了一点。","en":"The meeting ran {slightly|a bit|a little} over time."},
+{"id":"adv-work-07","level":2,"g":"-","zh":"她很少错过截止日期。","en":"She {rarely|seldom|hardly ever|almost never} misses a deadline."},
+{"id":"adv-work-08","level":4,"g":"-","zh":"听说经理月底要离职了。","en":"{Apparently}, the manager is leaving at the end of the month."},
+{"id":"adv-work-09","level":1,"g":"-","zh":"我已经把议程发给你了。","en":"I've {already} sent you the agenda."},
+{"id":"adv-work-10","level":4,"g":"-","zh":"我们得现在就走，否则见客户要迟到了。","en":"We need to leave now, {otherwise|or|or else} we'll be late for the client meeting."},
+{"id":"adv-work-11","level":3,"g":"-","zh":"和新团队的交接进行得很顺利。","en":"The handover to the new team went {smoothly|well}."},
+{"id":"adv-work-12","level":1,"g":"-","zh":"他开会总是提前到。","en":"He {always} arrives early for meetings."},
+{"id":"adv-work-13","level":2,"g":"-","zh":"我周五多半会在家办公。","en":"I'll {probably|most likely} be working from home on Friday."},
+{"id":"adv-work-14","level":4,"g":"-","zh":"基本上来说，我们需要更多人手才能按时完成。","en":"{Basically|Essentially}, we need more people to finish this on time."},
+{"id":"adv-work-15","level":2,"g":"-","zh":"你的报告已经写完了吗？","en":"Have you finished the report {yet}?"},
+{"id":"adv-work-16","level":3,"g":"-","zh":"谈了很久，我们最终就价格达成了一致。","en":"After a long discussion, we {eventually|finally} agreed on a price."},
+{"id":"adv-work-17","level":4,"g":"-","zh":"项目进度落后了。不过，客户还是很满意。","en":"The project is behind schedule. {However|Nevertheless|Still|Even so}, the client is happy with our work."},
+{"id":"adv-work-18","level":2,"g":"-","zh":"不好意思，我回得太快了，没看到你的第二个问题。","en":"Sorry, I replied too {quickly|fast} and missed your second question."},
+{"id":"adv-work-19","level":3,"g":"-","zh":"说真的，我一点也不介意今晚加班。","en":"I {honestly|really|genuinely} don't mind staying late tonight."},
+{"id":"adv-work-20","level":4,"g":"-","zh":"每次发布，两个团队都紧密合作。","en":"The two teams work {closely} together on every release."}
+]

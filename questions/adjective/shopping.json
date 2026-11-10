@@ -1,0 +1,22 @@
+[
+{"id":"adj-shopping-01","level":3,"g":"-","zh":"这双鞋对我的脚来说太窄了。","en":"These shoes are too {narrow|tight} for my feet."},
+{"id":"adj-shopping-02","level":2,"g":"-","zh":"这件衬衫有点松，有小一号的吗？","en":"This shirt is a bit {loose|baggy|big}; do you have a smaller size?"},
+{"id":"adj-shopping-03","level":3,"g":"-","zh":"我想找一个价格更实惠的。","en":"I'm looking for something more {affordable|reasonable}."},
+{"id":"adj-shopping-04","level":1,"g":"comparative","zh":"网上买便宜十块钱。","en":"It's ten dollars {cheaper} online."},
+{"id":"adj-shopping-05","level":4,"g":"-","zh":"这个包是真皮的吗？","en":"Is this bag {genuine|real} leather?"},
+{"id":"adj-shopping-06","level":2,"g":"-","zh":"结果那块手表是假的。","en":"The watch turned out to be {fake|counterfeit}."},
+{"id":"adj-shopping-07","level":4,"g":"-","zh":"我想要一个耐用的背包，能用很多年。","en":"I want a {durable|sturdy|strong|solid} backpack that will last for years."},
+{"id":"adj-shopping-08","level":1,"g":"-","zh":"这双运动鞋穿着真的很舒服。","en":"These trainers are really {comfortable|comfy}."},
+{"id":"adj-shopping-09","level":3,"g":"-","zh":"我在 Trade Me 上买了一辆二手自行车。","en":"I bought a {second-hand|secondhand|used} bike on Trade Me."},
+{"id":"adj-shopping-10","level":3,"g":"-","zh":"它是全新的，我连盒子都没打开过。","en":"It's {brand new|brand-new}; I've never even opened the box."},
+{"id":"adj-shopping-11","level":1,"g":"-","zh":"这个型号很受欢迎，我们一周能卖二十个左右。","en":"This model is very {popular}; we sell about twenty a week."},
+{"id":"adj-shopping-12","level":4,"g":"-","zh":"请包仔细一点，这个东西易碎。","en":"Please wrap it carefully; it's {fragile|delicate|breakable}."},
+{"id":"adj-shopping-13","level":4,"g":"-","zh":"我想要一件没有图案和标志的素色T恤。","en":"I'd prefer a {plain} T-shirt with no logo or pattern."},
+{"id":"adj-shopping-14","level":2,"g":"-","zh":"包裹送到的时候盒子已经破损了。","en":"The box was {damaged} when the parcel arrived."},
+{"id":"adj-shopping-15","level":3,"g":"-","zh":"这件夹克不适合大雨天穿。","en":"This jacket isn't {suitable|good} for heavy rain."},
+{"id":"adj-shopping-16","level":4,"g":"-","zh":"机场里的东西定价都过高。","en":"Everything at the airport is {overpriced|expensive|pricey|dear}."},
+{"id":"adj-shopping-17","level":3,"g":"-","zh":"我需要几件周末穿的休闲衣服。","en":"I need some {casual} clothes to wear at the weekend."},
+{"id":"adj-shopping-18","level":3,"g":"-","zh":"面试你得穿得正式得体一点。","en":"You'll need {smart|formal} clothes for the interview."},
+{"id":"adj-shopping-19","level":5,"g":"-","zh":"押金可以全额退还。","en":"The deposit is fully {refundable}."},
+{"id":"adj-shopping-20","level":3,"g":"-","zh":"这个小包旅行时特别方便好用。","en":"This little bag is really {handy|useful|convenient} for travelling."}
+]

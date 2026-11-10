@@ -1,0 +1,22 @@
+[
+{"id":"pv-health-01","level":3,"g":"base","zh":"我正在努力少吃糖。","en":"I'm trying to {cut back on|cut down on|ease up on|reduce} sugar."},
+{"id":"pv-health-02","level":2,"g":"base","zh":"那次感冒我花了两个星期才好。","en":"It took me two weeks to {get over|shake off|recover from|shake|beat} that cold."},
+{"id":"pv-health-03","level":3,"g":"ing","zh":"我觉得我快要得流感了。","en":"I think I'm {coming down with|getting|catching} the flu."},
+{"id":"pv-health-04","level":3,"g":"past","zh":"他热得晕倒了，我们叫了救护车。","en":"He {passed out|fainted|blacked out|collapsed} in the heat and we called an ambulance."},
+{"id":"pv-health-05","level":2,"g":"past","zh":"她昨晚吐了两次。","en":"She {threw up|vomited|was sick} twice last night."},
+{"id":"pv-health-06","level":1,"g":"base","zh":"压力大的时候你要照顾好自己。","en":"You need to {look after|take care of} yourself when you're stressed."},
+{"id":"pv-health-07","level":1,"g":"base","zh":"我要去躺半个小时。","en":"I'm going to {lie down|rest} for half an hour."},
+{"id":"pv-health-08","level":1,"g":"past","zh":"今天早上我醒来时嗓子疼。","en":"I {woke up|woke} with a sore throat this morning."},
+{"id":"pv-health-09","level":2,"g":"past","zh":"我爸十年前戒烟了。","en":"My dad {gave up|quit|stopped} smoking ten years ago."},
+{"id":"pv-health-10","level":4,"g":"past","zh":"几天后皮疹就消了。","en":"The rash {cleared up|went away|disappeared|went|healed|cleared|faded} after a few days."},
+{"id":"pv-health-11","level":4,"g":"base","zh":"止痛药的药效开始消退了。","en":"The painkillers are starting to {wear off}."},
+{"id":"pv-health-12","level":3,"g":"past","zh":"我扭伤后脚踝肿了起来。","en":"My ankle {swelled up|swelled|puffed up|blew up|ballooned} after I twisted it."},
+{"id":"pv-health-13","level":4,"g":"perfect","zh":"我肯定是在办公室染上了什么病菌。","en":"I must have {picked up|caught|got|gotten} a bug at the office."},
+{"id":"pv-health-14","level":3,"g":"past","zh":"今天早上有两个人打电话请了病假。","en":"Two people {called in|rang in|phoned in} sick this morning."},
+{"id":"pv-health-15","level":4,"g":"past","zh":"连续两年周末加班后，她彻底累垮了。","en":"She {burned out|burnt out} after two years of working weekends."},
+{"id":"pv-health-16","level":2,"g":"base","zh":"医生叫我放慢节奏，多睡觉。","en":"The doctor told me to {slow down|ease up|ease off|relax|rest|take it easy} and get more sleep."},
+{"id":"pv-health-17","level":4,"g":"ing","zh":"我这一整个星期都在跟感冒作斗争。","en":"I've been {fighting off|fighting|battling} a cold all week."},
+{"id":"pv-health-18","level":3,"g":"base","zh":"医生叫我彻底戒掉奶制品。","en":"My doctor told me to {cut out|give up|avoid|drop|quit} dairy completely."},
+{"id":"pv-health-19","level":5,"g":"3sg","zh":"我的花粉症一到春天就发作。","en":"My hay fever always {flares up|plays up|acts up|gets worse|comes back|returns} in spring."},
+{"id":"pv-health-20","level":2,"g":"past","zh":"周六我睡了个懒觉，感觉好多了。","en":"I {slept in|slept late|had a lie-in} on Saturday and felt much better."}
+]

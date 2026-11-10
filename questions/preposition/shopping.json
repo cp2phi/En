@@ -1,0 +1,22 @@
+[
+{"id":"prep-shopping-01","level":3,"g":"-","zh":"不好意思，那个尺码没货了。","en":"Sorry, that size is {out of} stock."},
+{"id":"prep-shopping-02","level":2,"g":"-","zh":"这些鞋这周在打折。","en":"These shoes are {on} sale this week."},
+{"id":"prep-shopping-03","level":1,"g":"-","zh":"那件夹克你花了多少钱？","en":"How much did you pay {for} that jacket?"},
+{"id":"prep-shopping-04","level":3,"g":"-","zh":"我拿到了八折，比原价便宜百分之二十。","en":"I got twenty percent {off} the price."},
+{"id":"prep-shopping-05","level":1,"g":"-","zh":"这家店从九点开到五点。","en":"The shop is open {from} nine to five."},
+{"id":"prep-shopping-06","level":2,"g":"-","zh":"我可以刷卡付款吗？","en":"Can I pay {by|with} card?"},
+{"id":"prep-shopping-07","level":3,"g":"-","zh":"药店在超市对面。","en":"The chemist is {opposite|across from} the supermarket."},
+{"id":"prep-shopping-08","level":2,"g":"-","zh":"这个包是真皮做的。","en":"This bag is made {of|from} leather."},
+{"id":"prep-shopping-09","level":2,"g":"-","zh":"这件有大一号的吗？","en":"Do you have this {in} a bigger size?"},
+{"id":"prep-shopping-10","level":3,"g":"-","zh":"试衣间在商店的最里面。","en":"The fitting rooms are {at|in} the back of the shop."},
+{"id":"prep-shopping-11","level":4,"g":"-","zh":"我想把这件衬衫换成小一号的。","en":"I'd like to exchange this shirt {for} a smaller one."},
+{"id":"prep-shopping-12","level":5,"g":"-","zh":"我是一时冲动买的。","en":"I bought it {on} impulse."},
+{"id":"prep-shopping-13","level":4,"g":"-","zh":"我在网上订的，三天之内就到了。","en":"I ordered it online and it arrived {within|in} three days."},
+{"id":"prep-shopping-14","level":1,"g":"-","zh":"这些苹果是我在农夫市集买的。","en":"I got these apples {from|at} the farmers' market."},
+{"id":"prep-shopping-15","level":2,"g":"-","zh":"它附带两年保修。","en":"It comes {with} a two-year warranty."},
+{"id":"prep-shopping-16","level":3,"g":"-","zh":"这部手机和我的很像。","en":"This phone is similar {to} mine."},
+{"id":"prep-shopping-17","level":4,"g":"-","zh":"价格涨了百分之十。","en":"The price went up {by} ten percent."},
+{"id":"prep-shopping-18","level":2,"g":"-","zh":"我上个月在衣服上花了太多钱。","en":"I spent too much money {on} clothes last month."},
+{"id":"prep-shopping-19","level":3,"g":"-","zh":"蓝色的和绿色的，我选不出来。","en":"I can't choose {between} the blue one and the green one."},
+{"id":"prep-shopping-20","level":3,"g":"-","zh":"颜色看起来和网上的照片不一样。","en":"The colour looks different {from|to|than} the photo online."}
+]

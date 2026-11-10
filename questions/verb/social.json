@@ -1,0 +1,22 @@
+[
+{"id":"v-social-01","level":1,"g":"past","zh":"她邀请我参加她的生日聚会。","en":"She {invited} me to her birthday party."},
+{"id":"v-social-02","level":3,"g":"past","zh":"我为迟到道了歉。","en":"I {apologised|apologized} for being late."},
+{"id":"v-social-03","level":3,"g":"3sg","zh":"他总是抱怨天气。","en":"He always {complains} about the weather."},
+{"id":"v-social-04","level":1,"g":"base","zh":"我同意你的看法。","en":"I {agree} with you."},
+{"id":"v-social-05","level":2,"g":"past","zh":"她答应明天给我打电话。","en":"She {promised} to call me tomorrow."},
+{"id":"v-social-06","level":3,"g":"past","zh":"他们为钱吵了一架。","en":"They {argued|fought} about money."},
+{"id":"v-social-07","level":3,"g":"base","zh":"我真的很感激你的帮助。","en":"I really {appreciate} your help."},
+{"id":"v-social-08","level":4,"g":"past","zh":"他假装没看见我。","en":"He {pretended} not to see me."},
+{"id":"v-social-09","level":4,"g":"past","zh":"她拒绝了他的邀请。","en":"She {declined|refused|rejected} his invitation."},
+{"id":"v-social-10","level":4,"g":"base","zh":"我怀疑他在说谎。","en":"I {suspect|think} he is lying."},
+{"id":"v-social-11","level":4,"g":"past","zh":"他说服我留了下来。","en":"He {persuaded|convinced} me to stay."},
+{"id":"v-social-12","level":1,"g":"base","zh":"我想念我的家人。","en":"I {miss} my family."},
+{"id":"v-social-13","level":4,"g":"past","zh":"她原谅了他。","en":"She {forgave} him."},
+{"id":"v-social-14","level":2,"g":"base","zh":"你介意我开窗吗？","en":"Do you {mind} if I open the window?"},
+{"id":"v-social-15","level":4,"g":"base","zh":"我后悔说了那句话。","en":"I {regret} saying that."},
+{"id":"v-social-16","level":3,"g":"past","zh":"他提醒我带上钥匙。","en":"He {reminded} me to bring my keys."},
+{"id":"v-social-17","level":3,"g":"perfect","zh":"她一直都在鼓励我。","en":"She has always {encouraged|supported} me."},
+{"id":"v-social-18","level":2,"g":"past","zh":"我们庆祝了他的升职。","en":"We {celebrated} his promotion."},
+{"id":"v-social-19","level":4,"g":"past","zh":"我说话的时候他打断了我。","en":"He {interrupted} me while I was speaking."},
+{"id":"v-social-20","level":2,"g":"base","zh":"我完全信任她。","en":"I {trust} her completely."}
+]

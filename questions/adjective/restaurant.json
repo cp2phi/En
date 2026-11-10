@@ -1,0 +1,22 @@
+[
+{"id":"adj-restaurant-01","level":1,"g":"-","zh":"这个咖喱很辣吗？","en":"Is the curry very {spicy|hot}?"},
+{"id":"adj-restaurant-02","level":2,"g":"-","zh":"鸡肉中间还是生的。","en":"The chicken is still {raw|uncooked|pink} in the middle."},
+{"id":"adj-restaurant-03","level":3,"g":"-","zh":"我喜欢烤猪肉上那层脆脆的皮。","en":"I love the {crispy|crunchy|crisp} skin on roast pork."},
+{"id":"adj-restaurant-04","level":4,"g":"-","zh":"上飞机前我不想吃太腻、太难消化的一餐。","en":"I don't want a {heavy|rich} meal before the flight."},
+{"id":"adj-restaurant-05","level":4,"g":"-","zh":"这个巧克力蛋糕味道很浓很腻，我只能吃一小块。","en":"The chocolate cake is very {rich}; I can only eat a small piece."},
+{"id":"adj-restaurant-06","level":3,"g":"-","zh":"羊肉炖得很嫩，一碰就脱骨了。","en":"The lamb was so {tender} it fell off the bone."},
+{"id":"adj-restaurant-07","level":3,"g":"-","zh":"牛排太老了，嚼不动，也很难切。","en":"The steak was {tough|chewy} and hard to cut."},
+{"id":"adj-restaurant-08","level":1,"g":"-","zh":"这里的鱼总是很新鲜。","en":"The fish here is always {fresh}."},
+{"id":"adj-restaurant-09","level":4,"g":"-","zh":"这面包不新鲜了，又干又硬，肯定放了好几天。","en":"This bread is {stale}; it must be a few days old."},
+{"id":"adj-restaurant-10","level":2,"g":"-","zh":"牛奶已经变酸了，别喝。","en":"The milk has gone {sour|off|bad}; don't drink it."},
+{"id":"adj-restaurant-11","level":2,"g":"-","zh":"不加糖的话，这咖啡对我来说太苦了。","en":"The coffee is too {bitter} for me without sugar."},
+{"id":"adj-restaurant-12","level":4,"g":"-","zh":"这个米饭有点淡，没什么味道，需要多放点调料。","en":"The rice dish is a bit {bland|tasteless|plain}; it needs more seasoning."},
+{"id":"adj-restaurant-13","level":2,"g":"-","zh":"这汤太咸了，你是不是放了两次盐？","en":"The soup is too {salty}; did you add salt twice?"},
+{"id":"adj-restaurant-14","level":5,"g":"-","zh":"咖啡端上来的时候只是温的，不够热。","en":"My coffee was only {lukewarm|warm|tepid} when it arrived."},
+{"id":"adj-restaurant-15","level":2,"g":"-","zh":"我不要甜点了，谢谢，我吃饱了。","en":"No dessert for me, thanks. I'm {full|stuffed}."},
+{"id":"adj-restaurant-16","level":2,"g":"-","zh":"什么时候吃晚饭？我饿坏了。","en":"When's dinner? I'm {starving|starved|famished}."},
+{"id":"adj-restaurant-17","level":1,"g":"-","zh":"真好吃，谢谢你做饭。","en":"That was {delicious|tasty|yummy|lovely}; thanks for cooking."},
+{"id":"adj-restaurant-18","level":3,"g":"-","zh":"这份炸鱼薯条对我来说太油腻了。","en":"The fish and chips were too {greasy|oily} for me."},
+{"id":"adj-restaurant-19","level":3,"g":"-","zh":"这家店的分量给得很足，一份够两个人吃。","en":"The portions here are really {generous|big|large|huge}; one dish feeds two."},
+{"id":"adj-restaurant-20","level":3,"g":"-","zh":"我吃不了辣，可以给我微辣的吗？","en":"I can't handle spicy food; can I get the {mild} version?"}
+]

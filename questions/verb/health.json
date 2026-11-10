@@ -1,0 +1,22 @@
+[
+{"id":"v-health-01","level":4,"g":"past","zh":"医生给我开了抗生素。","en":"The doctor {prescribed} me antibiotics."},
+{"id":"v-health-02","level":2,"g":"3sg","zh":"我头疼。","en":"My head {hurts|aches}."},
+{"id":"v-health-03","level":3,"g":"past","zh":"她昨天感冒了。","en":"She {caught|got} a cold yesterday."},
+{"id":"v-health-04","level":3,"g":"past","zh":"护士量了我的体温。","en":"The nurse {took|measured|checked} my temperature."},
+{"id":"v-health-05","level":3,"g":"ing","zh":"我咳了一整天。","en":"I've been {coughing} all day."},
+{"id":"v-health-06","level":2,"g":"past","zh":"他摔断了胳膊。","en":"He {broke} his arm."},
+{"id":"v-health-07","level":1,"g":"base","zh":"你需要多休息。","en":"You need to {rest} more."},
+{"id":"v-health-08","level":4,"g":"ing","zh":"伤口正在愈合。","en":"The wound is {healing}."},
+{"id":"v-health-09","level":5,"g":"past","zh":"她在厨房里晕倒了。","en":"She {fainted|collapsed} in the kitchen."},
+{"id":"v-health-10","level":2,"g":"base","zh":"我每天吃两次这个药。","en":"I {take} this medicine twice a day."},
+{"id":"v-health-11","level":3,"g":"ing","zh":"他正在从手术中恢复。","en":"He is {recovering} from surgery."},
+{"id":"v-health-12","level":3,"g":"past","zh":"医生检查了我的眼睛。","en":"The doctor {examined|checked} my eyes."},
+{"id":"v-health-13","level":5,"g":"perfect","zh":"我的脚踝肿了。","en":"My ankle has {swollen}."},
+{"id":"v-health-14","level":3,"g":"past","zh":"她去年戒烟了。","en":"She {quit|stopped} smoking last year."},
+{"id":"v-health-15","level":4,"g":"3sg","zh":"这种药能缓解疼痛。","en":"This medicine {relieves|reduces|eases} pain."},
+{"id":"v-health-16","level":2,"g":"past","zh":"我上周打了流感疫苗。","en":"I {got|had} a flu shot last week."},
+{"id":"v-health-17","level":5,"g":"past","zh":"他流了很多血。","en":"He {bled} a lot."},
+{"id":"v-health-18","level":2,"g":"base","zh":"我需要预约牙医。","en":"I need to {book|make|schedule} an appointment with the dentist."},
+{"id":"v-health-19","level":2,"g":"past","zh":"他上个月瘦了五公斤。","en":"He {lost} five kilos last month."},
+{"id":"v-health-20","level":5,"g":"past","zh":"我昨晚吐了两次。","en":"I {vomited} twice last night."}
+]
