@@ -41,8 +41,17 @@ class ServerTest(unittest.TestCase):
                 raise ai.AIError("no key")
             return f"heard {len(audio)} bytes of {mime}"
 
+        self.speech_calls = []
+
+        def fake_speech(text, voice, accent, pace, key, model):
+            if not key:
+                raise ai.AIError("no key")
+            self.speech_calls.append((text, voice, accent, pace, model))
+            used = ai.TTS_FALLBACK_MODEL if text == "old model gone" else model
+            return f"ID3 {text}|{voice}|{accent}|{pace}".encode(), used
+
         self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), explain=fake_explain,
-                                  feedback=fake_feedback, transcribe=fake_transcribe)
+                                  feedback=fake_feedback, transcribe=fake_transcribe, speech=fake_speech)
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
@@ -203,6 +212,50 @@ class ServerTest(unittest.TestCase):
         locked = meta["write"]["tracks"][5]["id"]
         _, deep = self.call("GET", "/api/practice/meta")
         self.assertTrue(next(t for t in deep["write"]["tracks"] if t["id"] == locked)["locked"])
+
+
+    def test_tts_cache_fallback_and_settings(self):
+        _, s = self.call("GET", "/api/settings")
+        self.assertEqual((s["tts"], s["voice"], s["pace"], s["tts_model"]), ("openai", "marin", "normal", ai.TTS_MODEL))
+        self.assertIn("cedar", s["voices"])
+        self.assertEqual(self.call("POST", "/api/tts", {"text": "Hello."})[0], 502, "no key yet")
+
+        self.call("PUT", "/api/settings", {"openai_key": "sk-secret", "accent": "uk"})
+        status, audio = self.call("POST", "/api/tts", {"text": "  Hello   there. "})
+        self.assertEqual((status, audio), (200, b"ID3 Hello there.|marin|uk|normal"))
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        conn.request("POST", "/api/tts", body=json.dumps({"text": "Hello there."}),
+                     headers={"Content-Type": "application/json"})
+        response = conn.getresponse()
+        self.assertEqual((response.status, response.getheader("Content-Type"), response.read()),
+                         (200, "audio/mpeg", b"ID3 Hello there.|marin|uk|normal"))
+        conn.close()
+        self.assertEqual(len(self.speech_calls), 1, "the second request is served from the cache")
+        self.assertEqual(len(list((self.root / "cache" / "tts").glob("*.mp3"))), 1)
+
+        # Preview overrides and a different voice are separate cache entries.
+        self.assertEqual(self.call("POST", "/api/tts", {"text": "Hello there.", "voice": "cedar", "pace": "slow",
+                                                        "accent": "us"})[1], b"ID3 Hello there.|cedar|us|slow")
+        self.assertEqual(len(self.speech_calls), 2)
+        for bad in ({"text": ""}, {"text": "x", "voice": "robot"}, {"text": "x", "accent": "fr"},
+                    {"text": "x", "pace": "fast"}):
+            self.assertEqual(self.call("POST", "/api/tts", bad)[0], 400, bad)
+        self.assertEqual(self.call("GET", "/api/tts")[0], 404, "GET cannot trigger paid speech")
+
+        # Once the chosen model is gone, later requests go straight to the fallback.
+        self.call("POST", "/api/tts", {"text": "old model gone"})
+        self.call("POST", "/api/tts", {"text": "Next one."})
+        self.assertEqual(self.speech_calls[-1][4], ai.TTS_FALLBACK_MODEL)
+        # Saving a model choice tries it again.
+        self.call("PUT", "/api/settings", {"tts_model": ai.TTS_MODEL})
+        self.call("POST", "/api/tts", {"text": "Third one."})
+        self.assertEqual(self.speech_calls[-1][4], ai.TTS_MODEL)
+
+        _, s = self.call("PUT", "/api/settings", {"tts": "browser", "voice": "cedar", "pace": "slow"})
+        self.assertEqual((s["tts"], s["voice"], s["pace"]), ("browser", "cedar", "slow"))
+        for bad in ({"tts": "robot"}, {"voice": "robot"}, {"pace": "fast"}, {"tts_model": "gpt-9"}):
+            self.assertEqual(self.call("PUT", "/api/settings", bad)[0], 400, bad)
+        self.assertNotIn("sk-secret", (self.root / "data" / "settings.json").read_text(encoding="utf-8"))
 
 
 class SyncTest(unittest.TestCase):

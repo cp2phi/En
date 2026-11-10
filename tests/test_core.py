@@ -472,5 +472,64 @@ class AiFeedbackTest(unittest.TestCase):
             ai.transcribe(b"", "audio/webm", "sk")
 
 
+class AiSpeechTest(unittest.TestCase):
+    def test_tts_model_gets_accent_and_pace(self):
+        seen = {}
+
+        def post_speech(payload, key):
+            seen.update(payload)
+            return b"MP3"
+
+        audio, used = ai.speech("  Hello\n  there ", "cedar", "uk", "slow", "sk", post_speech=post_speech)
+        self.assertEqual((audio, used), (b"MP3", ai.TTS_MODEL))
+        self.assertEqual((seen["model"], seen["voice"], seen["input"], seen["response_format"]),
+                         (ai.TTS_MODEL, "cedar", "Hello there", "mp3"))
+        self.assertIn("British", seen["instructions"])
+        self.assertIn("slower", seen["instructions"])
+        _, _ = ai.speech("Hi", "nope", "us", "normal", "sk", post_speech=post_speech)
+        self.assertEqual(seen["voice"], "marin", "unknown voices fall back to the default")
+        self.assertIn("American", seen["instructions"])
+
+    def test_falls_back_only_when_the_model_is_gone(self):
+        chat = {}
+
+        def gone(payload, key):
+            raise ai.AIError("model not found", 404)
+
+        def post(payload, key):
+            chat.update(payload)
+            return {"choices": [{"message": {"audio": {"data": "TVAz"}}}]}  # base64 of b"MP3"
+
+        audio, used = ai.speech("Hi there.", "marin", "us", "normal", "sk", post_speech=gone, post=post)
+        self.assertEqual((audio, used), (b"MP3", ai.TTS_FALLBACK_MODEL))
+        self.assertEqual(chat["model"], ai.TTS_FALLBACK_MODEL)
+        self.assertEqual(chat["audio"], {"voice": "marin", "format": "mp3"})
+        self.assertEqual(chat["messages"][1]["content"], "Hi there.")
+        self.assertIn("exactly as written", chat["messages"][0]["content"])
+
+        def bad_key(payload, key):
+            raise ai.AIError("bad key", 401)
+
+        with self.assertRaises(ai.AIError):
+            ai.speech("Hi", "marin", "us", "normal", "sk", post_speech=bad_key, post=post)
+        # Choosing the fallback model directly skips the speech endpoint.
+        self.assertEqual(ai.speech("Hi", "marin", "us", "normal", "sk", ai.TTS_FALLBACK_MODEL,
+                                   post_speech=bad_key, post=post)[1], ai.TTS_FALLBACK_MODEL)
+
+    def test_speech_errors(self):
+        with self.assertRaises(ai.AIError):
+            ai.speech("Hi", "marin", "us", "normal", "")
+        with self.assertRaises(ai.AIError):
+            ai.speech("   ", "marin", "us", "normal", "sk")
+        with self.assertRaises(ai.AIError):
+            ai.speech("Hi", "marin", "us", "normal", "sk", ai.TTS_FALLBACK_MODEL,
+                      post=lambda p, k: {"choices": [{"message": {}}]})
+        long_text = "word " * 1000
+        seen = {}
+        ai.speech(long_text, "marin", "us", "normal", "sk",
+                  post_speech=lambda p, k: seen.update(p) or b"x")
+        self.assertLessEqual(len(seen["input"]), ai.MAX_TTS_CHARS)
+
+
 if __name__ == "__main__":
     unittest.main()

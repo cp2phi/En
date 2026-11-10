@@ -2,10 +2,12 @@
 
 import base64
 import binascii
+import hashlib
 import json
 import math
 import mimetypes
 import threading
+from dataclasses import dataclass
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,10 +17,21 @@ from . import ai, cloze, practice, words
 from .store import JsonStore
 from .sync import sync
 
-DEFAULT_SETTINGS = {"accent": "us", "new_per_day": 20, "model": ai.DEFAULT_MODEL}
+DEFAULT_SETTINGS = {
+    "accent": "us", "new_per_day": 20, "model": ai.DEFAULT_MODEL,
+    # Read-aloud: "openai" (natural voice, cached) or "browser" (built-in speech synthesis).
+    "tts": "openai", "voice": ai.TTS_VOICES[0], "pace": "normal", "tts_model": ai.TTS_MODEL,
+}
+TTS_ENGINES = ("openai", "browser")
 MAX_BODY = 40 * 1024 * 1024  # a few minutes of recorded audio, base64 encoded
 MAX_SESSION_SECONDS = 4 * 3600  # caps a clock left running by mistake
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
+
+
+@dataclass
+class RawResponse:
+    body: bytes
+    content_type: str
 
 
 class ApiError(Exception):
@@ -32,7 +45,7 @@ class App:
     """All state and request logic. `root` is the repository directory."""
 
     def __init__(self, root: Path, today=date.today, explain=ai.explain,
-                 feedback=ai.feedback, transcribe=ai.transcribe):
+                 feedback=ai.feedback, transcribe=ai.transcribe, speech=ai.speech):
         self.root = Path(root)
         self.data_dir = self.root / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -50,6 +63,10 @@ class App:
         self.explain = explain
         self.feedback = feedback
         self.transcribe = transcribe
+        self.speech = speech
+        # Generated speech is cached here (git-ignored), so each sentence is paid for once.
+        self.tts_cache = self.root / "cache" / "tts"
+        self.tts_model_fallback = None  # set once the chosen speech model stops working
         self.lock = threading.Lock()
 
     # ---- helpers -------------------------------------------------------
@@ -59,7 +76,8 @@ class App:
         return self.questions[qid]
 
     def _settings_view(self) -> dict:
-        return self.settings.load() | {"has_key": bool(self.secrets.load()["openai_key"])}
+        return self.settings.load() | {"has_key": bool(self.secrets.load()["openai_key"]),
+                                       "voices": list(ai.TTS_VOICES), "tts_models": list(ai.TTS_MODELS)}
 
     # ---- routes --------------------------------------------------------
     def handle(self, method: str, path: str, query: dict, body: dict) -> dict:
@@ -84,10 +102,41 @@ class App:
             except ai.AIError as e:
                 raise ApiError(502, str(e)) from e
             return {"text": text}
+        if route == ("POST", "tts"):
+            return self._tts(body)
         if route == ("POST", "practice", "submit"):
             return self._practice_submit(body)
         with self.lock:
             return self._handle_locked(method, parts, query, body)
+
+    def _tts(self, body: dict) -> RawResponse:
+        """MP3 for one piece of text. POST + JSON so other websites cannot spend API credits."""
+        settings = self.settings.load()
+        text = " ".join(str(body.get("text") or "").split())[:ai.MAX_TTS_CHARS]
+        if not text:
+            raise ApiError(400, "text is required")
+        # voice/pace/accent may be overridden for the preview button in settings.
+        voice = body.get("voice") or settings["voice"]
+        accent = body.get("accent") or settings["accent"]
+        pace = body.get("pace") or settings["pace"]
+        if voice not in ai.TTS_VOICES or accent not in ai.ACCENTS or pace not in ai.PACES:
+            raise ApiError(400, "unknown voice, accent or pace")
+        key = hashlib.sha256(json.dumps([voice, accent, pace, text]).encode("utf-8")).hexdigest()
+        path = self.tts_cache / f"{key}.mp3"
+        if path.is_file():
+            return RawResponse(path.read_bytes(), "audio/mpeg")
+        model = self.tts_model_fallback or settings["tts_model"]
+        try:
+            audio, used = self.speech(text, voice, accent, pace, self.secrets.load()["openai_key"], model)
+        except ai.AIError as e:
+            raise ApiError(502, str(e)) from e
+        if used != model:
+            self.tts_model_fallback = used
+        self.tts_cache.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(f".{threading.get_ident()}.tmp")  # unique per concurrent request
+        tmp.write_bytes(audio)
+        tmp.replace(path)
+        return RawResponse(audio, "audio/mpeg")
 
     def _practice_submit(self, body: dict) -> dict:
         prompt = practice.find_prompt(self.prompts, body.get("prompt_id"))
@@ -261,6 +310,14 @@ class App:
                         settings["new_per_day"] = max(0, min(500, int(body["new_per_day"])))
                     except (TypeError, ValueError) as e:
                         raise ApiError(400, "new_per_day must be a number") from e
+                for field, allowed in (("tts", TTS_ENGINES), ("voice", ai.TTS_VOICES),
+                                       ("pace", tuple(ai.PACES)), ("tts_model", ai.TTS_MODELS)):
+                    if field in body:
+                        if body[field] not in allowed:
+                            raise ApiError(400, f"{field} must be one of {', '.join(allowed)}")
+                        settings[field] = body[field]
+                if body.get("tts_model"):
+                    self.tts_model_fallback = None  # an explicit choice is tried again
                 if body.get("model"):
                     settings["model"] = str(body["model"]).strip()
                 self.settings.save(settings)
@@ -327,7 +384,11 @@ def make_handler(app: App):
                     return self._json(400, {"error": "body must be an object"})
             query = {k: v[0] for k, v in parse_qs(url.query).items()}
             try:
-                self._json(200, app.handle(method, url.path, query, body))
+                result = app.handle(method, url.path, query, body)
+                if isinstance(result, RawResponse):
+                    self._send(200, result.body, result.content_type)
+                else:
+                    self._json(200, result)
             except ApiError as e:
                 self._json(e.status, {"error": e.message})
             except Exception as e:  # noqa: BLE001 - report instead of dropping the connection

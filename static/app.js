@@ -19,7 +19,7 @@ const KIND_TEXT = {
 };
 
 const view = document.getElementById("view");
-let settings = { accent: "us", new_per_day: 20, model: "", has_key: false };
+let settings = { accent: "us", new_per_day: 20, model: "", has_key: false, tts: "browser" };
 let prefill = null; // card draft handed from another page to the add page
 const clozeFilters = { pos: "", scene: "", level: "", mode: "" };
 
@@ -59,15 +59,75 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
 }
 
-function speak(text, accent) {
+// ---- read aloud --------------------------------------------------------
+// Natural OpenAI voice when enabled (generated once, cached on disk by the server and
+// in memory here), otherwise the browser's built-in voice.
+const audioUrls = new Map();
+let currentAudio = null;
+let speakToken = null; // only the latest speak() call may start playing
+let ttsWarned = false;
+
+function stopSpeaking() {
+  speakToken = null;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
+
+function bestBrowserVoice(lang) {
+  const score = (v) => (/natural|neural|premium|enhanced/i.test(v.name) ? 4 : 0)
+    + (/google/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
+  return speechSynthesis.getVoices()
+    .filter((v) => v.lang.replace("_", "-") === lang)
+    .sort((a, b) => score(b) - score(a))[0];
+}
+
+function browserSpeak(text, accent, pace) {
   if (!("speechSynthesis" in window)) return;
-  const lang = (accent || settings.accent) === "uk" ? "en-GB" : "en-US";
+  const lang = accent === "uk" ? "en-GB" : "en-US";
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
-  const voice = speechSynthesis.getVoices().find((v) => v.lang.replace("_", "-") === lang);
+  const voice = bestBrowserVoice(lang);
   if (voice) utterance.voice = voice;
-  speechSynthesis.cancel();
+  if (pace === "slow") utterance.rate = 0.85;
   speechSynthesis.speak(utterance);
+}
+
+// options: {tts, voice, pace} override the saved settings (used by the settings preview).
+async function speak(text, accent, options = {}) {
+  stopSpeaking();
+  if (!text) return;
+  const token = {};
+  speakToken = token;
+  const a = accent || settings.accent;
+  const pace = options.pace || settings.pace;
+  if ((options.tts || settings.tts) === "openai" && settings.has_key) {
+    const voice = options.voice || settings.voice;
+    const cacheKey = JSON.stringify([voice, a, pace, text]);
+    try {
+      let url = audioUrls.get(cacheKey);
+      if (!url) {
+        const response = await fetch("/api/tts", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, accent: a, voice, pace }),
+        });
+        if (!response.ok) throw new Error((await response.json()).error || "语音生成失败");
+        url = URL.createObjectURL(await response.blob());
+        audioUrls.set(cacheKey, url);
+      }
+      if (speakToken !== token) return; // a newer speak(), or the page changed
+      currentAudio = new Audio(url);
+      await currentAudio.play();
+      return;
+    } catch (e) {
+      // NotAllowedError: autoplay blocked before any click; AbortError: stopped by a newer call.
+      if (speakToken !== token || e.name === "NotAllowedError" || e.name === "AbortError") return;
+      if (!ttsWarned) {
+        ttsWarned = true;
+        toast("自然语音暂时不可用，先用浏览器语音：" + e.message);
+      }
+    }
+  }
+  if (speakToken === token) browserSpeak(text, a, pace);
 }
 
 function speakButtons(text) {
@@ -713,8 +773,21 @@ async function settingsView() {
     h("option", { value: "us", selected: settings.accent === "us" }, "美式"),
     h("option", { value: "uk", selected: settings.accent === "uk" }, "英式"));
   const perDay = h("input", { type: "number", min: "0", max: "500", value: String(settings.new_per_day) });
+  const option = (value, text, current) => h("option", { value, selected: value === current }, text);
+  const engine = h("select", {},
+    option("openai", "OpenAI 自然语音（需要 key，每句只生成一次）", settings.tts),
+    option("browser", "浏览器自带语音（免费，较生硬）", settings.tts));
+  const voice = h("select", {}, settings.voices.map((v) =>
+    option(v, v === "marin" || v === "cedar" ? `${v}（推荐）` : v, settings.voice)));
+  const pace = h("select", {}, option("normal", "正常", settings.pace), option("slow", "稍慢", settings.pace));
+  const ttsModel = h("select", {},
+    option("gpt-4o-mini-tts", "gpt-4o-mini-tts（便宜；2027-01-06 停用后自动改用下一个）", settings.tts_model),
+    option("gpt-audio-1.5", "gpt-audio-1.5（贵约 5 倍，没有停用日期）", settings.tts_model));
+  const preview = () => speak("Hey, sorry I'm running a bit late. Can we push the meeting back ten minutes?",
+    accent.value, { tts: engine.value, voice: voice.value, pace: pace.value });
   const save = async () => {
-    const body = { accent: accent.value, model: model.value, new_per_day: perDay.value };
+    const body = { accent: accent.value, model: model.value, new_per_day: perDay.value,
+      tts: engine.value, voice: voice.value, pace: pace.value, tts_model: ttsModel.value };
     if (key.value.trim()) body.openai_key = key.value.trim();
     try {
       settings = await api("PUT", "settings", body);
@@ -729,11 +802,19 @@ async function settingsView() {
     h("div", { class: "card" },
       h("label", {}, "OpenAI key（只保存在本机的 config.local.json，不会被同步上传）"), key,
       h("label", {}, "AI 模型"), model,
-      h("label", {}, "朗读口音"), accent,
       h("label", {}, "每天新词上限"), perDay,
       h("div", { class: "row", style: "margin-top:16px" },
-        h("button", { class: "primary", type: "button", onclick: save }, "保存"),
-        h("button", { type: "button", onclick: () => speak("The meeting has been postponed to Friday.", accent.value) }, "试听"))),
+        h("button", { class: "primary", type: "button", onclick: save }, "保存"))),
+    h("div", { class: "card" },
+      h("label", {}, "朗读语音"), engine,
+      h("label", {}, "口音"), accent,
+      h("label", {}, "声音"), voice,
+      h("label", {}, "语速"), pace,
+      h("label", {}, "语音模型"), ttsModel,
+      h("p", { class: "muted" }, "自然语音：每句第一次播放时生成（约 1 秒），之后从本机缓存播放，不再花钱。没有 key 或生成失败时自动改用浏览器语音。"),
+      h("div", { class: "row", style: "margin-top:12px" },
+        h("button", { type: "button", onclick: preview }, "试听当前选择"),
+        h("button", { class: "primary", type: "button", onclick: save }, "保存"))),
   );
 }
 
@@ -766,7 +847,7 @@ const routes = {
 
 async function render() {
   cancelRecording();
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  stopSpeaking();
   const name = location.hash.slice(1) || "home";
   document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + name));
   try {
