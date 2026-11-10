@@ -23,6 +23,13 @@ const KIND_TEXT = {
 const view = document.getElementById("view");
 let settings = { accent: "us", new_per_day: 20, model: "", has_key: false, tts: "browser" };
 let prefill = null; // card draft handed from another page to the add page
+
+// Example answers may contain {name} and {hometown}, filled in from Settings.
+function personalise(text) {
+  return text
+    .replaceAll("{name}", settings.my_name || "[your name]")
+    .replaceAll("{hometown}", settings.hometown || "[your hometown]");
+}
 const clozeFilters = { pos: "", scene: "", level: "", mode: "" };
 
 // ---- helpers ----------------------------------------------------------
@@ -528,25 +535,31 @@ async function practiceView(module) {
   const meta = (await api("GET", "practice/meta"))[module];
   settings = await api("GET", "settings");
   const open = meta.tracks.filter((t) => !t.locked);
-  let track = open.find((t) => t.id === practiceTrack[module]) || open[open.length - 1];
-  if (!meta.ladder) track = open.find((t) => t.id === practiceTrack[module]) || open[0];
+  // Default: the highest unlocked level of a ladder, otherwise the first group.
+  const levels = open.filter((t) => t.level);
+  let track = open.find((t) => t.id === practiceTrack[module]) || levels[levels.length - 1] || open[0];
   practiceTrack[module] = track.id;
   let voice = module !== "write";
   const box = h("div", {});
 
-  const trackButtons = meta.tracks.map((t) => h("button", {
+  const trackButton = (t) => h("button", {
     type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
     title: t.locked ? "Unlocks after the level below" : `${t.done} / ${t.count} prompts done`,
     onclick: () => { practiceTrack[module] = t.id; practiceView(module); },
-  }, (t.locked ? "🔒 " : "") + t.name));
-  const next = meta.tracks[meta.tracks.indexOf(track) + 1];
-  const ladderNote = meta.ladder && next && next.locked
+  }, (t.locked ? "🔒 " : "") + t.name);
+  // One row of buttons per group ("Levels", "Small talk"); no heading when there is only one group.
+  const groups = [...new Set(meta.tracks.map((t) => t.group || ""))];
+  const trackButtons = groups.map((g) => h("div", { class: "row", style: "margin-bottom:8px" },
+    groups.length > 1 && g ? h("b", { class: "muted", style: "min-width:6em" }, g) : null,
+    meta.tracks.filter((t) => (t.group || "") === g).map(trackButton)));
+  const next = track.level && meta.tracks.find((t) => t.level === track.level + 1);
+  const ladderNote = next && next.locked
     ? `${Math.max(0, meta.unlock_sessions - track.good)} more good sessions on this level unlock "${next.name}"`
     : `${track.done} / ${track.count} prompts done in this group`;
 
   show(
     h("h1", {}, meta.name),
-    h("div", { class: "row", style: "margin-bottom:8px" }, trackButtons),
+    trackButtons,
     h("div", { class: "muted", style: "margin-bottom:16px" }, ladderNote),
     box,
   );
@@ -710,6 +723,13 @@ async function practiceView(module) {
         f && f.natural ? [h("label", {}, "A more natural way to say it"),
           h("div", { class: "answer" }, f.natural,
             h("button", { class: "link", type: "button", onclick: () => speak(f.natural) }, "🔊"))] : null) : null,
+      prompt.example ? h("div", { class: "card" },
+        h("label", {}, "One natural answer"),
+        h("div", { class: "answer" }, personalise(prompt.example),
+          h("button", { class: "link", type: "button", onclick: () => speak(personalise(prompt.example)) }, "🔊")),
+        (prompt.example.includes("{name}") && !settings.my_name)
+          || (prompt.example.includes("{hometown}") && !settings.hometown)
+          ? h("div", { class: "muted" }, "Add your name and hometown in Settings to see them here.") : null) : null,
       f && f.issues.length ? h("div", { class: "card" },
         h("label", {}, "What to fix first"),
         f.issues.map((i) => h("div", { class: "example" },
@@ -788,6 +808,8 @@ async function settingsView() {
     h("option", { value: "us", selected: settings.accent === "us" }, "American"),
     h("option", { value: "uk", selected: settings.accent === "uk" }, "British"));
   const perDay = h("input", { type: "number", min: "0", max: "500", value: String(settings.new_per_day) });
+  const myName = h("input", { class: "wide", maxlength: "40", value: settings.my_name || "", placeholder: "The name you use in English" });
+  const hometown = h("input", { class: "wide", maxlength: "40", value: settings.hometown || "", placeholder: "e.g. a city or region" });
   const option = (value, text, current) => h("option", { value, selected: value === current }, text);
   const engine = h("select", {},
     option("openai", "OpenAI natural voice (needs a key; each sentence is generated once)", settings.tts),
@@ -802,6 +824,7 @@ async function settingsView() {
     accent.value, { tts: engine.value, voice: voice.value, pace: pace.value });
   const save = async () => {
     const body = { accent: accent.value, model: model.value, new_per_day: perDay.value,
+      my_name: myName.value, hometown: hometown.value,
       tts: engine.value, voice: voice.value, pace: pace.value, tts_model: ttsModel.value };
     if (key.value.trim()) body.openai_key = key.value.trim();
     try {
@@ -818,6 +841,8 @@ async function settingsView() {
       h("label", {}, "OpenAI key (kept only in config.local.json on this computer, never uploaded by Sync)"), key,
       h("label", {}, "AI model"), model,
       h("label", {}, "New words per day"), perDay,
+      h("label", {}, "Your name (used in small-talk example answers)"), myName,
+      h("label", {}, "Where you're from (used in small-talk example answers)"), hometown,
       h("div", { class: "row", style: "margin-top:16px" },
         h("button", { class: "primary", type: "button", onclick: save }, "Save"))),
     h("div", { class: "card" },

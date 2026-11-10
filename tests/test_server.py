@@ -192,13 +192,23 @@ class ServerTest(unittest.TestCase):
             "mode": "speak", "stuck": 1})
         self.assertEqual((spoken["session"]["fillers"], spoken["session"]["stuck"]), (1, 1))
         self.assertIn(topic["prompt"]["say"], self.feedback_calls[-1][1])
+        self.assertEqual(self.feedback_calls[-1][0], "toast")
+
+        # Small-talk tracks are open from the start and get small-talk feedback.
+        _, chat = self.call("GET", "/api/practice/next?module=speak&track=st_basics")
+        self.assertTrue(chat["prompt"]["example"])
+        _, reply = self.call("POST", "/api/practice/submit", {
+            "prompt_id": chat["prompt"]["id"], "text": "Not bad thanks, pretty busy week. How about you?",
+            "seconds": 8, "mode": "speak"})
+        self.assertEqual(self.feedback_calls[-1][0], "smalltalk")
+        self.assertEqual(reply["session"]["track"], "st_basics")
 
         _, stats = self.call("GET", "/api/practice/stats")
         self.assertEqual(stats["modules"]["write"]["all"]["sessions"], 5)
-        self.assertEqual(stats["modules"]["spoken"]["today"]["minutes"], 1.2)
+        self.assertEqual(stats["modules"]["spoken"]["today"]["minutes"], 1.4)  # 75 s + 8 s small talk
         self.assertEqual((stats["levels"]["write"], stats["streak"]), (2, 1))
         journal = json.loads((self.root / "data" / "journal" / "2026-11.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(journal["entries"]), 6)
+        self.assertEqual(len(journal["entries"]), 7)  # 5 writing, 1 Table Topics, 1 small talk
         self.assertEqual(journal["entries"][0]["text"], body["text"])
         self.assertNotIn("sk-secret", (self.root / "data" / "practice.json").read_text(encoding="utf-8"))
 
@@ -251,6 +261,10 @@ class ServerTest(unittest.TestCase):
         self.call("POST", "/api/tts", {"text": "Third one."})
         self.assertEqual(self.speech_calls[-1][4], ai.TTS_MODEL)
 
+        _, s = self.call("PUT", "/api/settings", {"my_name": "  Ping ", "hometown": "Hangzhou"})
+        self.assertEqual((s["my_name"], s["hometown"]), ("Ping", "Hangzhou"))
+        for bad in ({"my_name": "x" * 41}, {"hometown": "{name}"}, {"my_name": "<b>"}):
+            self.assertEqual(self.call("PUT", "/api/settings", bad)[0], 400, bad)
         _, s = self.call("PUT", "/api/settings", {"tts": "browser", "voice": "cedar", "pace": "slow"})
         self.assertEqual((s["tts"], s["voice"], s["pace"]), ("browser", "cedar", "slow"))
         for bad in ({"tts": "robot"}, {"voice": "robot"}, {"pace": "fast"}, {"tts_model": "gpt-9"}):

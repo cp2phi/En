@@ -72,6 +72,21 @@ Each file is a JSON array, one prompt per line:
 - `say` (optional): an English line the app reads aloud before the learner
   answers — a scene partner's line, a sentence to repeat, a Table Topics
   question.
+- `example` (optional; required for small talk): one natural model answer
+  shown after the learner replies, 1–3 short sentences (3–60 words), the way
+  a friendly New Zealander would really say it. English only.
+
+Tracks are declared in `prompts/<module>/_meta.json`. Besides `name` and the
+timing lights (`green`, `yellow`, `red` in seconds), a track may set `group`
+(a heading for its button row, e.g. "Small talk") and `focus` (which AI
+feedback style to use, e.g. "smalltalk"). In a ladder module only tracks named
+`l1`…`l6` are levels that unlock; other tracks are always open.
+
+Small-talk prompts (`prompts/speak/st_*.json`): `say` is the other person's
+line, `task` names who they are, the learner's situation if it matters, and
+the kind of reply wanted (answer + detail + ask back, react, follow-up
+question, compliment, polite disagreement, deflect, exit), and `example` is
+always present.
 - Topics should be varied: work, IT, food, sport, shopping, travel, health,
   home, friends, money, feelings, opinions, New Zealand life. Never the same
   idea twice in a file.

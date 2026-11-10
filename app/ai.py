@@ -120,6 +120,12 @@ MODULE_FOCUS = {
     "improv": " This is improv practice: say whether they accepted the offer and added something"
               " new, and whether they answered quickly and simply. Never criticise silliness.",
     "toast": " This is Toastmasters practice: comment on structure (opening, points, closing).",
+    "smalltalk": " This is small-talk practice: a quick spoken reply in a casual conversation."
+                 " Judge whether it sounds natural, warm and relaxed (not formal or textbook), whether"
+                 " it fits the situation, and whether it keeps the conversation going (adds a detail,"
+                 " asks something back, or closes politely when that is the task). In \"natural\","
+                 " give what a friendly New Zealander would actually say, short. In \"vocab\", prefer"
+                 " ready-to-use small-talk phrases.",
 }
 
 

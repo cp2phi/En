@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app import cloze  # noqa: E402
 
 ANSWER = re.compile(r"^[A-Za-z][A-Za-z' -]*$")
+# Filled in from Settings when shown: the learner's own name and where they are from.
+PLACEHOLDERS = {"{name}", "{hometown}"}
 CJK = re.compile(r"[一-鿿]")
 
 
@@ -82,6 +84,14 @@ def check_prompts(folder: Path) -> list[str]:
                 errors.append(f"{where}: zh has no Chinese")
             if "say" in item and CJK.search(item["say"]):
                 errors.append(f"{where}: say must be English")
+            if "example" in item:
+                example = item["example"]
+                if not isinstance(example, str) or not example.strip() or CJK.search(example):
+                    errors.append(f"{where}: example must be English text")
+                elif not 3 <= len(example.split()) <= 60:
+                    errors.append(f"{where}: example should be a short spoken answer (3-60 words)")
+                elif set(re.findall(r"\{[^}]*\}", example)) - PLACEHOLDERS or re.search(r"\{[^}]*$|^[^{]*\}", example):
+                    errors.append(f"{where}: example may only use the placeholders {', '.join(sorted(PLACEHOLDERS))}")
         print(f"{path.name}: {len(items)} prompts")
     return errors
 

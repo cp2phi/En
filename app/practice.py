@@ -3,6 +3,9 @@
 Prompts live in prompts/<module>/<track>.json, with prompts/<module>/_meta.json
 naming the module and its tracks. The write and speak modules are ladders:
 track "l<N>" opens after UNLOCK_SESSIONS good sessions on track "l<N-1>".
+Other tracks in a ladder module (e.g. the small-talk scenes) are always open.
+A track may set "group" (a heading in the UI) and "focus" (what the AI
+feedback concentrates on, see ai.MODULE_FOCUS).
 """
 
 import json
@@ -42,7 +45,8 @@ def load_prompts(root: Path) -> dict:
             path = folder / f"{track}.json"
             items = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
             tracks[track] = info | {
-                "prompts": [item | {"module": module, "track": track} for item in items]
+                "prompts": [item | {"module": module, "track": track,
+                                    "focus": info.get("focus") or module} for item in items]
             }
         bank[module] = {"name": meta["name"], "ladder": bool(meta.get("ladder")), "tracks": tracks}
     return bank
@@ -92,6 +96,8 @@ def meta(bank: dict, data: dict) -> dict:
                 "locked": is_locked(bank, data, module, track),
                 "good": good_sessions(data, module, track),
                 "timing": [t[k] for k in ("green", "yellow", "red")] if "green" in t else None,
+                "level": track_level(track) if info["ladder"] else None,
+                "group": t.get("group") or ("Levels" if info["ladder"] and track_level(track) else ""),
             })
         out[module] = {"name": info["name"], "ladder": info["ladder"], "tracks": tracks,
                        "unlock_sessions": UNLOCK_SESSIONS}

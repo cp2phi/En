@@ -1,3 +1,4 @@
+import json
 import random
 import unittest
 from datetime import date, timedelta
@@ -376,6 +377,24 @@ class PracticeTest(unittest.TestCase):
         only_silent = practice._summary([self.data["sessions"][-1]])
         self.assertIsNone(only_silent["wpm"])
 
+    def test_extra_tracks_in_a_ladder_are_always_open(self):
+        self.bank["write"]["tracks"]["st_chat"] = {
+            "name": "Chat", "group": "Small talk", "focus": "smalltalk",
+            "prompts": [{"id": "st-1", "level": 3, "task": "t", "zh": "说", "module": "write",
+                         "track": "st_chat", "focus": "smalltalk"}]}
+        self.assertFalse(practice.is_locked(self.bank, self.data, "write", "st_chat"))
+        tracks = {t["id"]: t for t in practice.meta(self.bank, self.data)["write"]["tracks"]}
+        self.assertEqual((tracks["l1"]["group"], tracks["l1"]["level"]), ("Levels", 1))
+        self.assertEqual((tracks["st_chat"]["group"], tracks["st_chat"]["level"], tracks["st_chat"]["locked"]),
+                         ("Small talk", None, False))
+        self.assertTrue(tracks["l2"]["locked"])
+        # Sessions on an extra track never unlock ladder levels.
+        for _ in range(practice.UNLOCK_SESSIONS + 2):
+            self.do(self.bank["write"]["tracks"]["st_chat"]["prompts"][0], "Not bad thanks, busy week.", score=5)
+        self.assertTrue(practice.is_locked(self.bank, self.data, "write", "l2"))
+        toast = practice.meta(self.bank, self.data)["toast"]["tracks"][0]
+        self.assertEqual((toast["group"], toast["level"]), ("", None))
+
     def test_stats_streak_and_rank(self):
         p = self.bank["write"]["tracks"]["l1"]["prompts"][0]
         for back in (0, 1, 2, 4):
@@ -413,11 +432,53 @@ class PromptBankTest(unittest.TestCase):
                         self.assertNotIn(p["id"], ids)
                         ids.add(p["id"])
                         self.assertTrue(p["task"].strip() and p["zh"].strip())
-        for module in ("write", "speak"):
-            self.assertEqual(list(bank[module]["tracks"]), [f"l{i}" for i in range(1, 7)])
-            self.assertTrue(bank[module]["ladder"])
+        levels = [f"l{i}" for i in range(1, 7)]
+        self.assertEqual(list(bank["write"]["tracks"]), levels)
+        self.assertEqual(list(bank["speak"]["tracks"])[:6], levels)
+        self.assertTrue(bank["write"]["ladder"] and bank["speak"]["ladder"])
         self.assertEqual(len(bank["toast"]["tracks"]["table_topics"]["prompts"]), 100)
+
+    def test_small_talk_section(self):
+        bank = practice.load_prompts(ROOT / "prompts")
+        small = {k: t for k, t in bank["speak"]["tracks"].items() if k.startswith("st_")}
+        self.assertEqual(len(small), 10)
+        prompts = [p for t in small.values() for p in t["prompts"]]
+        self.assertEqual(len(prompts), 400)
+        for t in small.values():
+            self.assertEqual((t["group"], t["focus"], t["green"] < t["red"] <= 30), ("Small talk", "smalltalk", True))
+        self.assertTrue(all(p["focus"] == "smalltalk" and p["example"].strip() for p in prompts))
+        self.assertGreaterEqual(sum(1 for p in prompts if p.get("say")), 350, "most prompts give a line to answer")
+        self.assertEqual(bank["speak"]["tracks"]["l3"]["prompts"][0]["focus"], "speak")
+        intro = [p for p in prompts if "{name}" in p["example"]]
+        self.assertGreaterEqual(len(intro), 8, "self-introductions use the learner's own name")
+        invented = ("I'm Wei", "I'm Jun", "Chengdu, in China", "my wife", "Ben's dad")
+        self.assertFalse([p["id"] for p in prompts if any(x in p["example"] for x in invented)])
         self.assertIs(practice.find_prompt(bank, "nope"), None)
+
+
+class CheckerTest(unittest.TestCase):
+    def test_prompt_examples_are_validated(self):
+        import subprocess
+        import sys
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "prompts" / "speak"
+            folder.mkdir(parents=True)
+            good = {"id": "s-st_x-01", "level": 1, "task": "Reply.", "zh": "回答。", "say": "Hi!",
+                    "example": "Hey, not bad thanks. You?"}
+            rows = [good, good | {"id": "s-st_x-02", "example": "你好"},
+                    good | {"id": "s-st_x-03", "example": "Hi"}, good | {"id": "s-st_x-04", "example": ""},
+                    good | {"id": "s-st_x-05", "example": "Hi, I'm {name} from {hometown}. You?"},
+                    good | {"id": "s-st_x-06", "example": "Hi, I'm {first_name}, nice to meet you."}]
+            (folder / "st_x.json").write_text(json.dumps(rows))
+            out = subprocess.run([sys.executable, str(ROOT / "tools" / "check_bank.py"), str(folder)],
+                                 capture_output=True, text=True).stdout
+        self.assertIn("4 errors", out)
+        self.assertIn("s-st_x-06: example may only use the placeholders", out)
+        self.assertNotIn("s-st_x-05", out)
+        self.assertIn("s-st_x-02: example must be English", out)
+        self.assertIn("s-st_x-03: example should be a short spoken answer", out)
+        self.assertNotIn("s-st_x-01", out)
 
 
 class AiFeedbackTest(unittest.TestCase):

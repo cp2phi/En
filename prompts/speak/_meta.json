@@ -4,5 +4,15 @@
  "l3": {"name": "L3 Tell an experience", "green": 60, "yellow": 90, "red": 120},
  "l4": {"name": "L4 Opinion and reasons", "green": 120, "yellow": 150, "red": 180},
  "l5": {"name": "L5 Improvised story or rebuttal", "green": 120, "yellow": 150, "red": 180},
- "l6": {"name": "L6 Impromptu speech", "green": 120, "yellow": 150, "red": 180}
+ "l6": {"name": "L6 Impromptu speech", "green": 120, "yellow": 150, "red": 180},
+ "st_basics": {"name": "Everyday questions", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_office": {"name": "Office kitchen & corridor", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_meetings": {"name": "Before meetings & calls", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_starting": {"name": "Starting a conversation", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_events": {"name": "Networking & meetups", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_service": {"name": "Cafés, shops & services", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_neighbours": {"name": "Neighbours, friends & parties", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_kiwi": {"name": "Kiwi topics", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_reactions": {"name": "Reacting & keeping it going", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "st_tricky": {"name": "Tricky moments & exits", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30}
 }}

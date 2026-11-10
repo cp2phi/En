@@ -21,6 +21,8 @@ DEFAULT_SETTINGS = {
     "accent": "us", "new_per_day": 20, "model": ai.DEFAULT_MODEL,
     # Read-aloud: "openai" (natural voice, cached) or "browser" (built-in speech synthesis).
     "tts": "openai", "voice": ai.TTS_VOICES[0], "pace": "normal", "tts_model": ai.TTS_MODEL,
+    # Filled into example answers that contain {name} / {hometown} (small talk introductions).
+    "my_name": "", "hometown": "",
 }
 TTS_ENGINES = ("openai", "browser")
 MAX_BODY = 40 * 1024 * 1024  # a few minutes of recorded audio, base64 encoded
@@ -167,7 +169,7 @@ class App:
             if prompt["task"].startswith("Translate"):
                 task += f"\nChinese sentence: {prompt['zh']}"
             try:
-                feedback = self.feedback(prompt["module"], task, text, mode, key, self.settings.load()["model"])
+                feedback = self.feedback(prompt["focus"], task, text, mode, key, self.settings.load()["model"])
             except ai.AIError as e:
                 ai_error = str(e)
 
@@ -305,6 +307,12 @@ class App:
                     if body["accent"] not in ("us", "uk"):
                         raise ApiError(400, "accent must be us or uk")
                     settings["accent"] = body["accent"]
+                for field in ("my_name", "hometown"):
+                    if field in body:
+                        value = " ".join(str(body[field] or "").split())
+                        if len(value) > 40 or any(c in value for c in "{}<>"):
+                            raise ApiError(400, f"{field} must be at most 40 characters, without {{}} or <>")
+                        settings[field] = value
                 if "new_per_day" in body:
                     try:
                         settings["new_per_day"] = max(0, min(500, int(body["new_per_day"])))
