@@ -28,7 +28,7 @@ python3 -m unittest discover -s tests -t .   # 运行测试
 | 添加 / 积累 | 粘贴句子，指出不懂的部分，AI 解释并填好卡片，勾选要保留的解释。 |
 | 单词本 | 查看、搜索、删除。 |
 | 设置 | OpenAI key、AI 模型、每天新词上限；朗读语音（OpenAI 自然语音或浏览器语音）、英式/美式口音、声音、语速、语音模型，可以先试听再保存。 |
-| 同步 | 把 `data/` 提交并推送到 git 远程，换电脑后 `git pull` 就能接着练。 |
+| 同步 | 把整个仓库（代码、题库、练习记录、朗读音频缓存）提交并推送到 git 远程，同时拉取别的电脑上传的内容。换电脑后 `git clone` 或 `git pull` 就能接着练。只有存 API key 的 `config.local.json` 永远不上传。 |
 
 练习模块各有自己的题库，不围绕生词出题；练习中遇到不会的表达，点「加入生词」沉淀到单词本。
 
@@ -45,7 +45,7 @@ python3 -m unittest discover -s tests -t .   # 运行测试
 | 名词词组 | 300 | 同上，每场景 30 |
 | 其他 | 200 | 连接词 40、委婉表达 50、习语俚语 60、常用句式 50 |
 | 组合（多空） | 20 | 一句挖掉动词 + 名词 |
-| 语法专题 | 420 | 过去时 100、将来时 40、现在进行时 40、虚拟语气 40、其他常用时态 60、第三人称 40、复数 40、其他语法 60（括号里给原形提示） |
+| 语法专题 | 420 | 过去时 100、将来时 40、现在进行时 40、虚拟语气 40、其他常用时态 60、第三人称 40、复数 40、其他语法 60。只给首字母，不给原形，词和语法一起考 |
 
 练习题库：一直写 240 题、一直说 240 题、Improv 250 题、Toastmasters 160 题。
 
@@ -64,21 +64,22 @@ app/         后端（标准库 HTTP 服务、间隔重复、判题、练习与�
 static/      前端（原生 HTML/JS）
 questions/   填空题库：questions/<词类>/<场景>.json
 prompts/     写、说、Improv、Toastmasters 题库：prompts/<模块>/<分组>.json
-data/        你的练习记录（同步按钮上传的就是这个目录），data/journal/ 保存每次写和说的原文与反馈
+data/        你的练习记录，data/journal/ 保存每次写和说的原文与反馈
+cache/tts/   生成过的朗读音频（mp3）
 docs/        出题规范
 tools/       题库检查脚本
 tests/       测试
 ```
 
-`config.local.json` 保存 OpenAI key，`cache/tts/` 保存生成过的朗读音频，两者都在 `.gitignore` 里，不会被同步上传。
+`config.local.json` 保存 OpenAI key，在 `.gitignore` 里，同步时还会再强制排除一次，永远不会上传；换电脑后要在设置里重新填 key。`cache/tts/` 保存生成过的朗读音频，会随同步上传，换电脑后不用重新生成（全部填空句子的音频约 60 MB）。
 
 ## 加题 / 扩题
 
-规范见 [docs/content-guide.md](docs/content-guide.md)。填空题在 `questions/<词类>/<场景>.json` 里加一行，`{}` 里是答案，`|` 分隔其他可接受的答案，`::` 后面是给学习者看的提示，一句话可以有多个空：
+规范见 [docs/content-guide.md](docs/content-guide.md)。填空题在 `questions/<词类>/<场景>.json` 里加一行，`{}` 里是答案，`|` 分隔其他可接受的答案，一句话可以有多个空：
 
 ```json
 {"id":"v-work-01","level":2,"g":"3sg","zh":"她每周一主持团队例会。","en":"She {runs|chairs|leads} the team meeting every Monday."}
-{"id":"g-past-001","level":2,"g":"past","zh":"我昨天去了超市。","en":"I {went::go} to the supermarket yesterday."}
+{"id":"g-past-001","level":2,"g":"past","zh":"我昨天去了超市。","en":"I {went} to the supermarket yesterday."}
 ```
 
 加完运行 `python3 tools/check_bank.py questions/<词类>`，打印 OK 才算合格。`id` 一旦用过就不要改，练习记录靠它对应。

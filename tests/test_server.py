@@ -95,8 +95,8 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(meta["by_pos"]["grammar"]["past"], 100)
         _, drill = self.call("GET", "/api/cloze/next?pos=grammar&scene=past")
         blank = next(seg for seg in drill["question"]["segments"] if "blank" in seg)
-        self.assertTrue(blank["cue"])
-        self.assertEqual(blank["hint"], "")
+        self.assertNotIn("cue", blank)
+        self.assertRegex(blank["hint"], r"^[A-Za-z]$", "grammar drills show the first letter only")
         _, nxt = self.call("GET", "/api/cloze/next?pos=verb&scene=work&level=3")
         q = nxt["question"]
         self.assertEqual((q["pos"], q["scene"], q["level"]), ("verb", "work", 3))
@@ -278,24 +278,55 @@ class SyncTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def test_no_data_yet(self):
-        self.assertFalse(sync(self.repo)["ok"])
+    def pushed(self):
+        return sorted(git(self.remote, "ls-tree", "-r", "--name-only", "main").split())
 
-    def test_commits_only_data_and_pushes(self):
+    def test_nothing_to_sync(self):
+        result = sync(self.repo)
+        self.assertTrue(result["ok"], result)
+        self.assertIn("没有新的", result["message"])
+
+    def test_commits_the_whole_repo_except_the_key(self):
         (self.repo / "data").mkdir()
         (self.repo / "data" / "words.json").write_text("{}\n")
+        (self.repo / "cache" / "tts").mkdir(parents=True)
+        audio = bytes(range(256)) * 4
+        (self.repo / "cache" / "tts" / "abc.mp3").write_bytes(audio)
+        (self.repo / "app.py").write_text("print('new code')\n")
         (self.repo / "config.local.json").write_text('{"openai_key": "sk-secret"}')
-        (self.repo / "scratch.py").write_text("print('wip')\n")
 
         result = sync(self.repo, now=datetime(2026, 11, 10, 21, 30))
         self.assertTrue(result["ok"], result)
-        self.assertEqual(git(self.repo, "log", "-1", "--format=%s").strip(), "practice: sync 2026-11-10 21:30")
-        pushed = git(self.remote, "ls-tree", "-r", "--name-only", "main").split()
-        self.assertEqual(sorted(pushed), [".gitignore", "data/words.json"])
+        self.assertEqual(git(self.repo, "log", "-1", "--format=%s").strip(), "sync: 2026-11-10 21:30")
+        self.assertEqual(self.pushed(), [".gitignore", "app.py", "cache/tts/abc.mp3", "data/words.json"])
+        blob = subprocess.run(["git", "show", "main:cache/tts/abc.mp3"], cwd=self.remote,
+                              capture_output=True, check=True).stdout
+        self.assertEqual(blob, audio, "binary audio arrives unchanged")
+
+        # Deletions and edits are synced too.
+        (self.repo / "app.py").unlink()
+        (self.repo / "data" / "words.json").write_text('{"words": {}}\n')
+        self.assertTrue(sync(self.repo)["ok"])
+        self.assertEqual(self.pushed(), [".gitignore", "cache/tts/abc.mp3", "data/words.json"])
 
         again = sync(self.repo)
         self.assertTrue(again["ok"])
         self.assertIn("没有新的", again["message"])
+
+    def test_key_stays_local_even_if_gitignore_changes(self):
+        (self.repo / ".gitignore").write_text("")
+        (self.repo / "config.local.json").write_text('{"openai_key": "sk-secret"}')
+        self.assertTrue(sync(self.repo)["ok"])
+        self.assertNotIn("config.local.json", self.pushed())
+
+    def test_refuses_when_the_key_file_is_tracked(self):
+        (self.repo / "config.local.json").write_text('{"openai_key": "sk-secret"}')
+        git(self.repo, "add", "-f", "config.local.json")
+        git(self.repo, "commit", "-m", "oops")
+        result = sync(self.repo)
+        self.assertFalse(result["ok"])
+        self.assertIn("git rm --cached config.local.json", result["message"])
+        self.assertNotIn("config.local.json", self.pushed(), "nothing was pushed")
 
     def test_pulls_changes_from_another_computer(self):
         other = Path(self.tmp.name) / "other"
