@@ -194,7 +194,7 @@ async function clozeView() {
   }
   if (clozeFilters.level && !(clozeFilters.level in counts.levels)) clozeFilters.level = "";
   const names = { pos: (k) => POS_NAMES[k] || k, scenes: (k) => SCENE_NAMES[k] || k, levels: (k) => "L" + k };
-  const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left} left)`;
+  const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left})`; // total / not yet attempted
   // group: which counts feed the options; key: the filter it sets; rerender: whether other counts change.
   const select = (group, key, placeholder, rerender) => {
     const entries = Object.entries(counts[group]);
