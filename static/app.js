@@ -182,32 +182,45 @@ async function homeView() {
 }
 
 // ---- cloze ------------------------------------------------------------
+const clozeMeta = () => api("GET", "cloze/meta?" + new URLSearchParams(
+  Object.entries({ pos: clozeFilters.pos, scene: clozeFilters.scene }).filter(([, v]) => v)));
+
 async function clozeView() {
-  const meta = await api("GET", "cloze/meta");
-  const select = (key, label, options) =>
-    h("select", { "aria-label": label, onchange: (e) => { clozeFilters[key] = e.target.value; loadQuestion(); } },
-      h("option", { value: "" }, label),
-      options.map(([value, text]) => h("option", { value, selected: clozeFilters[key] === String(value) }, text)));
-  const box = h("div", {});
-  // Scenes (or grammar topics) offered depend on the chosen word class.
-  const scenes = {};
-  for (const [pos, counts] of Object.entries(meta.by_pos)) {
-    if (clozeFilters.pos && clozeFilters.pos !== pos) continue;
-    for (const [scene, n] of Object.entries(counts)) scenes[scene] = (scenes[scene] || 0) + n;
+  let { counts } = await clozeMeta();
+  // Scenes (or grammar topics) offered depend on the chosen word class; drop a stale scene.
+  if (clozeFilters.scene && !(clozeFilters.scene in counts.scenes)) {
+    clozeFilters.scene = "";
+    ({ counts } = await clozeMeta());
   }
-  if (clozeFilters.scene && !(clozeFilters.scene in scenes)) clozeFilters.scene = "";
-  const posList = Object.entries(meta.pos).sort(([a], [b]) =>
-    (POS_ORDER.indexOf(a) + 1 || 99) - (POS_ORDER.indexOf(b) + 1 || 99));
-  const posSelect = h("select", { "aria-label": "Word class", onchange: (e) => { clozeFilters.pos = e.target.value; clozeView(); } },
-    h("option", { value: "" }, "All word classes and topics"),
-    posList.map(([k, n]) => h("option", { value: k, selected: clozeFilters.pos === k }, `${POS_NAMES[k] || k} (${n})`)));
+  if (clozeFilters.level && !(clozeFilters.level in counts.levels)) clozeFilters.level = "";
+  const names = { pos: (k) => POS_NAMES[k] || k, scenes: (k) => SCENE_NAMES[k] || k, levels: (k) => "L" + k };
+  const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left} left)`;
+  // group: which counts feed the options; key: the filter it sets; rerender: whether other counts change.
+  const select = (group, key, placeholder, rerender) => {
+    const entries = Object.entries(counts[group]);
+    if (group === "pos") entries.sort(([a], [b]) => (POS_ORDER.indexOf(a) + 1 || 99) - (POS_ORDER.indexOf(b) + 1 || 99));
+    return h("select", { "aria-label": placeholder, "data-group": group,
+      onchange: (e) => { clozeFilters[key] = e.target.value; if (rerender) clozeView(); else loadQuestion(); } },
+      h("option", { value: "" }, placeholder),
+      entries.map(([k, c]) => h("option", { value: k, selected: clozeFilters[key] === k }, label(group, k, c))));
+  };
+  // After each question the "left" numbers change: relabel the options in place.
+  async function refreshCounts() {
+    ({ counts } = await clozeMeta());
+    for (const sel of view.querySelectorAll("select[data-group]")) {
+      for (const opt of sel.options) {
+        const c = counts[sel.dataset.group][opt.value];
+        if (opt.value && c) opt.textContent = label(sel.dataset.group, opt.value, c);
+      }
+    }
+  }
+  const box = h("div", {});
   show(
     h("h1", {}, clozeFilters.mode === "wrongbook" ? "Redo wrong answers" : "Translation cloze"),
     h("div", { class: "row", style: "margin-bottom:16px" },
-      posSelect,
-      select("scene", clozeFilters.pos === "grammar" ? "All topics" : "All scenes",
-        Object.entries(scenes).map(([k, n]) => [k, `${SCENE_NAMES[k] || k} (${n})`])),
-      select("level", "All levels", Object.entries(meta.levels).map(([k, n]) => [k, `L${k} (${n})`])),
+      select("pos", "pos", "All word classes and topics", true),
+      select("scenes", "scene", clozeFilters.pos === "grammar" ? "All topics" : "All scenes", true),
+      select("levels", "level", "All levels", false),
       clozeFilters.mode === "wrongbook"
         ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "Back to normal practice")
         : null,
@@ -216,6 +229,7 @@ async function clozeView() {
   );
 
   async function loadQuestion() {
+    refreshCounts();
     const params = new URLSearchParams(Object.entries(clozeFilters).filter(([, v]) => v));
     const { question: q, redo } = await api("GET", "cloze/next?" + params);
     if (!q) {
@@ -248,8 +262,8 @@ async function clozeView() {
         h("span", { class: "tag" }, SCENE_NAMES[q.scene] || q.scene),
         h("span", { class: "tag" }, "L" + q.level),
         redo ? h("span", { class: "tag redo" }, "Redo") : null),
-      h("div", { class: "zh" }, q.zh),
-      sentence, feedback, actions);
+      // English first; the Chinese sits underneath as the meaning to aim for.
+      sentence, h("div", { class: "zh zh-below" }, q.zh), feedback, actions);
 
     function answeringActions() {
       fill(actions, 

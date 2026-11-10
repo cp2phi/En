@@ -130,6 +130,26 @@ class ClozeTest(unittest.TestCase):
         self.assertEqual(hints, ["", ""])
         self.assertEqual([seg["hint"] for seg in cloze.public_view(self.q)["segments"] if "blank" in seg], ["r", "m"])
 
+    def test_counts_total_and_left(self):
+        qs = self.questions | {"s1": self._q("s1", "We {won}.", level=2) | {"pos": "verb", "scene": "sports"},
+                               "a1": self._q("a1", "It's {cold}.") | {"pos": "adjective", "scene": "work"}}
+        p = {"seq": 0, "items": {}}
+        c = cloze.counts(qs, p, {})
+        self.assertEqual(c["pos"], {"verb": {"total": 4, "left": 4}, "adjective": {"total": 1, "left": 1}})
+        cloze.record(p, "q1", "correct", D0)   # done
+        cloze.record(p, "q2", "wrong", D0)     # attempted, in the redo queue: not left
+        cloze.record(p, "q3", "never", D0)     # hidden: not left
+        c = cloze.counts(qs, p, {})
+        self.assertEqual(c["pos"]["verb"], {"total": 4, "left": 1})
+        self.assertEqual(c["scenes"], {"work": {"total": 4, "left": 1}, "sports": {"total": 1, "left": 1}})
+        self.assertEqual(c["levels"], {"1": {"total": 2, "left": 1}, "2": {"total": 2, "left": 1},
+                                       "4": {"total": 1, "left": 0}})
+        # Scenes within the word class, levels within word class and scene.
+        c = cloze.counts(qs, p, {"pos": "verb", "scene": "sports"})
+        self.assertEqual(set(c["scenes"]), {"work", "sports"})
+        self.assertEqual(c["levels"], {"2": {"total": 1, "left": 1}})
+        self.assertEqual(cloze.counts(qs, p, {"pos": "adjective"})["scenes"], {"work": {"total": 1, "left": 1}})
+
     def test_reveal_includes_the_note(self):
         q = self.q | {"note": "Run a meeting means lead it."}
         self.assertEqual(cloze.reveal(q)["note"], "Run a meeting means lead it.")

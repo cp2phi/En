@@ -27,6 +27,7 @@ h1 { font-size: 22px; margin: 0 0 16px; }
 .stat b { display: block; font-size: 28px; }
 .muted { color: var(--muted); font-size: 14px; }
 .zh { font-size: 19px; margin-bottom: 10px; }
+.zh-below { margin: 4px 0 6px; font-size: 17px; }
 .en { font-size: 22px; line-height: 2.2; }
 .term { font-size: 34px; font-weight: 600; }
 .tag { display: inline-block; padding: 0 8px; border: 1px solid var(--line); border-radius: 10px;

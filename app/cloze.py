@@ -232,6 +232,30 @@ def meta(questions: dict) -> dict:
     return {"pos": pos, "by_pos": by_pos, "levels": dict(sorted(levels.items())), "total": len(questions)}
 
 
+def is_left(progress: dict, qid: str) -> bool:
+    """Not attempted yet ("Never show again" questions are not left)."""
+    item = progress["items"].get(qid)
+    return item is None or item["status"] == "new"
+
+
+def counts(questions: dict, progress: dict, filters: dict) -> dict:
+    """{total, left} for each dropdown option. Word classes are counted over everything,
+    scenes within the chosen word class, levels within the chosen word class and scene."""
+    def tally(rows, key):
+        out: dict = {}
+        for q in rows:
+            c = out.setdefault(str(q[key]), {"total": 0, "left": 0})
+            c["total"] += 1
+            c["left"] += is_left(progress, q["id"])
+        return out
+
+    rows = list(questions.values())
+    in_pos = [q for q in rows if not filters.get("pos") or q["pos"] == filters["pos"]]
+    in_scene = [q for q in in_pos if not filters.get("scene") or q["scene"] == filters["scene"]]
+    return {"pos": tally(rows, "pos"), "scenes": tally(in_pos, "scene"),
+            "levels": dict(sorted(tally(in_scene, "level").items()))}
+
+
 def stats(questions: dict, progress: dict, today: date) -> dict:
     out = {"total": len(questions), "passed": 0, "learning": 0, "never": 0, "due": 0}
     for qid, item in progress["items"].items():

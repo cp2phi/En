@@ -205,7 +205,8 @@ class App:
 
             # ---- cloze ----
             case ("GET", "cloze", "meta"):
-                return cloze.meta(self.questions)
+                return cloze.meta(self.questions) | {
+                    "counts": cloze.counts(self.questions, self.cloze.load(), query)}
             case ("GET", "cloze", "next"):
                 progress = self.cloze.load()
                 q = cloze.next_question(self.questions, progress, query, today)
