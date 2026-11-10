@@ -330,7 +330,14 @@ async function wrongbookView() {
           } }, "Redo them all"))
       : h("div", { class: "card" }, "No wrong answers yet."),
     items.map((item) => h("div", { class: "card" },
-      h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
+      h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
+        h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
+        h("button", { class: "link", type: "button", title: "Take this question off the wrong book", onclick: async () => {
+          if (!confirm("Remove this question from the wrong book? It comes back if you get it wrong again.")) return;
+          await api("POST", "cloze/wrongbook/remove", { id: item.id });
+          toast("Removed from the wrong book");
+          wrongbookView();
+        } }, "Remove")),
       h("div", { class: "answer" }, item.sentence,
         h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊")))),
   );
@@ -754,6 +761,131 @@ async function practiceView(module) {
   await loadPrompt();
 }
 
+// ---- line chart (inline SVG, no library) --------------------------------
+// series: [{name, color (CSS var), values: number[]}], dates: string[] (one per value).
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs, ...kids) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+  for (const kid of kids.flat()) if (kid != null) el.append(kid);
+  return el;
+}
+
+function niceStep(max, ticks = 4) {
+  const raw = Math.max(max, 1) / ticks;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  return [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+}
+
+function formatTick(v) {
+  return v >= 10000 ? `${+(v / 1000).toFixed(1)}K` : v.toLocaleString("en-NZ");
+}
+
+function shortDate(iso) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-NZ", { day: "numeric", month: "short" });
+}
+
+function lineChart({ title, unit, dates, series }) {
+  const W = 760, H = 220, M = { top: 14, right: 70, bottom: 26, left: 48 };
+  const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
+  const max = Math.max(1, ...series.flatMap((s) => s.values));
+  const step = niceStep(max);
+  const top = Math.ceil(max / step) * step;
+  const n = dates.length;
+  const x = (i) => M.left + (n === 1 ? iw : (i / (n - 1)) * iw);
+  const y = (v) => M.top + ih - (v / top) * ih;
+  // unit: "min", or [singular, plural] such as ["word", "words"].
+  const fmt = (v) => `${v.toLocaleString("en-NZ")} ${Array.isArray(unit) ? unit[v === 1 ? 0 : 1] : unit}`;
+
+  const grid = [];
+  for (let v = 0; v <= top + 1e-9; v += step) {
+    grid.push(svg("line", { x1: M.left, x2: M.left + iw, y1: y(v), y2: y(v),
+      stroke: v === 0 ? "var(--chart-axis)" : "var(--line)", "stroke-width": 1 }));
+    grid.push(svg("text", { x: M.left - 8, y: y(v) + 4, "text-anchor": "end", class: "chart-tick" }, formatTick(v)));
+  }
+  const xTicks = [...new Set([0, Math.round((n - 1) / 2), n - 1])].map((i) =>
+    svg("text", { x: x(i), y: H - 6, "text-anchor": n === 1 ? "end" : i === 0 ? "start" : i === n - 1 ? "end" : "middle",
+      class: "chart-tick" }, shortDate(dates[i])));
+
+  const lines = series.map((s) => n > 1 ? svg("path", {
+    d: s.values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(""),
+    fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }) : null);
+  const endDot = (s, i) => svg("circle", { cx: x(i), cy: y(s.values[i]), r: 4, fill: s.color,
+    stroke: "var(--card)", "stroke-width": 2 });
+  // Value at the end of each line; skipped when two end labels would collide (legend + tooltip carry it).
+  const ends = series.map((s) => y(s.values[n - 1]));
+  const collide = ends.some((a, i) => ends.some((b, j) => i < j && Math.abs(a - b) < 14));
+  const endLabels = collide ? [] : series.map((s) =>
+    svg("text", { x: x(n - 1) + 8, y: y(s.values[n - 1]) + 4, class: "chart-end" }, formatTick(s.values[n - 1])));
+
+  const cross = svg("line", { y1: M.top, y2: M.top + ih, stroke: "var(--chart-axis)", "stroke-width": 1, visibility: "hidden" });
+  const hoverDots = svg("g", { visibility: "hidden" });
+  const hit = svg("rect", { x: M.left, y: 0, width: iw, height: H, fill: "transparent" });
+  const chart = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", tabindex: 0, role: "img",
+    "aria-label": `${title}. Latest: ${series.map((s) => `${s.name} ${fmt(s.values[n - 1])}`).join(", ")}. Use the arrow keys to read each day.` },
+    grid, xTicks, lines, series.map((s) => endDot(s, n - 1)), endLabels, cross, hoverDots, hit);
+  const tip = h("div", { class: "chart-tip", hidden: true });
+  const box = h("div", { class: "chart-box" }, chart, tip);
+
+  let current = n - 1;
+  function showAt(i) {
+    current = Math.max(0, Math.min(n - 1, i));
+    const px = x(current);
+    cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("visibility", "visible");
+    hoverDots.replaceChildren(...series.map((s) => endDot(s, current)));
+    hoverDots.setAttribute("visibility", "visible");
+    fill(tip, h("div", { class: "muted" }, shortDate(dates[current])),
+      series.map((s) => h("div", { class: "chart-tip-row" },
+        h("span", { class: "chart-key", style: `background:${s.color}` }),
+        h("b", {}, fmt(s.values[current])),
+        // One series: the chart title already names it.
+        series.length > 1 ? [" ", h("span", { class: "muted" }, s.name)] : null)));
+    tip.hidden = false;
+    const rect = chart.getBoundingClientRect();
+    const left = (px / W) * rect.width;
+    tip.style.left = `${Math.min(rect.width - tip.offsetWidth, Math.max(0, left - tip.offsetWidth / 2))}px`;
+  }
+  function hide() {
+    cross.setAttribute("visibility", "hidden");
+    hoverDots.setAttribute("visibility", "hidden");
+    tip.hidden = true;
+  }
+  hit.addEventListener("pointermove", (e) => {
+    const rect = chart.getBoundingClientRect();
+    const sx = ((e.clientX - rect.left) / rect.width) * W;
+    showAt(n === 1 ? 0 : Math.round(((sx - M.left) / iw) * (n - 1)));
+  });
+  hit.addEventListener("pointerleave", hide);
+  chart.addEventListener("focus", () => showAt(current));
+  chart.addEventListener("blur", hide);
+  chart.addEventListener("keydown", (e) => {
+    const moves = { ArrowLeft: -1, ArrowRight: 1, Home: -n, End: n };
+    if (e.key in moves) { e.preventDefault(); showAt(current + moves[e.key]); }
+  });
+
+  const legend = series.length > 1 ? h("div", { class: "chart-legend" }, series.map((s) =>
+    h("span", {}, h("span", { class: "chart-key", style: `background:${s.color}` }), s.name))) : null;
+  return h("div", { class: "chart-wrap" }, h("div", { class: "chart-title" }, title), legend, box);
+}
+
+function growthCharts(growth) {
+  if (!growth.length) {
+    return h("div", { class: "card muted" }, "Charts appear once you have added words or practised.");
+  }
+  const dates = growth.map((d) => d.date);
+  const table = h("details", { class: "chart-table" }, h("summary", {}, "Table view"),
+    h("table", {}, h("thead", {}, h("tr", {}, ["Date", "Words in word bank", "Minutes speaking", "Minutes writing"].map((t) => h("th", {}, t)))),
+      h("tbody", {}, [...growth].reverse().map((d) => h("tr", {},
+        h("td", {}, d.date), h("td", {}, String(d.words)), h("td", {}, String(d.speak_minutes)), h("td", {}, String(d.write_minutes)))))));
+  return h("div", { class: "card" },
+    lineChart({ title: "Word bank size", unit: ["word", "words"], dates,
+      series: [{ name: "Words", color: "var(--series-1)", values: growth.map((d) => d.words) }] }),
+    lineChart({ title: "Practice minutes, cumulative", unit: "min", dates, series: [
+      { name: "Speaking (incl. Improv, Toastmasters)", color: "var(--series-1)", values: growth.map((d) => d.speak_minutes) },
+      { name: "Writing", color: "var(--series-2)", values: growth.map((d) => d.write_minutes) }] }),
+    table);
+}
+
 async function statsView() {
   const s = await api("GET", "practice/stats");
   const w = s.modules.write;
@@ -768,6 +900,7 @@ async function statsView() {
       h("div", { class: "card stat" }, h("b", {}, String(s.streak)), "day streak"),
       h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.write), "Keep writing unlocked"),
       h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.speak), "Keep speaking unlocked")),
+    growthCharts(s.growth),
     h("div", { class: "card" }, h("table", {},
       h("thead", {}, h("tr", {}, h("th", {}, "Writing"), h("th", {}, "Today"), h("th", {}, "Last 7 days"), h("th", {}, "7 days before"), h("th", {}, "All time"))),
       h("tbody", {},

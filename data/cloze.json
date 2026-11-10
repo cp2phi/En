@@ -1,0 +1,50 @@
+{
+ "items": {
+  "v-money-01": {
+   "attempts": 1,
+   "srs": {
+    "due": "2026-11-11",
+    "interval": 1,
+    "lapses": 1,
+    "last_reviewed": "2026-11-11",
+    "last_seq": 3,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 2
+   },
+   "status": "learning",
+   "wrong": 1
+  },
+  "v-restaurant-15": {
+   "attempts": 1,
+   "srs": {
+    "due": "2026-11-11",
+    "interval": 1,
+    "lapses": 1,
+    "last_reviewed": "2026-11-11",
+    "last_seq": 2,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 2
+   },
+   "status": "learning",
+   "wrong": 1
+  },
+  "v-travel-03": {
+   "attempts": 1,
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": "2026-11-11",
+    "last_seq": 1,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "status": "passed",
+   "wrong": 0
+  }
+ },
+ "seq": 3
+}

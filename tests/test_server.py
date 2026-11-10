@@ -115,6 +115,12 @@ class ServerTest(unittest.TestCase):
         _, summary = self.call("GET", "/api/summary")
         self.assertEqual((summary["cloze"]["learning"], summary["cloze"]["due"]), (1, 1))
 
+        self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 200)
+        self.assertEqual(self.call("GET", "/api/cloze/wrongbook")[1]["items"], [])
+        self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 404)
+        self.call("POST", "/api/cloze/answer", {"id": q["id"], "answers": ["zzzzzz"]})
+        self.assertEqual(len(self.call("GET", "/api/cloze/wrongbook")[1]["items"]), 1, "back after another miss")
+
         self.call("POST", "/api/cloze/mark", {"id": q["id"], "outcome": "never"})
         _, book = self.call("GET", "/api/cloze/wrongbook")
         self.assertEqual(book["items"], [])
@@ -207,6 +213,7 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(stats["modules"]["write"]["all"]["sessions"], 5)
         self.assertEqual(stats["modules"]["spoken"]["today"]["minutes"], 1.4)  # 75 s + 8 s small talk
         self.assertEqual((stats["levels"]["write"], stats["streak"]), (2, 1))
+        self.assertEqual(stats["growth"], [{"date": "2026-11-10", "words": 0, "speak_minutes": 1.4, "write_minutes": 1.7}])
         journal = json.loads((self.root / "data" / "journal" / "2026-11.json").read_text(encoding="utf-8"))
         self.assertEqual(len(journal["entries"]), 7)  # 5 writing, 1 Table Topics, 1 small talk
         self.assertEqual(journal["entries"][0]["text"], body["text"])

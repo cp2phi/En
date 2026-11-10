@@ -182,6 +182,25 @@ class ClozeTest(unittest.TestCase):
         self.assertIsNone(cloze.next_question(self.questions, p, {}, D0, rng))
         self.assertEqual(cloze.next_question(self.questions, p, {}, D0 + timedelta(days=1), rng)["id"], "q1")
 
+    def test_remove_from_wrong_book(self):
+        p = {"seq": 0, "items": {}}
+        cloze.record(p, "q1", "wrong", D0)
+        cloze.record(p, "q2", "correct", D0)
+        due_before = p["items"]["q1"]["srs"]["due"]
+        self.assertTrue(cloze.remove_from_wrong_book(p, "q1"))
+        self.assertEqual(cloze.wrong_book(self.questions, p), [])
+        self.assertIsNone(cloze.next_question(self.questions, p, {"mode": "wrongbook"}, D0))
+        self.assertEqual((p["items"]["q1"]["status"], p["items"]["q1"]["srs"]["due"]), ("learning", due_before),
+                         "the redo schedule is kept")
+        self.assertFalse(cloze.remove_from_wrong_book(p, "q1"), "already removed")
+        self.assertFalse(cloze.remove_from_wrong_book(p, "q2"), "never wrong")
+        self.assertFalse(cloze.remove_from_wrong_book(p, "nope"))
+        cloze.record(p, "q1", "reveal", D0)
+        self.assertEqual([r["id"] for r in cloze.wrong_book(self.questions, p)], ["q1"], "back after another miss")
+        # Records written before the flag existed still count as in the book.
+        legacy = {"seq": 1, "items": {"q3": {"status": "learning", "attempts": 1, "wrong": 1, "srs": srs.new_state()}}}
+        self.assertEqual([r["id"] for r in cloze.wrong_book(self.questions, legacy)], ["q3"])
+
     def test_never_and_filters_and_wrongbook_mode(self):
         p = {"seq": 0, "items": {}}
         cloze.record(p, "q1", "wrong", D0)
@@ -394,6 +413,22 @@ class PracticeTest(unittest.TestCase):
         self.assertTrue(practice.is_locked(self.bank, self.data, "write", "l2"))
         toast = practice.meta(self.bank, self.data)["toast"]["tracks"][0]
         self.assertEqual((toast["group"], toast["level"]), ("", None))
+
+    def test_growth_is_cumulative_per_day(self):
+        sessions = [
+            {"date": "2026-11-08", "module": "write", "seconds": 120},
+            {"date": "2026-11-08", "module": "speak", "seconds": 60},
+            {"date": "2026-11-10", "module": "toast", "seconds": 90},
+            {"date": "2026-11-10", "module": "improv", "seconds": 30},
+            {"date": "2026-11-10", "module": "write", "seconds": 30},
+        ]
+        g = practice.growth(sessions, ["2026-11-07", "2026-11-09", "2026-11-09", ""], D0)
+        self.assertEqual([d["date"] for d in g], ["2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10"])
+        self.assertEqual([d["words"] for d in g], [1, 1, 3, 3])
+        self.assertEqual([d["speak_minutes"] for d in g], [0, 1.0, 1.0, 3.0])
+        self.assertEqual([d["write_minutes"] for d in g], [0, 2.0, 2.0, 2.5])
+        self.assertEqual(practice.growth([], [], D0), [])
+        self.assertEqual(len(practice.growth([], ["2026-11-10"], D0)), 1, "a single day still gives a point")
 
     def test_stats_streak_and_rank(self):
         p = self.bank["write"]["tracks"]["l1"]["prompts"][0]

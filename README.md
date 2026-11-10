@@ -20,13 +20,13 @@ The interface is in English. Chinese appears only as learning support: the sente
 | Page | What it does |
 |---|---|
 | Cloze | Chinese → English fill-in-the-blank, served continuously. Filter by word class (or grammar topic), scene and level. An answer counts only if the word, its form and its spelling are all right. |
-| Wrong book | Every question you have missed, as Chinese/English pairs to read through, or redo them all. |
+| Wrong book | Every question you have missed, as Chinese/English pairs to read through, or redo them all. **Remove** takes one off the list (its redo schedule stays; it comes back if you miss it again). |
 | Keep writing | A six-level ladder, L1–L6: one-sentence translation → chat message → email → story or opinion → multi-paragraph piece → speech script. Five good sessions on a level unlock the next. You can write a Chinese word where you don't know the English. After you submit you get a natural rewrite, at most three issues that matter, and expressions you can save to the word bank with one click. |
 | Keep speaking | A six-level ladder, L1–L6: repeat a sentence → 30 seconds → an experience → an opinion → improvised story or rebuttal → impromptu speech. Recording, a timer and a "stuck" button; your speech is transcribed and you get feedback. |
 | Small talk (in Keep speaking) | 400 quick replies in 10 scenes, always open: everyday questions, office kitchen & corridor, before meetings & calls, starting a conversation, networking & meetups, cafés/shops/services, neighbours/friends/parties, Kiwi topics, reacting & keeping it going, tricky moments & exits. The other person's line is read aloud, you reply in 10–30 seconds, then see one natural example answer (it uses your own name and hometown from Settings). |
 | Improv | Grouped by the Improv 101 lessons: "Yes, and", spontaneity, storytelling, status, justification, scene set-ups, understanding game rules, and rescue phrases. |
 | Toastmasters | Table Topics (with green/yellow/red timing lights), Ice Breaker, evaluations, and meeting-role language. |
-| Stats | Rank and XP, streak, words written, typing speed, error rate, speaking time, speaking speed, stuck count, filler words, today vs. the last 7 days vs. the 7 days before, and the last 14 days. |
+| Stats | Line charts of your word-bank size and cumulative speaking and writing minutes (hover or use the arrow keys for each day; a table view lists every value). Rank and XP, streak, words written, typing speed, error rate, speaking time, speaking speed, stuck count, filler words, today vs. the last 7 days vs. the 7 days before, and the last 14 days. |
 | Review words | Forgot / Fuzzy / Remembered / Never show again. Due reviews come first, then new words. |
 | Add / Capture | Paste a sentence and mark the part you don't understand; the AI explains it and fills in the card, and you tick which notes to keep. |
 | Word bank | Browse, search and delete words. |

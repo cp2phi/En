@@ -1,0 +1,11 @@
+{
+ "accent": "us",
+ "hometown": "Auckland",
+ "model": "gpt-4o-mini",
+ "my_name": "Ping",
+ "new_per_day": 100,
+ "pace": "normal",
+ "tts": "openai",
+ "tts_model": "gpt-4o-mini-tts",
+ "voice": "marin"
+}

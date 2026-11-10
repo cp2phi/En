@@ -107,6 +107,21 @@ def reveal(q: dict) -> dict:
     return {"sentence": q["sentence"], "answers": [b[0] for b in q["blanks"]], "zh": q["zh"]}
 
 
+def in_wrong_book(item: dict) -> bool:
+    # Older records have no flag: they are in the book if they were ever answered wrong.
+    return item.get("in_wrong_book", item["wrong"] > 0) and item["status"] != "never"
+
+
+def remove_from_wrong_book(progress: dict, qid: str) -> bool:
+    """Take a question off the wrong book. Its redo schedule is unchanged, and it
+    comes back to the book if it is answered wrong again. Returns False if absent."""
+    item = progress["items"].get(qid)
+    if not item or not in_wrong_book(item):
+        return False
+    item["in_wrong_book"] = False
+    return True
+
+
 def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
     """Update progress for one question and return its item."""
     if outcome not in OUTCOMES:
@@ -134,6 +149,7 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
     else:  # wrong, reveal, guessed
         item["status"] = "learning"
         item["wrong"] += 1
+        item["in_wrong_book"] = True
         item["srs"] = srs.rate(item["srs"], "forget", today, seq)
     return item
 
@@ -160,8 +176,7 @@ def next_question(questions: dict, progress: dict, filters: dict, today: date,
     pool = [q for q in questions.values() if _matches(q, filters)]
 
     if filters.get("mode") == "wrongbook":
-        wrong = [q for q in pool if items.get(q["id"], {}).get("wrong", 0) > 0
-                 and items[q["id"]]["status"] != "never"]
+        wrong = [q for q in pool if q["id"] in items and in_wrong_book(items[q["id"]])]
         if not wrong:
             return None
         return min(wrong, key=lambda q: items[q["id"]]["srs"]["last_seq"])
@@ -185,7 +200,7 @@ def wrong_book(questions: dict, progress: dict) -> list[dict]:
     rows = []
     for qid, item in progress["items"].items():
         q = questions.get(qid)
-        if q and item["wrong"] > 0 and item["status"] != "never":
+        if q and in_wrong_book(item):
             rows.append({"id": qid, "zh": q["zh"], "sentence": q["sentence"], "pos": q["pos"],
                          "scene": q["scene"], "wrong": item["wrong"], "status": item["status"]})
     return sorted(rows, key=lambda r: (-r["wrong"], r["id"]))

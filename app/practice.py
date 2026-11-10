@@ -204,6 +204,36 @@ def _summary(sessions: list[dict]) -> dict:
     }
 
 
+def growth(sessions: list[dict], word_dates: list[str], today: date) -> list[dict]:
+    """Running totals per day, from the first day with any activity up to today:
+    words in the word bank, minutes spoken (speak, improv, toast) and minutes written."""
+    days = [s["date"] for s in sessions] + [d for d in word_dates if d]
+    if not days:
+        return []
+    start = date.fromisoformat(min(days))
+    spoken: dict[str, float] = {}
+    written: dict[str, float] = {}
+    for s in sessions:
+        target = written if s["module"] == "write" else spoken if s["module"] in SPOKEN else None
+        if target is not None:
+            target[s["date"]] = target.get(s["date"], 0) + s["seconds"]
+    added: dict[str, int] = {}
+    for d in word_dates:
+        if d:
+            added[d] = added.get(d, 0) + 1
+    out, words, speak_s, write_s = [], 0, 0.0, 0.0
+    day = start
+    while day <= today:
+        key = day.isoformat()
+        words += added.get(key, 0)
+        speak_s += spoken.get(key, 0)
+        write_s += written.get(key, 0)
+        out.append({"date": key, "words": words,
+                    "speak_minutes": round(speak_s / 60, 1), "write_minutes": round(write_s / 60, 1)})
+        day += timedelta(days=1)
+    return out
+
+
 def stats(data: dict, today: date) -> dict:
     sessions = data["sessions"]
     week_ago = (today - timedelta(days=6)).isoformat()

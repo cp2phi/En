@@ -236,6 +236,12 @@ class App:
                 return cloze.reveal(q)
             case ("GET", "cloze", "solution"):
                 return cloze.reveal(self._question(query.get("id")))
+            case ("POST", "cloze", "wrongbook", "remove"):
+                progress = self.cloze.load()
+                if not cloze.remove_from_wrong_book(progress, str(body.get("id"))):
+                    raise ApiError(404, "not in the wrong book")
+                self.cloze.save(progress)
+                return {"ok": True}
             case ("GET", "cloze", "wrongbook"):
                 return {"items": cloze.wrong_book(self.questions, self.cloze.load())}
 
@@ -296,7 +302,10 @@ class App:
                 prompt = practice.next_prompt(self.prompts, data, module, track)
                 return {"prompt": prompt}
             case ("GET", "practice", "stats"):
-                return practice.stats(self.practice.load(), today)
+                data = self.practice.load()
+                word_dates = [w["created"] for w in self.words.load()["words"].values()]
+                return practice.stats(data, today) | {
+                    "growth": practice.growth(data["sessions"], word_dates, today)}
 
             # ---- settings / sync ----
             case ("GET", "settings"):

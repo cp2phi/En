@@ -1,9 +1,12 @@
 :root {
+  /* Chart series: validated categorical slots 1-2 (blue, orange) for this surface. */
+  --series-1: #2a78d6; --series-2: #eb6834; --chart-axis: #c3c2b7;
   --bg: #f6f5f1; --card: #fff; --text: #1f2328; --muted: #8a8f98; --line: #e2e0d8;
   --accent: #2f6f4f; --bad: #c0392b; --warn: #b7791f; --good: #2f6f4f;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #17191c; --card: #212428; --text: #e6e6e6; --muted: #8b929c; --line: #33373d;
+  :root { --series-1: #3987e5; --series-2: #d95926; --chart-axis: #4a4f57;
+          --bg: #17191c; --card: #212428; --text: #e6e6e6; --muted: #8b929c; --line: #33373d;
           --accent: #6fbf95; --bad: #ef7d70; --warn: #e0b060; --good: #6fbf95; }
 }
 * { box-sizing: border-box; }
@@ -60,3 +63,18 @@ pre { white-space: pre-wrap; font-size: 13px; background: var(--bg); padding: 10
          background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 8px;
          opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
 #toast.show { opacity: 1; }
+.chart-wrap { margin-bottom: 18px; }
+.chart-title { font-weight: 600; margin-bottom: 4px; }
+.chart-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.chart-key { display: inline-block; width: 14px; height: 2px; border-radius: 1px; vertical-align: middle; margin-right: 6px; }
+.chart-box { position: relative; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart:focus { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.chart-tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.chart-end { font-size: 12px; fill: var(--text); }
+.chart-tip { position: absolute; top: 0; pointer-events: none; background: var(--card); border: 1px solid var(--line);
+             border-radius: 6px; padding: 6px 8px; font-size: 13px; white-space: nowrap;
+             box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.chart-tip-row { margin-top: 2px; }
+.chart-table summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.chart-table table { margin-top: 8px; font-variant-numeric: tabular-nums; }
