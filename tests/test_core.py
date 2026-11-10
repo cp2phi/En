@@ -101,17 +101,17 @@ class ClozeTest(unittest.TestCase):
     def test_parse(self):
         self.assertEqual(self.q["blanks"], [["runs", "chairs"], ["meeting"]])
         self.assertEqual(self.q["sentence"], "She runs the meeting every Monday.")
-        self.assertEqual(self.q["segments"][1], {"blank": 0, "hint": "r", "length": 4, "cue": ""})
+        self.assertEqual(self.q["segments"][1], {"blank": 0, "hint": "r", "length": 4})
 
-    def test_cue_replaces_letter_hint(self):
-        q = self._q("g1", "She {went|walked::go} home and {didn't call::not call}.")
-        self.assertEqual(q["blanks"], [["went", "walked"], ["didn't call"]])
-        self.assertEqual(q["sentence"], "She went home and didn't call.")
+    def test_grammar_drills_test_word_and_form_together(self):
+        # No base form is shown: only the first letter, like every other word class.
+        q = self._q("g1", "She {went} home and {didn't call|did not call}.") | {"pos": "grammar"}
         blanks = [seg for seg in cloze.public_view(q)["segments"] if "blank" in seg]
-        self.assertEqual([(b["cue"], b["hint"]) for b in blanks], [("go", ""), ("not call", "")])
-        self.assertTrue(cloze.check(q, ["went", "didn't call"])["correct"])
+        self.assertEqual([(b["hint"], "cue" in b) for b in blanks], [("w", False), ("d", False)])
+        self.assertTrue(cloze.check(q, ["went", "did not call"])["correct"])
         self.assertEqual(cloze.classify("goed", ["went"]), "grammar")
         self.assertEqual(cloze.classify("go", ["went"]), "grammar")
+        self.assertEqual(cloze.classify("walked", ["went"]), "word")
 
     def test_no_letter_hint_for_prepositions(self):
         q = self._q("p1", "I'm good {at} this.") | {"pos": "preposition"}
@@ -216,10 +216,7 @@ class QuestionBankTest(unittest.TestCase):
                     self.assertEqual(len(accepted), len(set(accepted)))
                     for answer in accepted:
                         self.assertRegex(answer, r"^[A-Za-z][A-Za-z' -]*$")
-                self.assertNotIn("::", q["sentence"])
-                if q["pos"] == "grammar":
-                    self.assertTrue(all(seg["cue"] for seg in q["segments"] if "blank" in seg),
-                                    "grammar drills show a cue for every blank")
+                self.assertNotIn("::", q["en"], "base-form cues were removed on purpose")
                 self.assertTrue(cloze.check(q, [b[0] for b in q["blanks"]])["correct"])
                 if q["pos"] == "combo":
                     self.assertGreaterEqual(len(q["blanks"]), 2)

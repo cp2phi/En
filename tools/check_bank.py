@@ -48,7 +48,7 @@ def check_questions(folder: Path) -> list[str]:
                     errors.append(f"{where}: repeated answer")
                 errors += [f"{where}: bad answer {a!r}" for a in accepted if not ANSWER.match(a)]
             sentence = cloze.solution(item["en"])
-            if "{" in sentence or "}" in sentence or "::" in sentence:
+            if "{" in sentence or "}" in sentence or "::" in item["en"]:
                 errors.append(f"{where}: broken braces")
             if sentence in sentences:
                 errors.append(f"{where}: duplicate sentence")

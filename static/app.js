@@ -221,8 +221,8 @@ async function clozeView() {
     const sentence = h("div", { class: "en" }, q.segments.map((seg) => {
       if (seg.text !== undefined) return seg.text;
       const input = h("input", {
-        class: "blank", placeholder: seg.cue ? `(${seg.cue})` : seg.hint ? seg.hint + "…" : "",
-        style: `width:${Math.max(6, seg.length + 3, (seg.cue || "").length + 3)}ch`,
+        class: "blank", placeholder: seg.hint ? seg.hint + "…" : "",
+        style: `width:${Math.max(6, seg.length + 3)}ch`,
         autocomplete: "off", autocapitalize: "off",
         spellcheck: "false", "aria-label": `第 ${seg.blank + 1} 个空`,
       });

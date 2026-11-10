@@ -40,8 +40,11 @@ Each file is a JSON array, one question per line:
   - Answers contain only letters, spaces, apostrophes and hyphens.
   - A blank may hold several words (`{settled up}`, `{would have gone}`).
   - A sentence may have two blanks, but one blank is the norm.
-  - Cue: `{went::go}` shows "go" to the learner instead of the first letter.
-    Use cues in grammar drills (base verb or base noun in the cue).
+  - No base-form hints: the learner sees only the first letter of the main
+    answer (prepositions show nothing), so grammar drills test the word and
+    its form together. The Chinese must therefore make the word itself clear,
+    and every alternative with the right form must be listed (went|walked|drove
+    if 去了 could be any of them).
 - Mix the forms being tested (tenses, third person, plurals) across a file.
 - Every sentence must be unique within the word class. Prefer the *useful*
   sense of a common word over an obscure word.
