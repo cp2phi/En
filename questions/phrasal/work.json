@@ -1,0 +1,22 @@
+[
+{"id":"pv-work-01","level":2,"g":"base","zh":"我明天会再跟客户跟进一下。","en":"I'll {follow up|check in|touch base} with the client tomorrow."},
+{"id":"pv-work-02","level":2,"g":"base","zh":"你能帮我查一下这个问题吗？","en":"Can you {look into|look at|investigate|check} this issue for me?"},
+{"id":"pv-work-03","level":2,"g":"past","zh":"她在研讨会上想出了一个很棒的主意。","en":"She {came up with|thought of|thought up|had} a great idea in the workshop."},
+{"id":"pv-work-04","level":3,"g":"perfect","zh":"我们已经把发布推迟到下个月了。","en":"We've {put off|pushed back|postponed|delayed} the launch until next month."},
+{"id":"pv-work-05","level":3,"g":"ing","zh":"休假之前，我正在把手上的项目交接出去。","en":"I'm {handing over|handing off|passing on} my projects before I go on leave."},
+{"id":"pv-work-06","level":2,"g":"base","zh":"假期回来后，我得把积压的邮件补上。","en":"I need to {catch up on|go through|get through} my emails after the holiday."},
+{"id":"pv-work-07","level":3,"g":"past","zh":"本离开后，阿罗哈接手了这个项目。","en":"Aroha {took over|picked up|took on} the project when Ben left."},
+{"id":"pv-work-08","level":4,"g":"past","zh":"他去年辞去了组长的职务。","en":"He {stepped down|stood down|resigned|quit} as team lead last year."},
+{"id":"pv-work-09","level":4,"g":"base","zh":"明天的站会你能替我一下吗？","en":"Can you {fill in for|cover for|stand in for} me at the stand-up tomorrow?"},
+{"id":"pv-work-10","level":3,"g":"past","zh":"刚才的会上没有人提起预算的事。","en":"Nobody {brought up|raised|mentioned} the budget in the meeting."},
+{"id":"pv-work-11","level":2,"g":"base","zh":"开会前我们把这些数字过一遍吧。","en":"Let's {go over|go through|run through|look over|check|review} the numbers before the meeting."},
+{"id":"pv-work-12","level":4,"g":"perfect","zh":"我经理还没有批准这个预算。","en":"My manager hasn't {signed off on|approved|signed off} the budget yet."},
+{"id":"pv-work-13","level":3,"g":"base","zh":"我们收个尾吧，时间到了。","en":"Let's {wrap up|finish up|finish|stop} now. We're out of time."},
+{"id":"pv-work-14","level":4,"g":"base","zh":"你周五一般几点下班？","en":"What time do you {knock off|finish|clock off|leave} on Fridays?"},
+{"id":"pv-work-15","level":1,"g":"perfect","zh":"我已经约好周四和供应商开会了。","en":"I've {set up|arranged|organised|organized|scheduled|booked} a meeting with the vendor for Thursday."},
+{"id":"pv-work-16","level":1,"g":"base","zh":"我今天下班前给你答复。","en":"I'll {get back to|reply to|respond to} you by the end of the day."},
+{"id":"pv-work-17","level":3,"g":"past","zh":"他们在最后一刻取消了会议。","en":"They {called off|cancelled|canceled} the meeting at the last minute."},
+{"id":"pv-work-18","level":1,"g":"3sg","zh":"她每天都要处理客户投诉。","en":"She {deals with|handles} customer complaints every day."},
+{"id":"pv-work-19","level":2,"g":"base","zh":"抱歉打断了，请继续。","en":"Sorry to interrupt. Please {carry on|go on|continue|keep going|go ahead}."},
+{"id":"pv-work-20","level":5,"g":"ing","zh":"律师们这周正在起草合同。","en":"The lawyers are {drawing up|writing up|drafting|preparing|writing} the contract this week."}
+]

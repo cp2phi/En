@@ -1,0 +1,22 @@
+[
+{"id":"adj-health-01","level":2,"g":"-","zh":"我嗓子疼，还流鼻涕。","en":"I've got a {sore} throat and a runny nose."},
+{"id":"adj-health-02","level":3,"g":"-","zh":"我站起来太快的时候感到头晕。","en":"I felt {dizzy|faint|light-headed|lightheaded} when I stood up too fast."},
+{"id":"adj-health-03","level":4,"g":"-","zh":"我的脚踝扭伤后肿起来了。","en":"My ankle is {swollen|puffy} after I twisted it."},
+{"id":"adj-health-04","level":3,"g":"-","zh":"我对花生过敏。","en":"I'm {allergic} to peanuts."},
+{"id":"adj-health-05","level":1,"g":"-","zh":"她戒烟以后看起来非常健康。","en":"She looks really {healthy|well} since she quit smoking."},
+{"id":"adj-health-06","level":1,"g":"-","zh":"我病了一整个星期，所以待在家里。","en":"I've been {sick|ill|unwell} all week, so I stayed home."},
+{"id":"adj-health-07","level":3,"g":"-","zh":"蚊子咬的包真的很痒。","en":"The mosquito bites are really {itchy}."},
+{"id":"adj-health-08","level":2,"g":"-","zh":"打针一点也不疼。","en":"The injection wasn't {painful|sore} at all."},
+{"id":"adj-health-09","level":5,"g":"-","zh":"待在家里吧，流感的传染性很强。","en":"Stay home; the flu is very {contagious|infectious}."},
+{"id":"adj-health-10","level":4,"g":"-","zh":"手术后他疼得很厉害，是剧烈的疼痛。","en":"He was in {severe|intense|terrible} pain after the operation."},
+{"id":"adj-health-11","level":2,"g":"-","zh":"我妻子怀孕六个月了。","en":"My wife is six months {pregnant}."},
+{"id":"adj-health-12","level":4,"g":"-","zh":"天太冷，我的手指冻得麻木了。","en":"My fingers went {numb} in the cold."},
+{"id":"adj-health-13","level":1,"g":"comparative","zh":"我今天感觉好多了，谢谢。","en":"I'm feeling much {better} today, thanks."},
+{"id":"adj-health-14","level":3,"g":"-","zh":"我鼻子堵了，只能用嘴呼吸。","en":"My nose is {blocked|stuffy|congested}, so I have to breathe through my mouth."},
+{"id":"adj-health-15","level":2,"g":"-","zh":"医生说我稍微有点超重。","en":"The doctor said I'm slightly {overweight}."},
+{"id":"adj-health-16","level":3,"g":"-","zh":"看牙医之前我总是感到焦虑。","en":"I always feel {anxious|nervous|worried} before seeing the dentist."},
+{"id":"adj-health-17","level":3,"g":"-","zh":"别担心，只是轻微的伤。","en":"Don't worry, it's only a {minor|small|slight} injury."},
+{"id":"adj-health-18","level":3,"g":"-","zh":"你脸色苍白，你还好吗？","en":"You look {pale}; are you feeling all right?"},
+{"id":"adj-health-19","level":2,"g":"-","zh":"四十岁以后应该定期体检。","en":"You should have {regular} check-ups after forty."},
+{"id":"adj-health-20","level":4,"g":"-","zh":"我肠胃不舒服，午饭就不吃了。","en":"I've got an {upset} stomach, so I'll skip lunch."}
+]

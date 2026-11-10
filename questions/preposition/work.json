@@ -1,0 +1,22 @@
+[
+{"id":"prep-work-01","level":1,"g":"-","zh":"会议九点开始。","en":"The meeting starts {at} nine o'clock."},
+{"id":"prep-work-02","level":1,"g":"-","zh":"我周五不上班。","en":"I don't work {on} Fridays."},
+{"id":"prep-work-03","level":2,"g":"-","zh":"请在周五之前把报告发给我。","en":"Please send me the report {by|before} Friday."},
+{"id":"prep-work-04","level":2,"g":"-","zh":"我从2019年起就在这里工作。","en":"I've worked here {since} 2019."},
+{"id":"prep-work-05","level":2,"g":"-","zh":"这个项目由谁负责？","en":"Who is {in} charge of this project?"},
+{"id":"prep-work-06","level":3,"g":"-","zh":"我负责培训新员工。","en":"I'm responsible {for} training the new staff."},
+{"id":"prep-work-07","level":2,"g":"-","zh":"我上周申请了那份工作。","en":"I applied {for} the job last week."},
+{"id":"prep-work-08","level":3,"g":"-","zh":"这取决于预算。","en":"It depends {on|upon} the budget."},
+{"id":"prep-work-09","level":3,"g":"-","zh":"我代表我的经理写这封邮件。","en":"I'm writing {on} behalf of my manager."},
+{"id":"prep-work-10","level":2,"g":"-","zh":"不好意思，她现在正在开会。","en":"Sorry, she's in a meeting {at} the moment."},
+{"id":"prep-work-11","level":3,"g":"-","zh":"我要休假，一直到下周三。","en":"I'll be away {until|till} next Wednesday."},
+{"id":"prep-work-12","level":4,"g":"-","zh":"我们需要在两周之内完成这件事。","en":"We need to finish this {within|in} two weeks."},
+{"id":"prep-work-13","level":3,"g":"-","zh":"在这一点上我完全同意你的看法。","en":"I totally agree {with} you on that."},
+{"id":"prep-work-14","level":2,"g":"-","zh":"他很擅长把事情讲清楚。","en":"He's really good {at} explaining things."},
+{"id":"prep-work-15","level":4,"g":"-","zh":"延误的原因是什么？","en":"What was the reason {for|behind} the delay?"},
+{"id":"prep-work-16","level":3,"g":"-","zh":"我们团队总是按时交付。","en":"Our team always delivers {on} time."},
+{"id":"prep-work-17","level":4,"g":"-","zh":"根据日程安排，我们三月份上线。","en":"{According to} the schedule, we go live in March."},
+{"id":"prep-work-18","level":3,"g":"-","zh":"你熟悉新的报销系统吗？","en":"Are you familiar {with} the new expense system?"},
+{"id":"prep-work-19","level":5,"g":"-","zh":"新政策下个月生效。","en":"The new policy comes {into} effect next month."},
+{"id":"prep-work-20","level":1,"g":"-","zh":"我通常和同事一起吃午饭。","en":"I usually have lunch {with} my colleagues."}
+]

@@ -1,0 +1,22 @@
+[
+{"id":"prep-health-01","level":2,"g":"-","zh":"我得跟我的家庭医生约个时间。","en":"I need to make an appointment {with} my GP."},
+{"id":"prep-health-02","level":1,"g":"-","zh":"睡前吃两片。","en":"Take two tablets {before} bed."},
+{"id":"prep-health-03","level":1,"g":"-","zh":"我已经咳嗽两个星期了。","en":"I've had this cough {for} two weeks."},
+{"id":"prep-health-04","level":2,"g":"-","zh":"我从周一开始就一直觉得很累。","en":"I've been feeling tired {since} Monday."},
+{"id":"prep-health-05","level":2,"g":"-","zh":"我儿子对猫过敏。","en":"My son is allergic {to} cats."},
+{"id":"prep-health-06","level":3,"g":"-","zh":"我爸爸还在住院。","en":"My dad is still {in} hospital."},
+{"id":"prep-health-07","level":4,"g":"-","zh":"医生让我开始吃抗生素。","en":"The doctor put me {on} antibiotics."},
+{"id":"prep-health-08","level":3,"g":"-","zh":"他一直受背痛的折磨。","en":"He's been suffering {from|with} back pain."},
+{"id":"prep-health-09","level":4,"g":"-","zh":"他今天请病假了，没来上班。","en":"He's {off|out} sick today."},
+{"id":"prep-health-10","level":2,"g":"-","zh":"我的腰疼。","en":"I have a pain {in} my lower back."},
+{"id":"prep-health-11","level":3,"g":"-","zh":"你应该少吃点糖。","en":"You should cut down {on} sugar."},
+{"id":"prep-health-12","level":3,"g":"-","zh":"护士一分钟后就来。","en":"The nurse will be with you {in} a minute."},
+{"id":"prep-health-13","level":2,"g":"-","zh":"我在节食，所以不吃蛋糕了。","en":"I'm {on} a diet, so no cake for me."},
+{"id":"prep-health-14","level":4,"g":"-","zh":"她工作压力很大。","en":"She's {under} a lot of stress at work."},
+{"id":"prep-health-15","level":2,"g":"-","zh":"吸烟对你的健康有害。","en":"Smoking is bad {for} your health."},
+{"id":"prep-health-16","level":3,"g":"-","zh":"爬完楼梯我上气不接下气。","en":"I was {out of} breath after climbing the stairs."},
+{"id":"prep-health-17","level":1,"g":"-","zh":"医生让我卧床休息几天。","en":"The doctor told me to stay {in} bed for a few days."},
+{"id":"prep-health-18","level":5,"g":"-","zh":"他终于在好转了。","en":"He's finally {on} the mend."},
+{"id":"prep-health-19","level":3,"g":"-","zh":"药房在诊所的马路对面。","en":"The pharmacy is {across|over} the road from the clinic."},
+{"id":"prep-health-20","level":4,"g":"-","zh":"我要去看专科医生，检查一下膝盖的问题。","en":"I'm seeing a specialist {about|for} my knee."}
+]

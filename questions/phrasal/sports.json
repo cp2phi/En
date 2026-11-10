@@ -1,0 +1,22 @@
+[
+{"id":"pv-sports-01","level":1,"g":"base","zh":"比赛前我们总是先热身十分钟。","en":"We always {warm up|stretch} for ten minutes before the game."},
+{"id":"pv-sports-02","level":2,"g":"base","zh":"跑完步花五分钟做做放松运动。","en":"Take five minutes to {cool down|warm down|stretch|recover|rest} after your run."},
+{"id":"pv-sports-03","level":1,"g":"3sg","zh":"他每周去健身房锻炼三次。","en":"He {works out|trains|exercises} at the gym three times a week."},
+{"id":"pv-sports-04","level":1,"g":"3sg","zh":"即使我们落后，她也从不放弃。","en":"She never {gives up|quits} even when we're losing."},
+{"id":"pv-sports-05","level":3,"g":"base","zh":"我停下来系鞋带，只好冲刺去追上其他人。","en":"I stopped to tie my lace and had to sprint to {catch up with|catch up to|catch|reach} the others."},
+{"id":"pv-sports-06","level":2,"g":"base","zh":"想玩的话随时加入。","en":"Feel free to {join in|join|play|join us|come along} if you want a game."},
+{"id":"pv-sports-07","level":3,"g":"passive","zh":"我们在半决赛被淘汰了。","en":"We got {knocked out|beaten|eliminated} in the semi-final."},
+{"id":"pv-sports-08","level":2,"g":"3sg","zh":"比赛七点半开球。","en":"The match {kicks off|starts|begins} at half past seven."},
+{"id":"pv-sports-09","level":4,"g":"ing","zh":"我儿子正在参加校足球队的选拔。","en":"My son is {trying out for|trialling for|trialing for} the school football team."},
+{"id":"pv-sports-10","level":3,"g":"ing","zh":"受伤之后我正在慢慢把体能练上来。","en":"I'm slowly {building up|building|improving|rebuilding|working on|regaining} my fitness after the injury."},
+{"id":"pv-sports-11","level":3,"g":"base","zh":"我们去伊甸公园给黑帽队加油。","en":"We went to {cheer on|support|watch|see} the Black Caps at Eden Park."},
+{"id":"pv-sports-12","level":3,"g":"past","zh":"因为太热，两名选手退出了比赛。","en":"Two runners {dropped out of|pulled out of|withdrew from|quit} the race because of the heat."},
+{"id":"pv-sports-13","level":4,"g":"passive","zh":"他因为危险的铲球被罚下场。","en":"He was {sent off|red-carded} for a dangerous tackle."},
+{"id":"pv-sports-14","level":3,"g":"past","zh":"去年夏天我开始打网球了。","en":"I {took up|started} tennis last summer."},
+{"id":"pv-sports-15","level":3,"g":"passive","zh":"跑完山路后我彻底累垮了。","en":"I was completely {worn out|exhausted|knackered|shattered|wiped out|tired out|stuffed} after the hill run."},
+{"id":"pv-sports-16","level":2,"g":"base","zh":"慢点！我跟不上你。","en":"Slow down! I can't {keep up with|catch|follow} you."},
+{"id":"pv-sports-17","level":2,"g":"past","zh":"我在湿草地上摔倒了，伤了膝盖。","en":"I {fell over|slipped over|fell|slipped|fell down|tripped} on the wet grass and hurt my knee."},
+{"id":"pv-sports-18","level":5,"g":"past","zh":"他们爆冷战胜了排名第一的球队。","en":"They {pulled off|managed|got|scored|had} a surprise win against the top team."},
+{"id":"pv-sports-19","level":4,"g":"base","zh":"锦标赛之前我们需要加强训练。","en":"We need to {step up|increase|ramp up|lift|pick up|improve} our training before the tournament."},
+{"id":"pv-sports-20","level":4,"g":"past","zh":"我们顶住了压力，最后以一分险胜。","en":"We {held on|hung on|managed} to win by one point."}
+]

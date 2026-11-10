@@ -1,0 +1,22 @@
+[
+{"id":"prep-money-01","level":2,"g":"-","zh":"我每个月十五号发工资。","en":"I get paid {on} the fifteenth of every month."},
+{"id":"prep-money-02","level":1,"g":"-","zh":"我把积蓄存在银行里。","en":"I keep my savings {in|at} the bank."},
+{"id":"prep-money-03","level":2,"g":"-","zh":"我在为买房的首付存钱。","en":"I'm saving up {for|towards|toward} a house deposit."},
+{"id":"prep-money-04","level":2,"g":"-","zh":"她向我借了五十块钱。","en":"She borrowed fifty dollars {from|off} me."},
+{"id":"prep-money-05","level":2,"g":"-","zh":"我今晚把钱转到你的账户。","en":"I'll transfer the money {to|into} your account tonight."},
+{"id":"prep-money-06","level":3,"g":"-","zh":"我们通过自动扣款交房租。","en":"We pay the rent {by|via} direct debit."},
+{"id":"prep-money-07","level":3,"g":"-","zh":"他还欠着债。","en":"He's still {in} debt."},
+{"id":"prep-money-08","level":2,"g":"-","zh":"我很担心房贷的还款。","en":"I'm worried {about} the mortgage payments."},
+{"id":"prep-money-09","level":3,"g":"-","zh":"我去年投了一些钱到股票里。","en":"I invested some money {in|into} shares last year."},
+{"id":"prep-money-10","level":4,"g":"-","zh":"我们现在手头很紧，要精打细算地过日子。","en":"We're living {on} a tight budget at the moment."},
+{"id":"prep-money-11","level":3,"g":"-","zh":"别把钱浪费在彩票上。","en":"Don't waste your money {on} lottery tickets."},
+{"id":"prep-money-12","level":5,"g":"-","zh":"我们尽量量入为出，不超出自己的收入。","en":"We try to live {within} our means."},
+{"id":"prep-money-13","level":4,"g":"-","zh":"我这周手头有点缺现金。","en":"I'm a bit short {of|on} cash this week."},
+{"id":"prep-money-14","level":4,"g":"-","zh":"我是按小时计酬的。","en":"I get paid {by} the hour."},
+{"id":"prep-money-15","level":4,"g":"-","zh":"我的房租拖欠了两个星期。","en":"I'm two weeks {behind} on my rent."},
+{"id":"prep-money-16","level":1,"g":"-","zh":"我可以用现金付吗？","en":"Can I pay {in|by|with} cash?"},
+{"id":"prep-money-17","level":3,"g":"-","zh":"我的保险可以打九折。","en":"I get a ten percent discount {on|off} my insurance."},
+{"id":"prep-money-18","level":2,"g":"-","zh":"我的旧自行车卖了两百块。","en":"I sold my old bike {for} two hundred dollars."},
+{"id":"prep-money-19","level":3,"g":"-","zh":"除了房租，我最大的开销是吃饭。","en":"{Apart from|Aside from|Other than|Besides|Except for} rent, my biggest expense is food."},
+{"id":"prep-money-20","level":1,"g":"-","zh":"我和室友平摊了账单。","en":"I split the bill {with} my flatmate."}
+]

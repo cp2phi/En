@@ -1,0 +1,22 @@
+[
+{"id":"prep-home-01","level":1,"g":"-","zh":"钥匙在厨房的桌子上。","en":"The keys are {on} the kitchen table."},
+{"id":"prep-home-02","level":1,"g":"-","zh":"牛奶在冰箱里。","en":"The milk is {in} the fridge."},
+{"id":"prep-home-03","level":2,"g":"-","zh":"猫躲在床底下。","en":"The cat is hiding {under|underneath|beneath} the bed."},
+{"id":"prep-home-04","level":2,"g":"-","zh":"把画挂在沙发上方。","en":"Hang the picture {above|over} the sofa."},
+{"id":"prep-home-05","level":2,"g":"-","zh":"垃圾桶在门后面。","en":"The bin is {behind} the door."},
+{"id":"prep-home-06","level":3,"g":"-","zh":"猫跳到了厨房台面上。","en":"The cat jumped {onto|on} the kitchen bench."},
+{"id":"prep-home-07","level":2,"g":"-","zh":"我六点之前到家。","en":"I'll be home {by|before} six."},
+{"id":"prep-home-08","level":3,"g":"-","zh":"我们去年搬进了这栋房子。","en":"We moved {into|to} this house last year."},
+{"id":"prep-home-09","level":3,"g":"-","zh":"这栋房子是我父母的。","en":"This house belongs {to} my parents."},
+{"id":"prep-home-10","level":1,"g":"-","zh":"孩子们在学校。","en":"The kids are {at} school."},
+{"id":"prep-home-11","level":4,"g":"-","zh":"淋浴又漏水了，我真是受够了。","en":"The shower is leaking again — I'm fed up {with} it."},
+{"id":"prep-home-12","level":2,"g":"-","zh":"不好意思，家里很乱。","en":"Sorry {about|for} the mess."},
+{"id":"prep-home-13","level":2,"g":"-","zh":"你能帮我洗碗吗？","en":"Could you help me {with} the dishes?"},
+{"id":"prep-home-14","level":2,"g":"-","zh":"我们的房子是1975年建的。","en":"Our house was built {in} 1975."},
+{"id":"prep-home-15","level":4,"g":"-","zh":"别靠在墙上，油漆还没干。","en":"Don't lean {against|on} the wall — the paint is still wet."},
+{"id":"prep-home-16","level":3,"g":"-","zh":"半夜停电了。","en":"The power went off {in} the middle of the night."},
+{"id":"prep-home-17","level":3,"g":"-","zh":"我们不在的时候谁来照顾狗？","en":"Who's going to look {after} the dog while we're away?"},
+{"id":"prep-home-18","level":4,"g":"-","zh":"你来决定吧，刷成白色或灰色都行。","en":"It's {up to} you — we can paint it white or grey."},
+{"id":"prep-home-19","level":5,"g":"-","zh":"这个露台是我们从零开始自己搭的。","en":"We built the deck {from} scratch."},
+{"id":"prep-home-20","level":3,"g":"-","zh":"我厌倦了老是跟在大家后面收拾。","en":"I'm tired {of} cleaning up after everyone."}
+]

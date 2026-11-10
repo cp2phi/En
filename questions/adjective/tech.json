@@ -1,0 +1,22 @@
+[
+{"id":"adj-tech-01","level":3,"g":"-","zh":"这个库已经过时了，五年没更新过。","en":"This library is {outdated|out of date|obsolete}; it hasn't been updated in five years."},
+{"id":"adj-tech-02","level":2,"g":"-","zh":"新版本比上一个版本稳定得多。","en":"The new release is much more {stable|reliable} than the last one."},
+{"id":"adj-tech-03","level":2,"g":"-","zh":"这个连接不安全，别输入你的密码。","en":"This connection is not {secure|safe}; don't enter your password."},
+{"id":"adj-tech-04","level":3,"g":"-","zh":"这个应用和旧手机不兼容。","en":"This app isn't {compatible} with older phones."},
+{"id":"adj-tech-05","level":1,"g":"-","zh":"今天的无线网真的很慢。","en":"The Wi-Fi is really {slow} today."},
+{"id":"adj-tech-06","level":4,"g":"-","zh":"我觉得这根线有故障，换一根试试。","en":"I think this cable is {faulty|defective|broken}; try another one."},
+{"id":"adj-tech-07","level":2,"g":"-","zh":"我买了一个无线鼠标，这样桌上的线少一些。","en":"I bought a {wireless|cordless} mouse so there are fewer cables on my desk."},
+{"id":"adj-tech-08","level":2,"g":"-","zh":"备份是自动的，你什么都不用做。","en":"The backup is {automatic|automated}; you don't need to do anything."},
+{"id":"adj-tech-09","level":3,"g":"-","zh":"这仍然是一个手动的流程，所以要花好几个小时。","en":"It's still a {manual} process, so it takes hours."},
+{"id":"adj-tech-10","level":1,"g":"comparative","zh":"你安装最新的版本了吗？","en":"Have you installed the {latest|newest} version?"},
+{"id":"adj-tech-11","level":4,"g":"-","zh":"这个文件损坏了，我打不开。","en":"The file is {corrupted|corrupt}, so I can't open it."},
+{"id":"adj-tech-12","level":3,"g":"-","zh":"新界面好用多了，对用户更友好。","en":"The new interface is much more {user-friendly|intuitive}."},
+{"id":"adj-tech-13","level":4,"g":"-","zh":"这个网站响应不够快，每点一下都要等两秒。","en":"The site isn't very {responsive|fast|quick}; every click takes two seconds."},
+{"id":"adj-tech-14","level":5,"g":"-","zh":"目前的设计不具备可扩展性，撑不住十倍的流量。","en":"The current design isn't {scalable}; it won't cope with ten times the traffic."},
+{"id":"adj-tech-15","level":3,"g":"-","zh":"我的手机没电了，能借一下你的充电器吗？","en":"My phone is {flat|dead}; can I borrow your charger?"},
+{"id":"adj-tech-16","level":2,"g":"-","zh":"服务器从今天早上起就一直离线。","en":"The server has been {offline|down} since this morning."},
+{"id":"adj-tech-17","level":2,"g":"-","zh":"这个设置对大多数用户来说太复杂了。","en":"The setup is too {complicated|complex} for most users."},
+{"id":"adj-tech-18","level":3,"g":"-","zh":"你有备用的显示器可以借我吗？","en":"Do you have a {spare} monitor I could borrow?"},
+{"id":"adj-tech-19","level":1,"g":"comparative","zh":"新笔记本电脑比我的旧电脑快得多。","en":"The new laptop is much {faster|quicker} than my old one."},
+{"id":"adj-tech-20","level":4,"g":"-","zh":"不要把敏感数据发到公开频道里。","en":"Don't put {sensitive|confidential|private} data in a public channel."}
+]

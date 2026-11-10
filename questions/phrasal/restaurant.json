@@ -1,0 +1,22 @@
+[
+{"id":"pv-restaurant-01","level":3,"g":"past","zh":"吃完晚饭我们结清了账就回家了。","en":"After dinner we {settled up|paid up|paid} and went home."},
+{"id":"pv-restaurant-02","level":1,"g":"base","zh":"我们大概每周在外面吃一次。","en":"We {eat out|dine out|go out} about once a week."},
+{"id":"pv-restaurant-03","level":2,"g":"base","zh":"是在这儿吃还是带走？","en":"Is that to have here or {take away|takeaway|take out|to take away|to go}?"},
+{"id":"pv-restaurant-04","level":2,"g":"past","zh":"咖啡馆十点前就把燕麦奶用完了。","en":"The café {ran out of|was out of|sold out of} oat milk by ten o'clock."},
+{"id":"pv-restaurant-05","level":1,"g":"base","zh":"我回家路上顺便去取披萨。","en":"I'll {pick up|grab|collect|get} the pizza on my way home."},
+{"id":"pv-restaurant-06","level":2,"g":"passive","zh":"我们在那家泰国餐馆订了七点的位子。","en":"We're {booked in|booked} for seven at the Thai place."},
+{"id":"pv-restaurant-07","level":3,"g":"base","zh":"订了位，结果有一半的人没来。","en":"Half the group didn't {turn up|show up|come|show|arrive} for the booking."},
+{"id":"pv-restaurant-08","level":4,"g":"past","zh":"这顿饭每个人凑了二十块钱。","en":"Everyone {chipped in|put in|paid|gave|contributed} twenty dollars for the meal."},
+{"id":"pv-restaurant-09","level":3,"g":"base","zh":"主菜上来之前别吃面包吃饱了。","en":"Don't {fill up on} bread before the mains arrive."},
+{"id":"pv-restaurant-10","level":2,"g":"base","zh":"你能帮我把这个派热一下吗？","en":"Could you {heat up|warm up|heat|warm|reheat|microwave} this pie for me?"},
+{"id":"pv-restaurant-11","level":3,"g":"ing","zh":"服务员一直在给我们的水杯加水。","en":"The waiter keeps {topping up|filling up|refilling|filling} our water glasses."},
+{"id":"pv-restaurant-12","level":5,"g":"past","zh":"孩子们两分钟就把整份甜点吃了个精光。","en":"The kids {polished off|finished off|finished|ate|demolished|wolfed down} the whole dessert in two minutes."},
+{"id":"pv-restaurant-13","level":4,"g":"base","zh":"菜要凉了，大家快开吃吧！","en":"The food's getting cold, so {tuck in|dig in|eat up|start|eat}, everyone!"},
+{"id":"pv-restaurant-14","level":3,"g":"base","zh":"今晚叫外卖吧，我不想做饭。","en":"Let's {order in|get takeaways|get takeaway|order takeaways|order takeaway} tonight. I don't feel like cooking."},
+{"id":"pv-restaurant-15","level":2,"g":"base","zh":"我想我就点羊肉吧。","en":"I think I'll {go for|have|get|order|try|choose|take} the lamb."},
+{"id":"pv-restaurant-16","level":1,"g":"base","zh":"这个汉堡配薯条吗？","en":"Does the burger {come with|include|have} chips?"},
+{"id":"pv-restaurant-17","level":1,"g":"past","zh":"我们在靠窗的一张桌子旁坐了下来。","en":"We {sat down|sat} at a table by the window."},
+{"id":"pv-restaurant-18","level":3,"g":"past","zh":"我们还没吃完，服务员就把盘子收走了。","en":"The waiter {cleared away|took away|cleared|removed|took|collected} our plates before we'd finished."},
+{"id":"pv-restaurant-19","level":3,"g":"past","zh":"上班前我们顺路进去喝了杯咖啡。","en":"We {popped in|stopped in|dropped in|called in|stopped|stopped off} for a quick coffee before work."},
+{"id":"pv-restaurant-20","level":4,"g":"ing","zh":"九点钟那家早午餐店外面就有人在排队了。","en":"People were {queuing up|queueing up|lining up|queuing|queueing|waiting} outside the brunch place by nine."}
+]

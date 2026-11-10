@@ -1,0 +1,22 @@
+[
+{"id":"prep-tech-01","level":1,"g":"-","zh":"点击邮件里的链接。","en":"Click {on} the link in the email."},
+{"id":"prep-tech-02","level":3,"g":"-","zh":"这个 bug 只在生产环境里出现。","en":"The bug only shows up {in|on} production."},
+{"id":"prep-tech-03","level":3,"g":"-","zh":"这个周末轮到我值班待命。","en":"I'm {on} call this weekend."},
+{"id":"prep-tech-04","level":2,"g":"-","zh":"服务器已经宕机三个小时了。","en":"The server has been down {for} three hours."},
+{"id":"prep-tech-05","level":3,"g":"-","zh":"我们还在找这个问题的解决办法。","en":"We're still looking for a solution {to|for} this problem."},
+{"id":"prep-tech-06","level":3,"g":"-","zh":"这周流量大幅增加。","en":"There has been a big increase {in} traffic this week."},
+{"id":"prep-tech-07","level":2,"g":"-","zh":"我不小心把文件删掉了。","en":"I deleted the file {by} accident."},
+{"id":"prep-tech-08","level":3,"g":"-","zh":"把网线插到路由器背面。","en":"Plug the cable {into|in} the back of the router."},
+{"id":"prep-tech-09","level":2,"g":"-","zh":"你看一下这条报错信息。","en":"Have a look {at} this error message."},
+{"id":"prep-tech-10","level":4,"g":"-","zh":"这个应用由三个服务组成。","en":"The app consists {of} three services."},
+{"id":"prep-tech-11","level":4,"g":"-","zh":"这个脚本依赖一个很旧的库。","en":"This script relies {on|upon} an old library."},
+{"id":"prep-tech-12","level":2,"g":"-","zh":"我在等构建完成。","en":"I'm waiting {for} the build to finish."},
+{"id":"prep-tech-13","level":3,"g":"-","zh":"午饭后我来处理那个工单。","en":"I'll deal {with} that ticket after lunch."},
+{"id":"prep-tech-14","level":3,"g":"-","zh":"升级期间网站无法访问。","en":"The site was down {during} the upgrade."},
+{"id":"prep-tech-15","level":4,"g":"-","zh":"二楼的打印机又坏了。","en":"The printer on level two is {out of} order again."},
+{"id":"prep-tech-16","level":1,"g":"-","zh":"我把笔记本电脑忘在家里了。","en":"I left my laptop {at} home."},
+{"id":"prep-tech-17","level":4,"g":"-","zh":"这个功能兼容旧款手机。","en":"This feature is compatible {with} older phones."},
+{"id":"prep-tech-18","level":5,"g":"-","zh":"审计完成之前，发布先暂停。","en":"The release is {on} hold until the audit is done."},
+{"id":"prep-tech-19","level":2,"g":"-","zh":"我对学 Python 很感兴趣。","en":"I'm interested {in} learning Python."},
+{"id":"prep-tech-20","level":1,"g":"-","zh":"去“设置”里把通知关掉。","en":"Go {to|into} Settings and turn off notifications."}
+]

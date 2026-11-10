@@ -1,0 +1,22 @@
+[
+{"id":"pv-home-01","level":2,"g":"past","zh":"客人来之前我把客厅收拾了一下。","en":"I {tidied up|cleaned up|tidied|cleaned} the lounge before the guests arrived."},
+{"id":"pv-home-02","level":3,"g":"perfect","zh":"搬家之后我们终于安顿下来了。","en":"We've finally {settled in|settled|settled down} after the move."},
+{"id":"pv-home-03","level":1,"g":"3sg","zh":"我们的新室友下周末搬进来。","en":"Our new flatmate {moves in|is moving in|arrives} next weekend."},
+{"id":"pv-home-04","level":2,"g":"base","zh":"这个周末我得把车库整理一下。","en":"I need to {sort out|clean out|clear out|tidy up|tidy|clean|organise|organize|clean up} the garage this weekend."},
+{"id":"pv-home-05","level":2,"g":"past","zh":"搬家的时候我们扔掉了很多旧东西。","en":"We {threw out|threw away|chucked out|got rid of|chucked away|tossed out|dumped} a lot of old stuff when we moved."},
+{"id":"pv-home-06","level":1,"g":"base","zh":"你能把洗干净的碗碟收起来吗？","en":"Can you {put away} the clean dishes, please?"},
+{"id":"pv-home-07","level":3,"g":"past","zh":"上班前我把洗好的衣服晾出去了。","en":"I {hung out|put out|hung up|hung} the washing before work."},
+{"id":"pv-home-08","level":1,"g":"base","zh":"我们出门前你把暖气关了吗？","en":"Did you {turn off|switch off} the heater before we left?"},
+{"id":"pv-home-09","level":2,"g":"base","zh":"你能把音乐调小点吗？宝宝睡着了。","en":"Could you {turn down|lower} the music? The baby's asleep."},
+{"id":"pv-home-10","level":2,"g":"base","zh":"这里冻死了，你能把热泵调高一点吗？","en":"It's freezing in here. Can you {turn up|crank up} the heat pump a bit?"},
+{"id":"pv-home-11","level":2,"g":"perfect","zh":"我们的卫生纸又用完了。","en":"We've {run out of} toilet paper again."},
+{"id":"pv-home-12","level":3,"g":"past","zh":"做完饭我把台面擦干净了。","en":"I {wiped down|wiped|cleaned|wiped off|cleaned up|cleaned down|scrubbed} the bench after cooking."},
+{"id":"pv-home-13","level":3,"g":"passive","zh":"昨晚我被锁在家门外了。","en":"I got {locked out} of the house last night."},
+{"id":"pv-home-14","level":4,"g":"ing","zh":"他们正在翻新我们街上那栋老别墅。","en":"They're {doing up|renovating|fixing up|restoring} the old villa on our street."},
+{"id":"pv-home-15","level":1,"g":"base","zh":"该你倒垃圾了。","en":"It's your turn to {take out|put out|empty} the rubbish."},
+{"id":"pv-home-16","level":3,"g":"past","zh":"周六我们在走廊里装了几个搁板。","en":"We {put up|installed|fitted|hung|built|mounted} some shelves in the hallway on Saturday."},
+{"id":"pv-home-17","level":3,"g":"ing","zh":"这张旧沙发快散架了。","en":"This old couch is {falling apart|falling to bits|falling to pieces}."},
+{"id":"pv-home-18","level":4,"g":"passive","zh":"厨房的水槽又堵了。","en":"The kitchen sink is {blocked up|blocked|clogged|clogged up} again."},
+{"id":"pv-home-19","level":5,"g":"base","zh":"把窗户打开，给房间通通风。","en":"Open the windows to {air out|air|ventilate|freshen up} the room."},
+{"id":"pv-home-20","level":2,"g":"past","zh":"因为下雨，我们待在家里看了部电影。","en":"We {stayed in|stayed home|stayed at home} and watched a movie because of the rain."}
+]

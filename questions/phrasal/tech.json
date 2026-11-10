@@ -1,0 +1,22 @@
+[
+{"id":"pv-tech-01","level":1,"g":"base","zh":"我登录不了，系统说我密码错了。","en":"I can't {log in|sign in|log on|get in}. It says my password is wrong."},
+{"id":"pv-tech-02","level":3,"g":"past","zh":"故障之后我们把这次发布回滚了。","en":"We {rolled back|reverted|backed out} the release after the outage."},
+{"id":"pv-tech-03","level":2,"g":"base","zh":"升级之前一定要备份你的文件。","en":"Make sure you {back up|save|copy} your files before the upgrade."},
+{"id":"pv-tech-04","level":3,"g":"past","zh":"昨晚服务器自己关机了。","en":"The server {shut down|switched off|turned off|powered off} by itself last night."},
+{"id":"pv-tech-05","level":1,"g":"perfect","zh":"你把充电器插上了吗？","en":"Have you {plugged in|connected} the charger?"},
+{"id":"pv-tech-06","level":2,"g":"ing","zh":"IT部门今天下午在给我配置新电脑。","en":"IT is {setting up|configuring} my new laptop this afternoon."},
+{"id":"pv-tech-07","level":2,"g":"past","zh":"我昨天注册了免费试用。","en":"I {signed up for|registered for} the free trial yesterday."},
+{"id":"pv-tech-08","level":1,"g":"base","zh":"显示器开不了机。","en":"The monitor won't {turn on|switch on|come on|power on|start|work}."},
+{"id":"pv-tech-09","level":2,"g":"past","zh":"我终于弄明白构建为什么失败了。","en":"I finally {figured out|worked out|found out} why the build was failing."},
+{"id":"pv-tech-10","level":3,"g":"past","zh":"今天早上网站宕机了两个小时。","en":"The website {went down|was down} for two hours this morning."},
+{"id":"pv-tech-11","level":3,"g":"base","zh":"往下滚动，你就能看到下载按钮。","en":"If you {scroll down}, you'll see the download button."},
+{"id":"pv-tech-12","level":2,"g":"base","zh":"你能帮我把议程打印出来吗？","en":"Could you {print out|print off|print} the agenda for me?"},
+{"id":"pv-tech-13","level":2,"g":"past","zh":"她连续三次输错了密码。","en":"She {typed in|entered|put in|keyed in|typed} the wrong password three times."},
+{"id":"pv-tech-14","level":4,"g":"base","zh":"你可以在设置里选择退订营销邮件。","en":"You can {opt out of|unsubscribe from|turn off|switch off|stop|disable|block} marketing emails in your settings."},
+{"id":"pv-tech-15","level":5,"g":"ing","zh":"我们会在六月前逐步淘汰旧系统。","en":"We're {phasing out|retiring|replacing|removing|decommissioning} the old system by June."},
+{"id":"pv-tech-16","level":4,"g":"perfect","zh":"他已经把笔记本电脑连到大屏幕上了。","en":"He's {hooked up|connected} the laptop to the big screen."},
+{"id":"pv-tech-17","level":3,"g":"ing","zh":"视频通话的时候我的电脑老是卡死。","en":"My laptop keeps {freezing up|freezing|crashing|locking up|hanging} during video calls."},
+{"id":"pv-tech-18","level":3,"g":"past","zh":"测试的时候我们遇到了几个程序错误。","en":"We {ran into|came across|hit|found} a few bugs during testing."},
+{"id":"pv-tech-19","level":3,"g":"3sg","zh":"我每次打开这个应用都会弹出一条错误信息。","en":"An error message {pops up|comes up|appears|shows up} every time I open the app."},
+{"id":"pv-tech-20","level":4,"g":"ing","zh":"办公室的打印机老是出毛病。","en":"The office printer keeps {playing up|acting up|jamming|breaking|breaking down|failing}."}
+]

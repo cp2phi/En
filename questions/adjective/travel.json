@@ -1,0 +1,22 @@
+[
+{"id":"adj-travel-01","level":2,"g":"-","zh":"一月份海滩会变得非常拥挤。","en":"The beach gets really {crowded|busy|packed} in January."},
+{"id":"adj-travel-02","level":3,"g":"-","zh":"他们住在南岛一个偏远的地方。","en":"They live in a {remote|isolated} part of the South Island."},
+{"id":"adj-travel-03","level":4,"g":"-","zh":"我们走沿海那条风景优美的路线吧。","en":"Let's take the {scenic} route along the coast."},
+{"id":"adj-travel-04","level":2,"g":"-","zh":"我们的航班延误了两个小时。","en":"Our flight is {delayed|late} by two hours."},
+{"id":"adj-travel-05","level":2,"g":"-","zh":"奥克兰到东京有直飞航班吗？","en":"Is there a {direct|nonstop|non-stop} flight from Auckland to Tokyo?"},
+{"id":"adj-travel-06","level":3,"g":"-","zh":"你的护照有效期必须至少还有六个月。","en":"Your passport must be {valid} for at least six months."},
+{"id":"adj-travel-07","level":4,"g":"-","zh":"下飞机三天了，我还在倒时差。","en":"Three days after the flight, I'm still {jet-lagged|jetlagged}."},
+{"id":"adj-travel-08","level":1,"g":"-","zh":"我们在夜市尝了当地的食物。","en":"We tried the {local} food at a night market."},
+{"id":"adj-travel-09","level":1,"g":"-","zh":"火车上几乎是空的，我们独占了一整节车厢。","en":"The train was almost {empty}, so we had a whole carriage to ourselves."},
+{"id":"adj-travel-10","level":4,"g":"-","zh":"这趟航班很颠簸，气流很多。","en":"The flight was {bumpy|rough}; there was a lot of turbulence."},
+{"id":"adj-travel-11","level":3,"g":"-","zh":"山顶的景色美得惊人。","en":"The view from the top was {stunning|breathtaking|spectacular|amazing|gorgeous|incredible|beautiful}."},
+{"id":"adj-travel-12","level":2,"g":"-","zh":"在外国开车很难。","en":"It's hard to drive in a {foreign} country."},
+{"id":"adj-travel-13","level":5,"g":"-","zh":"皇后镇很美，但游客太多、太商业化了。","en":"Queenstown is beautiful but very {touristy}."},
+{"id":"adj-travel-14","level":2,"g":"-","zh":"酒店的位置非常方便，离车站只有两分钟。","en":"The hotel's location is really {convenient|handy}; it's two minutes from the station."},
+{"id":"adj-travel-15","level":1,"g":"-","zh":"我们在去酒店的路上迷路了。","en":"We got {lost} on the way to the hotel."},
+{"id":"adj-travel-16","level":3,"g":"-","zh":"我们的房间很宽敞，还能看到海港。","en":"Our room was {spacious|roomy|big|large|huge}, with a view of the harbour."},
+{"id":"adj-travel-17","level":3,"g":"-","zh":"这里真宁静，一点车声都听不到。","en":"It's so {peaceful|quiet|calm|tranquil} out here; you can't hear any traffic."},
+{"id":"adj-travel-18","level":3,"g":"-","zh":"我只订了单程票，因为还不知道什么时候回来。","en":"I only booked a {one-way|single} ticket because I don't know when I'm coming back."},
+{"id":"adj-travel-19","level":3,"g":"-","zh":"新加坡一年到头又热又潮湿。","en":"Singapore is hot and {humid|muggy|sticky} all year."},
+{"id":"adj-travel-20","level":2,"g":"comparative","zh":"酒店离海滩比地图上看起来更远。","en":"The hotel was {further|farther} from the beach than it looked on the map."}
+]
