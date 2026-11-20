@@ -1,5 +1,22 @@
 {
  "items": {
+  "t-passive-03": {
+   "attempts": 1,
+   "last_answer": "your account has been locked",
+   "last_verdict": "good",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": "2026-11-20",
+    "last_seq": 3,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "status": "passed",
+   "wrong": 0
+  },
   "t-questions-02": {
    "attempts": 0,
    "last_answer": "did you off today?",
@@ -53,5 +70,5 @@
    "wrong": 1
   }
  },
- "seq": 2
+ "seq": 3
 }

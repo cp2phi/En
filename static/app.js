@@ -266,27 +266,31 @@ function answerHistory(box, past = [], noun = "answer") {
 // ---- home -------------------------------------------------------------
 async function homeView() {
   const s = await api("GET", "summary");
-  const stat = (n, label) => h("div", { class: "card stat" }, h("b", {}, String(n)), label);
+  const fmt = (n) => Number(n).toLocaleString("en");
+  const num = (n, label) => h("div", {}, h("b", { class: n ? "" : "zero" }, fmt(n)), h("span", { class: "muted" }, label));
+  // One card per daily activity: what is waiting, the bank behind it, and a way in.
+  const activity = (title, nums, foot, href, button) => h("div", { class: "card" },
+    h("h2", {}, title),
+    h("div", { class: "nums" }, nums),
+    h("div", { class: "foot" }, foot),
+    h("a", { href }, h("button", { class: "primary", type: "button" }, button)));
   show(
     h("h1", {}, "What to practise today"),
-    h("div", { class: "grid" },
-      stat(s.words.due, "words due for review"),
-      stat(s.words.new_today_left, "new words left today"),
-      stat(s.cloze.due, "cloze questions to redo"),
-      stat(s.cloze.unseen, "cloze questions not yet done"),
-      stat(s.translate.due, "translations to redo"),
+    h("div", { class: "today" },
+      activity("Words",
+        [num(s.words.due, "due"), num(s.words.new_today_left, "new today")],
+        `${fmt(s.words.total)} in the bank` + (s.words.never ? ` · ${fmt(s.words.never)} hidden` : ""),
+        "#review", "Review words"),
+      activity("Cloze",
+        [num(s.cloze.due, "to redo"), num(s.cloze.unseen, "not done")],
+        `${fmt(s.cloze.passed)} passed · ${fmt(s.cloze.learning)} learning` + (s.cloze.never ? ` · ${fmt(s.cloze.never)} hidden` : ""),
+        "#cloze", "Start cloze"),
+      activity("Translate",
+        [num(s.translate.due, "to redo"), num(s.translate.unseen, "not done")],
+        `${fmt(s.translate.passed)} passed · ${fmt(s.translate.learning)} learning`,
+        "#translate", "Translate sentences"),
     ),
-    h("div", { class: "card" },
-      h("div", {}, `Cloze bank: ${s.cloze.total} questions · ${s.cloze.passed} passed · ${s.cloze.learning} learning · ${s.cloze.never} hidden`),
-      h("div", {}, `Translation bank: ${s.translate.total} sentences · ${s.translate.passed} passed · ${s.translate.learning} learning`),
-      h("div", {}, `Word bank: ${s.words.total} words · ${s.words.never} hidden`),
-      s.has_key ? null : h("p", { class: "muted" }, "No OpenAI key yet, so AI explanations and feedback are off. Add it in Settings."),
-    ),
-    h("div", { class: "row" },
-      h("a", { href: "#cloze" }, h("button", { class: "primary", type: "button" }, "Start cloze")),
-      h("a", { href: "#translate" }, h("button", { type: "button" }, "Translate sentences")),
-      h("a", { href: "#review" }, h("button", { type: "button" }, "Review words")),
-    ),
+    s.has_key ? null : h("p", { class: "notice" }, "No OpenAI key yet, so AI explanations and feedback are off. Add it in Settings."),
   );
 }
 
@@ -348,16 +352,17 @@ async function clozeView() {
   const earlier = answerHistory(box);
   let current = null; // {nodes, done}: the question on screen
   show(
-    h("h1", {}, clozeFilters.mode === "wrongbook" ? "Redo wrong answers" : "Translation cloze"),
-    h("div", { class: "row", style: "margin-bottom:16px" },
-      select("pos", "pos", "All word classes and topics", true),
+    h("div", { class: "page-head" },
+      h("h1", {}, clozeFilters.mode === "wrongbook" ? "Redo wrong answers" : "Translation cloze"),
+      h("div", { class: "actions" },
+        earlier.nav,
+        clozeFilters.mode === "wrongbook"
+          ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "Back to normal practice")
+          : null)),
+    h("div", { class: "filters" },
+      select("pos", "pos", "All word classes", true),
       select("scenes", "scene", clozeFilters.pos === "grammar" ? "All topics" : "All scenes", true),
-      select("levels", "level", "All levels", false),
-      clozeFilters.mode === "wrongbook"
-        ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "Back to normal practice")
-        : null,
-      earlier.nav,
-    ),
+      select("levels", "level", "All levels", false)),
     box,
   );
 
@@ -493,9 +498,37 @@ async function clozeView() {
 // ---- sentence translation -------------------------------------------
 const VERDICT_TEXT = {
   good: ["good", "✅ Correct and natural."],
-  fix: ["warn", "⚠️ Almost. Fix these:"],
-  wrong: ["bad", "❌ Not quite. The meaning is off:"],
+  fix: ["warn", "⚠️ Almost."],
+  wrong: ["bad", "❌ Not quite. The meaning is off."],
 };
+
+// Loose sentence key: case, punctuation and spacing don't count.
+const sentenceKey = (s) => (s || "").toLowerCase().replace(/[^\p{L}\p{N}\s']/gu, " ").replace(/\s+/g, " ").trim();
+
+// The learner's sentence with the fix written into it: removed words struck out
+// in red, added words in green. Word-level LCS; punctuation and case don't count.
+function diffWords(from, to) {
+  const a = from.match(/\S+/g) || [], b = to.match(/\S+/g) || [];
+  const ka = a.map(sentenceKey), kb = b.map(sentenceKey);
+  const L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--)
+    for (let j = b.length - 1; j >= 0; j--)
+      L[i][j] = ka[i] === kb[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = [];
+  const put = (tag, word) => {
+    const last = out[out.length - 1];
+    if (last && last.tag === tag) last.words.push(word);
+    else out.push({ tag, words: [word] });
+  };
+  let i = 0, j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && ka[i] === kb[j]) { put(null, b[j]); i++; j++; }
+    else if (i < a.length && (j >= b.length || L[i + 1][j] >= L[i][j + 1])) put("del", a[i++]);
+    else put("ins", b[j++]);
+  }
+  return out.flatMap((part, n) => [n ? " " : null,
+    part.tag ? h(part.tag, {}, part.words.join(" ")) : part.words.join(" ")]);
+}
 const translateMeta = () => api("GET", "translate/meta?" + new URLSearchParams(
   Object.entries({ type: translateFilters.type, scene: translateFilters.scene }).filter(([, v]) => v)));
 
@@ -528,16 +561,17 @@ async function translateView() {
   const earlier = answerHistory(box);
   let current = null; // {nodes, done, refresh}: the sentence on screen
   show(
-    h("h1", {}, wrongbook ? "Redo saved and wrong translations" : "Translate the sentence"),
-    h("div", { class: "row", style: "margin-bottom:16px" },
+    h("div", { class: "page-head" },
+      h("h1", {}, wrongbook ? "Redo saved and wrong translations" : "Translate the sentence"),
+      h("div", { class: "actions" },
+        earlier.nav,
+        wrongbook
+          ? h("button", { type: "button", onclick: () => { translateFilters.mode = ""; translateView(); } }, "Back to normal practice")
+          : null)),
+    h("div", { class: "filters" },
       select("types", "type", "All sentence types", true),
       select("scenes", "scene", "All scenes", true),
-      select("levels", "level", "All levels", false),
-      wrongbook
-        ? h("button", { type: "button", onclick: () => { translateFilters.mode = ""; translateView(); } }, "Back to normal practice")
-        : null,
-      earlier.nav,
-    ),
+      select("levels", "level", "All levels", false)),
     box,
   );
 
@@ -674,19 +708,36 @@ async function translateView() {
           h("button", { class: "good", type: "button", onclick: gotIt }, "I got it"),
           h("button", { class: "bad", type: "button", onclick: notQuite }, "Not quite"));
       }
+      // Layout, top to bottom: verdict → your sentence corrected in place, with the
+      // reasons under it → the model answer and other ways to say it → tip.
+      // Each sentence appears once: if your fixed sentence is the model answer,
+      // the model block only keeps the alternatives.
+      const fixed = r.fixed && answer && sentenceKey(r.fixed) !== sentenceKey(answer) ? r.fixed : "";
+      const fixedIsModel = fixed && sentenceKey(fixed) === sentenceKey(r.en);
+      const whole = (orig) => sentenceKey(orig).split(" ").length >= sentenceKey(answer).split(" ").length - 1;
+      const reasons = (r.issues || []).filter((i) => i.why);
       fill(feedback,
         r.ai_error ? h("div", { class: "bad" }, "No AI check: " + r.ai_error) : null,
         answer && !r.verdict && !r.ai_error ? h("div", { class: "muted" }, "No OpenAI key, so there is no AI check.") : null,
         verdict ? h("div", { class: "verdict " + verdict[0] }, verdict[1]) : null,
-        r.issues && r.issues.length ? h("div", { class: "issues" }, r.issues.map((i) => h("div", { class: "issue" },
-          h("span", { class: "wrong-part" }, i.original), " → ", h("b", {}, i.better),
-          i.why ? h("span", { class: "muted" }, "  " + i.why) : null))) : null,
-        r.fixed ? h("div", { class: "fixed" }, h("span", { class: "muted" }, "Yours, fixed: "), r.fixed,
-          h("button", { class: "link", type: "button", onclick: () => speak(r.fixed) }, "🔊")) : null,
+        fixed ? h("div", { class: "fb-block" },
+          h("div", { class: "fb-label" }, fixedIsModel ? "Yours, corrected (= model answer)" : "Yours, corrected"),
+          h("div", { class: "fb-sentence diff" }, diffWords(answer, fixed),
+            h("button", { class: "link", type: "button", onclick: () => speak(fixed) }, "🔊")),
+          reasons.length ? h("ul", { class: "reasons" }, reasons.map((i) => h("li", {},
+            i.original && i.better && !whole(i.original)
+              ? [h("del", {}, i.original), " → ", h("ins", {}, i.better), "  "] : null,
+            i.why))) : null) : null,
+        // a "fix" verdict without a fixed sentence: fall back to the issue list
+        !fixed && r.issues && r.issues.length ? h("ul", { class: "reasons" }, r.issues.map((i) => h("li", {},
+          h("del", {}, i.original), " → ", h("ins", {}, i.better), i.why ? "  " + i.why : null))) : null,
         selfMark ? markBox : null,
-        h("div", { class: "answer" }, r.en,
-          h("button", { class: "link", type: "button", onclick: () => speak(r.en) }, "🔊")),
-        r.alt.length ? h("div", { class: "alt" }, h("span", { class: "muted" }, "Also: "), r.alt.join(" / ")) : null,
+        h("div", { class: "fb-block model" },
+          fixedIsModel ? null : [
+            h("div", { class: "fb-label" }, answer ? "Model answer" : "Answer"),
+            h("div", { class: "fb-sentence answer" }, r.en,
+              h("button", { class: "link", type: "button", onclick: () => speak(r.en) }, "🔊"))],
+          r.alt.length ? h("div", { class: "alt" }, h("span", { class: "fb-label" }, "Also: "), r.alt.join(" / ")) : null),
         r.point ? h("div", { class: "note" }, "💡 " + r.point) : null,
         !answer ? h("div", { class: "muted" }, "Revealed sentences go to the wrong book and come back later today, then at growing intervals.") : null,
       );
@@ -737,8 +788,8 @@ let wrongbookTab = "translate";
 
 async function wrongbookView() {
   const [clozeBook, translateBook] = await Promise.all([api("GET", "cloze/wrongbook"), api("GET", "translate/wrongbook")]);
-  const tab = (id, text, n) => h("button", { type: "button", class: "chip" + (wrongbookTab === id ? " on" : ""),
-    onclick: () => { wrongbookTab = id; wrongbookView(); } }, `${text} (${n})`);
+  const tab = (id, text, n) => h("button", { type: "button", class: wrongbookTab === id ? "on" : "",
+    onclick: () => { wrongbookTab = id; wrongbookView(); } }, text, h("span", { class: "count" }, String(n)));
   const remove = (path, id, what) => h("button", { class: "link", type: "button", title: "Take it off the wrong book", onclick: async () => {
     if (!confirm(`Remove this ${what} from the wrong book? It comes back if you get it wrong again.`)) return;
     await api("POST", path, { id });
@@ -783,7 +834,7 @@ async function wrongbookView() {
         acceptedLines(item.accepted)))];
   show(
     h("h1", {}, "Wrong book"),
-    h("div", { class: "row chips", style: "margin-bottom:16px" },
+    h("div", { class: "tabs" },
       tab("translate", "Translation", translateRows.length), tab("cloze", "Cloze", clozeRows.length)),
     ...body,
   );
@@ -1256,6 +1307,7 @@ async function wordsView() {
 
 // ---- keep writing / keep speaking / improv / toastmasters ---------------
 const practiceTrack = {}; // remembered track per module
+const practiceGroupTrack = {}; // remembered track per module/group
 const practicePast = {}; // per module: feedback you moved on from, for "← Previous" (this visit only)
 // Tag given to words saved from each practice module's feedback.
 const MODULE_TAGS = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters",
@@ -1315,28 +1367,44 @@ async function practiceView(module) {
   // label: the task, for screens that don't show it themselves.
   const keepFeedback = (label) => earlier.keep({ nodes: [...box.childNodes], label });
 
-  const trackButton = (t) => h("button", {
-    type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
-    title: t.locked ? "Unlocks after the level below" : `${t.done} / ${t.count} prompts done`,
-    onclick: () => { practiceTrack[module] = t.id; practiceView(module); },
-  }, (t.locked ? "🔒 " : "") + t.name + (t.private ? " (private)" : ""));
-  // One row of buttons per group ("Levels", "Small talk"); no heading when there is only one group.
-  const groups = [...new Set(meta.tracks.map((t) => t.group || ""))];
-  const trackButtons = groups.map((g) => h("div", { class: "row", style: "margin-bottom:8px" },
-    groups.length > 1 && g ? h("b", { class: "muted", style: "min-width:6em" }, g) : null,
-    meta.tracks.filter((t) => (t.group || "") === g).map(trackButton)));
+  // Picking a topic: group tabs on one line (Levels, Small talk, ...), then one dropdown for
+  // the topics in that group. Each group remembers the topic last used in it.
+  const groupOf = (t) => t.group || "";
+  const pick = (t) => {
+    practiceTrack[module] = t.id;
+    practiceGroupTrack[`${module}/${groupOf(t)}`] = t.id;
+    practiceView(module);
+  };
+  practiceGroupTrack[`${module}/${groupOf(track)}`] = track.id;
+  const groups = [...new Set(meta.tracks.map(groupOf))];
+  const firstIn = (g) => {
+    const inGroup = open.filter((t) => groupOf(t) === g);
+    const ladder = inGroup.filter((t) => t.level);
+    return inGroup.find((t) => t.id === practiceGroupTrack[`${module}/${g}`]) || ladder[ladder.length - 1] || inGroup[0];
+  };
+  const tabs = groups.length > 1 ? h("div", { class: "tabs", role: "tablist" },
+    groups.map((g) => h("button", { type: "button", role: "tab", class: g === groupOf(track) ? "on" : "",
+      "aria-selected": String(g === groupOf(track)),
+      onclick: () => { const t = firstIn(g); if (t && t.id !== track.id) pick(t); } }, g || "Other"))) : null;
+  const siblings = meta.tracks.filter((t) => groupOf(t) === groupOf(track));
+  const picker = siblings.length > 1 ? h("select", { "aria-label": "Topic",
+    onchange: (e) => pick(meta.tracks.find((t) => t.id === e.target.value)) },
+    siblings.map((t) => h("option", { value: t.id, selected: t.id === track.id, disabled: t.locked },
+      (t.locked ? "🔒 " : "") + t.name + (t.private ? " (private)" : "")))) : null;
   const next = track.level && meta.tracks.find((t) => t.level === track.level + 1);
-  const ladderNote = next && next.locked
-    ? `${Math.max(0, meta.unlock_sessions - track.good)} more good sessions on this level unlock "${next.name}"`
-    : track.id === FREE_TALK.id ? "Pick who you're talking to and what about. The AI asks follow-up questions about whatever you say."
-    : `${track.done} / ${track.count} prompts done in this group`;
+  const progress = next && next.locked
+    ? h("div", { class: "muted" }, `${Math.max(0, meta.unlock_sessions - track.good)} more good sessions unlock “${next.name}”`)
+    : track.id === FREE_TALK.id
+      ? h("div", { class: "muted" }, "Pick who you're talking to and what about. The AI asks follow-up questions about whatever you say.")
+      : h("div", { class: "muted" }, `${track.done} / ${track.count} done`,
+          h("div", { class: "bar" }, h("i", { style: `width:${track.count ? Math.round(100 * track.done / track.count) : 0}%` })));
 
   show(
-    h("h1", {}, meta.name),
-    trackButtons,
-    h("div", { class: "row", style: "margin-bottom:16px" }, h("span", { class: "muted" }, ladderNote), earlier.nav),
-    track.private || track.id === FREE_TALK.id ? h("div", { class: "card muted" },
-      "Private: what you say here is kept in private/ on this computer and never synced to GitHub. "
+    h("div", { class: "page-head" }, h("h1", {}, meta.name), h("div", { class: "actions" }, earlier.nav)),
+    tabs,
+    h("div", { class: "trackbar" }, picker, h("div", { class: "progress" }, progress)),
+    track.private || track.id === FREE_TALK.id ? h("p", { class: "notice" },
+      "🔒 Private: kept in private/ on this computer and never synced to GitHub. "
       + "It is still sent to OpenAI for transcription and feedback.") : null,
     track.pack ? phrasePanel(track.pack) : null,
     box,
@@ -2092,6 +2160,9 @@ async function render() {
   stopSpeaking();
   const name = location.hash.slice(1) || "home";
   document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + name));
+  // On phones the links are one scrolling strip: keep the current page's link in view.
+  const active = document.querySelector("nav a.active");
+  if (active) active.scrollIntoView({ block: "nearest", inline: "nearest" });
   try {
     await (routes[name] || homeView)();
   } catch (e) {
