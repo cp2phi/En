@@ -158,6 +158,12 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 200)
         self.assertEqual(self.call("GET", "/api/cloze/wrongbook")[1]["items"], [])
         self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 404)
+        # Add to word bank also stars the question into the wrong book; rows list every accepted answer.
+        _, starred = self.call("POST", "/api/cloze/mark", {"id": q["id"], "outcome": "star"})
+        row, = self.call("GET", "/api/cloze/wrongbook")[1]["items"]
+        self.assertEqual(row["accepted"], starred["accepted"])
+        self.assertEqual([p["fill"] for p in row["parts"] if "fill" in p], [a[0] for a in row["accepted"]])
+        self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 200)
         self.call("POST", "/api/cloze/answer", {"id": q["id"], "answers": ["zzzzzz"]})
         self.assertEqual(len(self.call("GET", "/api/cloze/wrongbook")[1]["items"]), 1, "back after another miss")
 

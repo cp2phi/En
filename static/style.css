@@ -59,6 +59,12 @@ input.blank.word, input.blank.empty { border-color: var(--bad); color: var(--bad
 .feedback { margin: 10px 0; }
 .feedback .good { color: var(--good); } .feedback .bad { color: var(--bad); }
 .answer { font-size: 20px; margin: 8px 0; }
+/* The words that went in the cloze blanks: bold on highlighter yellow (dark text in both themes). */
+mark.fill { background: #fff35c; color: #1f2328; font-weight: 700; padding: 0 3px; border-radius: 3px; }
+.also { font-size: 17px; margin: -4px 0 8px; }
+/* Other ways to say it, under the model answer: big enough not to be skipped. */
+.alt { font-size: 18px; margin: -2px 0 10px; padding-left: 10px; border-left: 3px solid var(--good); }
+.alt .muted { font-size: 15px; }
 .example { margin: 8px 0; }
 .example .muted { display: block; }
 table { width: 100%; border-collapse: collapse; }

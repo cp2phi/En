@@ -49,6 +49,8 @@ function personalise(text) {
 const missingDetails = (text) => Object.entries(PLACEHOLDERS).some(([key, [field]]) =>
   text.includes(`{${key}}`) && !settings[field]);
 const clozeFilters = { pos: "", scene: "", level: "", mode: "" };
+// A finished cloze card set aside while its word is added to the word bank; shown again on return.
+let clozeResume = null;
 const translateFilters = { type: "", scene: "", level: "", mode: "" };
 
 // ---- helpers ----------------------------------------------------------
@@ -177,7 +179,7 @@ function show(...nodes) {
 
 // "← Previous": look back at answers you have moved on from, then return to where you were.
 // Past cards are kept as live DOM nodes, so their buttons (Never show again, Add to word bank,
-// I actually guessed, ☆ Save) still work. `past` holds {nodes, label?}, newest last; pass an
+// I don't know, ☆ Save) still work. `past` holds {nodes, label?}, newest last; pass an
 // array that outlives the view to keep it across re-renders. Nothing here is saved.
 const PAST_LIMIT = 20;
 function answerHistory(box, past = [], noun = "answer") {
@@ -276,6 +278,26 @@ async function homeView() {
 }
 
 // ---- cloze ------------------------------------------------------------
+// A solved cloze sentence with the blank words bold and highlighted. parts come from the
+// server ({text} | {fill, blank}); fills (optional, per blank) replace the main answers.
+function filledSentence(parts, fills) {
+  return parts.map((p) => (p.text !== undefined ? p.text
+    : h("mark", { class: "fill" }, (fills && fills[p.blank]) || p.fill)));
+}
+const sameAnswer = (a, b) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
+// The other accepted answers, one line per blank that has any. given (optional): what the
+// learner typed; an accepted alternative they used is highlighted and marked "yours".
+function acceptedLines(accepted, given) {
+  return accepted.map((answers, i) => {
+    const others = answers.slice(1);
+    if (!others.length) return null;
+    const lead = accepted.length > 1 ? `Blank ${i + 1}, also accepted: ` : "Also accepted: ";
+    return h("div", { class: "also" }, h("span", { class: "muted" }, lead),
+      others.flatMap((a, k) => [k ? " · " : "",
+        given && given[i] && sameAnswer(given[i], a) ? [h("mark", { class: "fill" }, a), " (yours)"] : a]));
+  });
+}
+
 const clozeMeta = () => api("GET", "cloze/meta?" + new URLSearchParams(
   Object.entries({ pos: clozeFilters.pos, scene: clozeFilters.scene }).filter(([, v]) => v)));
 
@@ -343,7 +365,7 @@ async function clozeView() {
     renderQuestion(q, redo);
   }
 
-  function renderQuestion(q, redo) {
+  function renderQuestion(q, redo, resume) {
     let attempted = false;
     const inputs = [];
     const sentence = h("div", { class: "en" }, q.segments.map((seg) => {
@@ -373,7 +395,7 @@ async function clozeView() {
     function answeringActions() {
       fill(actions, 
         h("button", { class: "primary", type: "submit" }, attempted ? "Try again" : "Check"),
-        h("button", { type: "button", onclick: revealAnswer }, "Show answer"),
+        h("button", { type: "button", onclick: revealAnswer }, "I don't know"),
         h("button", { class: "link", type: "button", onclick: never }, "Never show again"),
       );
     }
@@ -383,7 +405,7 @@ async function clozeView() {
         id: q.id, answers: inputs.map((i) => i.value), record: !attempted,
       });
       result.blanks.forEach((b, i) => { inputs[i].className = "blank " + b.kind; });
-      if (result.correct) return finish(result, !attempted);
+      if (result.correct) return finish(result, !attempted, inputs.map((i) => i.value));
       attempted = true;
       fill(feedback, ...result.blanks.map((b, i) =>
         h("div", { class: b.kind === "correct" ? "good" : "bad" }, `Blank ${i + 1}: ${KIND_TEXT[b.kind]}`)));
@@ -404,28 +426,44 @@ async function clozeView() {
       advance();
     }
 
-    function finish(result, firstTry) {
+    // The best answer first, then the other accepted answers. given: what the learner typed,
+    // when it was accepted. resumed: coming back from the word bank, so nothing is spoken again.
+    function finish(result, firstTry, given, resumed) {
       entry.done = true;
       inputs.forEach((i) => { i.disabled = true; });
-      speak(result.sentence);
+      if (!resumed) speak(result.sentence);
       fill(feedback, 
         h("div", { class: firstTry ? "good" : "bad" },
           firstTry ? "Correct." : "This question comes back later today, then at growing intervals."),
-        h("div", { class: "answer" }, result.sentence,
+        h("div", { class: "answer" }, filledSentence(result.parts),
           h("button", { class: "link", type: "button", onclick: () => speak(result.sentence) }, "🔊")),
+        acceptedLines(result.accepted, given),
         result.note ? h("div", { class: "note" }, "💡 " + result.note) : null,
       );
       const next = h("button", { class: "primary", type: "button", onclick: advance }, "Next");
-      const guessed = h("button", { type: "button", onclick: async () => {
+      // Right, but not really known: the same as not knowing it.
+      const dontKnow = h("button", { type: "button", onclick: async () => {
         await api("POST", "cloze/mark", { id: q.id, outcome: "guessed" });
-        guessed.disabled = true;
-        toast("Added to the redo queue");
-      } }, "I actually guessed");
+        dontKnow.disabled = true;
+        toast("Added to the wrong book");
+      } }, "I don't know");
+      if (resumed && resumed.inBook) dontKnow.disabled = true;
       fill(actions, 
         next,
-        firstTry ? guessed : null,
-        h("button", { type: "button", onclick: () => {
-          prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }], tags: ["Cloze"] };
+        firstTry ? dontKnow : null,
+        h("button", { type: "button", onclick: async () => {
+          // A word worth saving is a question worth redoing: it goes in the wrong book too
+          // (if it isn't already), without counting as a mistake.
+          if (firstTry && !dontKnow.disabled) {
+            await api("POST", "cloze/mark", { id: q.id, outcome: "star" });
+            toast("Also added to the wrong book");
+          }
+          // Come back to this same card after saving the word, not to a new question.
+          clozeResume = { q, redo, result, firstTry, given, inBook: true,
+            filters: JSON.stringify(clozeFilters),
+            inputs: inputs.map((i) => ({ value: i.value, className: i.className })) };
+          prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }],
+            tags: ["Cloze"], returnTo: "#cloze" };
           location.hash = "#add";
         } }, "Add to word bank"),
         h("button", { class: "link", type: "button", onclick: never }, "Never show again"),
@@ -433,12 +471,20 @@ async function clozeView() {
       next.focus();
     }
 
-    answeringActions();
     fill(box, form);
+    if (resume) {
+      resume.inputs.forEach((saved, i) => Object.assign(inputs[i], saved));
+      finish(resume.result, resume.firstTry, resume.given, resume);
+      return;
+    }
+    answeringActions();
     inputs[0].focus();
   }
 
-  await loadQuestion();
+  const resume = clozeResume;
+  clozeResume = null;
+  if (resume && resume.filters === JSON.stringify(clozeFilters)) renderQuestion(resume.q, resume.redo, resume);
+  else await loadQuestion();
 }
 
 // ---- sentence translation -------------------------------------------
@@ -636,7 +682,7 @@ async function translateView() {
         selfMark ? markBox : null,
         h("div", { class: "answer" }, r.en,
           h("button", { class: "link", type: "button", onclick: () => speak(r.en) }, "🔊")),
-        r.alt.length ? h("div", { class: "muted" }, "Also: " + r.alt.join(" / ")) : null,
+        r.alt.length ? h("div", { class: "alt" }, h("span", { class: "muted" }, "Also: "), r.alt.join(" / ")) : null,
         r.point ? h("div", { class: "note" }, "💡 " + r.point) : null,
         !answer ? h("div", { class: "muted" }, "Revealed sentences go to the wrong book and come back later today, then at growing intervals.") : null,
       );
@@ -726,8 +772,9 @@ async function wrongbookView() {
         h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
           h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
           remove("cloze/wrongbook/remove", item.id, "question")),
-        h("div", { class: "answer" }, item.sentence,
-          h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊"))))];
+        h("div", { class: "answer" }, filledSentence(item.parts),
+          h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊")),
+        acceptedLines(item.accepted)))];
   show(
     h("h1", {}, "Wrong book"),
     h("div", { class: "row chips", style: "margin-bottom:16px" },
@@ -1006,7 +1053,8 @@ function addView() {
         examples, note: [...picked, note.value.trim()].filter(Boolean).join("\n"),
       });
       toast(r.duplicate ? "Already in your word bank. New examples were merged in" : "Added to your word bank");
-      addView();
+      if (draft.returnTo) location.hash = draft.returnTo; // back to the card you came from
+      else addView();
     } catch (e) {
       toast(e.message);
     }

@@ -465,7 +465,8 @@ class App:
             case ("POST", "cloze", "mark"):
                 q = self._question(body.get("id"))
                 outcome = body.get("outcome")
-                if outcome not in ("reveal", "guessed", "never"):
+                # "star": saved to the word bank, so into the wrong book without counting as a mistake.
+                if outcome not in ("reveal", "guessed", "never", "star"):
                     raise ApiError(400, "bad outcome")
                 progress = self.cloze.load()
                 cloze.record(progress, q["id"], outcome, today)

@@ -57,6 +57,13 @@ def solution(en: str) -> str:
     return BLANK.sub(lambda m: m.group(1).split("|")[0].strip(), en)
 
 
+def solution_parts(q: dict) -> list[dict]:
+    """The solved sentence as pieces, so the page can highlight what went in the blanks:
+    [{"text": "Let's "}, {"fill": "go over", "blank": 0}, {"text": " the numbers..."}]."""
+    return [{"fill": q["blanks"][seg["blank"]][0], "blank": seg["blank"]} if "blank" in seg else seg
+            for seg in q["segments"]]
+
+
 def load_questions(root: Path) -> dict[str, dict]:
     questions: dict[str, dict] = {}
     for path in sorted(Path(root).glob("*/*.json")):
@@ -120,8 +127,9 @@ def check(q: dict, answers: list[str]) -> dict:
 
 def reveal(q: dict) -> dict:
     # "note" (optional): a one-sentence explanation shown with the answer.
-    return {"sentence": q["sentence"], "answers": [b[0] for b in q["blanks"]], "zh": q["zh"],
-            "note": q.get("note", "")}
+    # "accepted": every answer per blank, the best one first.
+    return {"sentence": q["sentence"], "parts": solution_parts(q), "accepted": q["blanks"],
+            "answers": [b[0] for b in q["blanks"]], "zh": q["zh"], "note": q.get("note", "")}
 
 
 def in_wrong_book(item: dict) -> bool:
@@ -237,7 +245,8 @@ def wrong_book(questions: dict, progress: dict) -> list[dict]:
     for qid, item in progress["items"].items():
         q = questions.get(qid)
         if q and in_wrong_book(item):
-            rows.append({"id": qid, "zh": q["zh"], "sentence": q["sentence"], "pos": q["pos"],
+            rows.append({"id": qid, "zh": q["zh"], "sentence": q["sentence"],
+                         "parts": solution_parts(q), "accepted": q["blanks"], "pos": q["pos"],
                          "scene": q["scene"], "wrong": item["wrong"], "status": item["status"]})
     return sorted(rows, key=lambda r: (-r["wrong"], r["id"]))
 

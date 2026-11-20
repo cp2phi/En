@@ -152,6 +152,12 @@ class ClozeTest(unittest.TestCase):
         self.assertEqual(c["levels"], {"2": {"total": 1, "left": 1}})
         self.assertEqual(cloze.counts(qs, p, {"pos": "adjective"})["scenes"], {"work": {"total": 1, "left": 1}})
 
+    def test_solution_parts_mark_the_blank_words(self):
+        segments, blanks = cloze.parse("Let's {go over|go through} the numbers.")
+        q = {"segments": segments, "blanks": blanks}
+        self.assertEqual(cloze.solution_parts(q), [
+            {"text": "Let's "}, {"fill": "go over", "blank": 0}, {"text": " the numbers."}])
+
     def test_reveal_includes_the_note(self):
         q = self.q | {"note": "Run a meeting means lead it."}
         self.assertEqual(cloze.reveal(q)["note"], "Run a meeting means lead it.")
