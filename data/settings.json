@@ -1,8 +1,11 @@
 {
  "accent": "us",
  "hometown": "Auckland",
+ "letter_hint": false,
  "model": "gpt-4o-mini",
+ "my_company": "",
  "my_name": "Ping",
+ "my_role": "",
  "new_per_day": 100,
  "pace": "normal",
  "tts": "openai",

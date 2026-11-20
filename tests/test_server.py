@@ -7,7 +7,9 @@ import unittest
 from datetime import date, datetime
 from pathlib import Path
 
-from app import ai
+import base64
+
+from app import ai, images
 from app.server import make_server
 from app.sync import sync
 
@@ -50,8 +52,31 @@ class ServerTest(unittest.TestCase):
             used = ai.TTS_FALLBACK_MODEL if text == "old model gone" else model
             return f"ID3 {text}|{voice}|{accent}|{pace}".encode(), used
 
+        self.grade_calls = []
+
+        def fake_grade(zh, reference, answer, key, model):
+            self.grade_calls.append(answer)
+            if answer == "boom":
+                raise ai.AIError("AI down")
+            return {"verdict": "fix", "issues": [{"original": "x", "better": "y", "why": "原因"}], "fixed": "Fixed."}
+
+        self.photo_calls = []
+
+        def fake_wiki_photo(title, search=""):
+            self.photo_calls.append(("wiki", title, search))
+            if title == "Nothing":
+                raise images.ImageError("No Wikipedia photo found.")
+            return b"\xff\xd8\xff wiki", f"Photo: Wikipedia, {title}"
+
+        def fake_ai_picture(word, key):
+            if not key:
+                raise ai.AIError("No OpenAI key yet.")
+            self.photo_calls.append(("ai", word["term"], key))
+            return b"\x89PNG\r\n\x1a\n ai", "AI picture"
+
         self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), explain=fake_explain,
-                                  feedback=fake_feedback, transcribe=fake_transcribe, speech=fake_speech)
+                                  feedback=fake_feedback, transcribe=fake_transcribe, speech=fake_speech,
+                                  wiki_photo=fake_wiki_photo, ai_picture=fake_ai_picture, grade=fake_grade)
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
@@ -142,6 +167,59 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(self.call("POST", "/api/cloze/answer", {"id": "nope", "answers": []})[0], 404)
         self.assertEqual(self.call("POST", "/api/cloze/mark", {"id": q["id"], "outcome": "correct"})[0], 400)
 
+    def test_translate_flow(self):
+        _, meta = self.call("GET", "/api/translate/meta")
+        self.assertGreater(meta["total"], 0)
+        some_type = next(iter(meta["counts"]["types"]))
+        _, nxt = self.call("GET", f"/api/translate/next?type={some_type}&level=1")
+        q = nxt["question"]
+        self.assertEqual((q["type"], q["level"]), (some_type, 1))
+        self.assertNotIn("en", q, "the answer is not sent before answering")
+        self.assertFalse(nxt["in_wrong_book"])
+
+        # No key: no AI call, no verdict, the learner marks it.
+        _, r = self.call("POST", "/api/translate/check", {"id": q["id"], "answer": "something else entirely"})
+        self.assertEqual((r["verdict"], self.grade_calls), (None, []))
+        self.assertTrue(r["en"])
+        self.assertEqual(self.call("POST", "/api/translate/check", {"id": q["id"], "answer": " "})[0], 400)
+        _, m = self.call("POST", "/api/translate/mark", {"id": q["id"], "outcome": "wrong"})
+        self.assertTrue(m["in_wrong_book"])
+        _, book = self.call("GET", "/api/translate/wrongbook")
+        self.assertEqual(book["items"][0]["last_answer"], "something else entirely")
+
+        # The reference itself passes without asking the AI, even with a key.
+        self.call("PUT", "/api/settings", {"openai_key": "sk-test"})
+        _, r = self.call("POST", "/api/translate/check", {"id": q["id"], "answer": r["en"].upper()})
+        self.assertEqual((r["verdict"], self.grade_calls), ("good", []))
+        _, r = self.call("POST", "/api/translate/check", {"id": q["id"], "answer": "my own try"})
+        self.assertEqual((r["verdict"], r["fixed"], self.grade_calls), ("fix", "Fixed.", ["my own try"]))
+
+        # A wrong answer is not recorded until the learner picks Next or Save & next.
+        _, fresh = self.call("GET", f"/api/translate/next?type={some_type}&level=3")
+        fid = fresh["question"]["id"]
+        _, r = self.call("POST", "/api/translate/check", {"id": fid, "answer": "a wrong try"})
+        self.assertEqual((r["verdict"], r["in_wrong_book"]), ("fix", False))
+        _, m = self.call("POST", "/api/translate/mark", {"id": fid, "outcome": "tried"})
+        self.assertFalse(m["in_wrong_book"])
+        _, book = self.call("GET", "/api/translate/wrongbook")
+        self.assertNotIn(fid, [i["id"] for i in book["items"]])
+        _, r = self.call("POST", "/api/translate/check", {"id": q["id"], "answer": "boom"})
+        self.assertEqual((r["verdict"], r["ai_error"]), (None, "AI down"))
+
+        # Star, remove, reveal, never.
+        _, other = self.call("GET", f"/api/translate/next?type={some_type}&level=2")
+        oid = other["question"]["id"]
+        self.assertTrue(self.call("POST", "/api/translate/mark", {"id": oid, "outcome": "star"})[1]["in_wrong_book"])
+        _, book = self.call("GET", "/api/translate/wrongbook")
+        self.assertIn(oid, [i["id"] for i in book["items"] if i["starred"]])
+        self.assertEqual(self.call("POST", "/api/translate/wrongbook/remove", {"id": oid})[0], 200)
+        self.assertEqual(self.call("POST", "/api/translate/wrongbook/remove", {"id": oid})[0], 404)
+        self.assertEqual(self.call("POST", "/api/translate/mark", {"id": oid, "outcome": "bogus"})[0], 400)
+        self.assertEqual(self.call("POST", "/api/translate/mark", {"id": "nope", "outcome": "star"})[0], 404)
+        _, summary = self.call("GET", "/api/summary")
+        self.assertEqual(summary["translate"]["total"], meta["total"])
+        self.assertTrue((self.root / "data" / "translate.json").exists())
+
     def test_words_flow(self):
         status, added = self.call("POST", "/api/words", {
             "term": "in the zone", "examples": [{"en": "You're in the zone.", "zh": "你很专注"}]})
@@ -163,6 +241,89 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(self.call("DELETE", f"/api/words/{word_id}")[0], 200)
         self.assertEqual(self.call("DELETE", f"/api/words/{word_id}")[0], 404)
 
+    def test_word_tags_and_filter(self):
+        self.call("POST", "/api/words", {"term": "aioli", "tags": "Restaurant/Sauces, Manual"})
+        self.call("POST", "/api/words", {"term": "excavator", "tags": ["Construction"]})
+        _, listing = self.call("GET", "/api/words")
+        self.assertEqual(listing["tags"], {"Construction": 1, "Manual": 1, "Restaurant": 1, "Restaurant/Sauces": 1})
+        _, nxt = self.call("GET", "/api/words/next?tags=Construction")
+        self.assertEqual((nxt["word"]["term"], nxt["counts"]["total"]), ("excavator", 1))
+        _, nxt = self.call("GET", "/api/words/next?tags=Restaurant,Nope")
+        self.assertEqual(nxt["word"]["term"], "aioli")
+
+    def test_word_packs(self):
+        _, r = self.call("GET", "/api/words/packs")
+        pack = r["packs"][0]
+        self.assertEqual(pack["in_bank"], 0)
+        topic = next(iter(pack["topics"]))
+        _, added = self.call("POST", "/api/words/packs/add", {"id": pack["id"], "topics": [topic]})
+        self.assertEqual(added, {"added": pack["topics"][topic], "merged": 0})
+        _, tags = self.call("GET", "/api/words/tags")
+        self.assertEqual(tags["tags"][f"{pack['tag']}/{topic}"], pack["topics"][topic])
+        self.assertEqual(self.call("POST", "/api/words/packs/add", {"id": "nope"})[0], 404)
+        _, full = self.call("GET", f"/api/words/packs/{pack['id']}")
+        self.assertEqual((full["tag"], len(full["words"])), (pack["tag"], pack["count"]))
+        in_bank = [w["term"] for w in full["words"] if w["in_bank"]]
+        self.assertEqual(len(in_bank), pack["topics"][topic])
+        # Preview, then add just two chosen cards from another topic.
+        chosen = [w["term"] for w in full["words"] if not w["in_bank"]][:2]
+        _, added = self.call("POST", "/api/words/packs/add", {"id": pack["id"], "terms": chosen})
+        self.assertEqual(added, {"added": 2, "merged": 0})
+        _, full = self.call("GET", f"/api/words/packs/{pack['id']}")
+        self.assertEqual(sum(w["in_bank"] for w in full["words"]), pack["topics"][topic] + 2)
+        self.assertEqual(self.call("POST", "/api/words/packs/add", {"id": pack["id"], "terms": "x"})[0], 400)
+        self.assertEqual(self.call("GET", "/api/words/packs/nope")[0], 404)
+        self.assertEqual(self.call("POST", "/api/words/packs/add", {"id": pack["id"], "topics": "x"})[0], 400)
+
+    def test_word_pictures(self):
+        _, added = self.call("POST", "/api/words", {"term": "flat white", "wiki": "Flat white"})
+        wid = added["word"]["id"]
+        images_dir = self.root / "data" / "images"
+
+        _, r = self.call("POST", f"/api/words/{wid}/image", {"source": "wiki"})
+        self.assertEqual(r["word"]["image"]["by"], "wiki")
+        self.assertEqual(self.photo_calls[-1], ("wiki", "Flat white", "flat white"))
+        status, raw = self.call("GET", f"/api/words/{wid}/image")
+        self.assertEqual((status, raw), (200, b"\xff\xd8\xff wiki"))
+        self.assertTrue((images_dir / f"{wid}.jpg").is_file())
+
+        # AI needs a key; a new picture replaces the old file.
+        self.assertEqual(self.call("POST", f"/api/words/{wid}/image", {"source": "ai"})[0], 502)
+        self.call("PUT", "/api/settings", {"openai_key": "sk-k"})
+        _, r = self.call("POST", f"/api/words/{wid}/image", {"source": "ai"})
+        self.assertEqual(r["word"]["image"]["file"], f"{wid}.png")
+        self.assertFalse((images_dir / f"{wid}.jpg").exists())
+
+        upload = base64.b64encode(b"GIF89a mine").decode()
+        _, r = self.call("POST", f"/api/words/{wid}/image", {"source": "upload", "data_b64": upload})
+        self.assertEqual((r["word"]["image"]["file"], r["word"]["image"]["credit"]), (f"{wid}.gif", "Your picture"))
+        bad = base64.b64encode(b"<svg onload=alert(1)>").decode()
+        self.assertEqual(self.call("POST", f"/api/words/{wid}/image", {"source": "upload", "data_b64": bad})[0], 400)
+        self.assertEqual(self.call("POST", f"/api/words/{wid}/image", {"source": "upload", "data_b64": "!!"})[0], 400)
+        self.assertEqual(self.call("POST", f"/api/words/{wid}/image", {"source": "x"})[0], 400)
+        self.assertEqual(self.call("POST", "/api/words/nope/image", {"source": "wiki"})[0], 404)
+        self.assertEqual(self.call("POST", f"/api/words/{wid}/image", {"source": "wiki", "title": "Nothing"})[0], 502)
+
+        # Preview photos come from the same cache, so Wikipedia is asked once per title.
+        calls = len(self.photo_calls)
+        status, raw = self.call("GET", "/api/wiki/photo?title=Flat%20white")
+        self.assertEqual((status, raw, len(self.photo_calls)), (200, b"\xff\xd8\xff wiki", calls))
+        self.assertEqual(self.call("GET", "/api/wiki/photo?title=Nothing")[0], 404)
+        self.assertEqual(self.call("GET", "/api/wiki/photo")[0], 400)
+
+        _, r = self.call("DELETE", f"/api/words/{wid}/image")
+        self.assertIsNone(r["word"]["image"])
+        self.assertEqual(self.call("GET", f"/api/words/{wid}/image")[0], 404)
+        self.call("POST", f"/api/words/{wid}/image", {"source": "upload", "data_b64": upload})
+        self.call("DELETE", f"/api/words/{wid}")
+        self.assertEqual(list(images_dir.iterdir()), [])
+
+    def test_settings_role_and_company(self):
+        _, s = self.call("PUT", "/api/settings", {"my_role": "  Data   Engineer ", "my_company": "Acme"})
+        self.assertEqual((s["my_role"], s["my_company"]), ("Data Engineer", "Acme"))
+        self.assertEqual(self.call("PUT", "/api/settings", {"my_role": "{name}"})[0], 400)
+        self.assertEqual(self.call("PUT", "/api/settings", {"my_company": "x" * 61})[0], 400)
+
     def test_settings_keep_key_out_of_data(self):
         _, s = self.call("PUT", "/api/settings", {"accent": "uk", "new_per_day": "7", "openai_key": "sk-secret"})
         self.assertEqual((s["accent"], s["new_per_day"], s["has_key"]), ("uk", 7, True))
@@ -178,8 +339,9 @@ class ServerTest(unittest.TestCase):
 
     def test_practice_flow(self):
         _, meta = self.call("GET", "/api/practice/meta")
-        self.assertEqual(set(meta), {"write", "speak", "improv", "toast"})
-        self.assertEqual([t["locked"] for t in meta["write"]["tracks"]], [False] + [True] * 5)
+        self.assertEqual(set(meta), {"write", "speak", "improv", "toast", "talk"})
+        self.assertEqual([t["locked"] for t in meta["write"]["tracks"]], [False] + [True] * 5 + [False] * 5,
+                         "levels unlock in turn; the work-writing tracks are always open")
         self.assertFalse(any(t["locked"] for t in meta["improv"]["tracks"]))
         self.assertEqual(self.call("GET", "/api/practice/next?module=write&track=l2")[0], 400)
         self.assertEqual(self.call("GET", "/api/practice/next?module=write&track=zz")[0], 404)
@@ -294,6 +456,122 @@ class ServerTest(unittest.TestCase):
         self.assertNotIn("sk-secret", (self.root / "data" / "settings.json").read_text(encoding="utf-8"))
 
 
+class TalkTest(unittest.TestCase):
+    """Conversation practice, and private tracks that stay out of data/ and the synced cache."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        folder = self.root / "private" / "prompts" / "talk"
+        folder.mkdir(parents=True)
+        (folder / "_meta.json").write_text(json.dumps({"tracks": {"proj": {"name": "My project", "group": "Mine"}}}))
+        (folder / "proj.json").write_text(json.dumps([{
+            "id": "p-proj-01", "level": 4, "task": "Explain the project.", "zh": "讲项目。", "role": "A colleague.",
+            "setting": "Kitchen.", "say": "So what's this project?", "turns": 2, "brief": "It moves 40 servers."}]))
+        self.calls = []
+
+        def fake_reply(scenario, history, turns_left, name, key, model):
+            self.calls.append(("reply", scenario.get("brief"), len(history), turns_left, name))
+            return "Bye then." if turns_left <= 0 else "Why?"
+
+        def fake_hint(scenario, history, key, model):
+            return {"starter": "Well, basically…", "points": ["what", "why"], "zh": "先回答"}
+
+        def fake_feedback(scenario, history, key, model):
+            self.calls.append(("feedback", [m["who"] for m in history]))
+            return {"score": 4, "comment": "好", "handling": "不错", "turns": [{"you": "a", "better": "b"}],
+                    "issues": [], "vocab": []}
+
+        def fake_speech(text, voice, accent, pace, key, model):
+            return b"ID3 " + text.encode(), model
+
+        self.server = make_server(self.root, port=0, today=lambda: date(2026, 11, 10), speech=fake_speech,
+                                  talk_reply=fake_reply, talk_hint=fake_hint, talk_feedback=fake_feedback)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.tmp.cleanup()
+
+    call = ServerTest.call
+
+    def journal(self, folder):
+        path = self.root / folder / "journal" / "2026-11.json"
+        return json.loads(path.read_text(encoding="utf-8"))["entries"] if path.exists() else []
+
+    def test_needs_a_key(self):
+        status, r = self.call("POST", "/api/talk/turn", {"prompt_id": "c-updates-01", "history": []})
+        self.assertEqual(status, 400)
+        self.assertIn("OpenAI key", r["error"])
+
+    def test_private_scenario_round_trip(self):
+        self.call("PUT", "/api/settings", {"openai_key": "sk-test", "my_name": "Ping"})
+        _, meta = self.call("GET", "/api/practice/meta")
+        track = next(t for t in meta["talk"]["tracks"] if t["id"] == "proj")
+        self.assertTrue(track["private"])
+        self.assertFalse(next(t for t in meta["talk"]["tracks"] if t["id"] == "updates")["private"])
+
+        history = [{"who": "ai", "text": "So what's this project?"}]
+        status, r = self.call("POST", "/api/talk/turn", {"prompt_id": "p-proj-01", "history": history})
+        self.assertEqual(status, 400, "the learner speaks next")
+        history.append({"who": "me", "text": "It moves servers   to Azure."})
+        _, r = self.call("POST", "/api/talk/turn", {"prompt_id": "p-proj-01", "history": history})
+        self.assertEqual(r, {"line": "Why?", "done": False})
+        self.assertEqual(self.calls[-1], ("reply", "It moves 40 servers.", 2, 1, "Ping"))
+        history += [{"who": "ai", "text": r["line"]}, {"who": "me", "text": "Cost."}]
+        _, r = self.call("POST", "/api/talk/turn", {"prompt_id": "p-proj-01", "history": history})
+        self.assertEqual(r, {"line": "Bye then.", "done": True})
+        _, hint = self.call("POST", "/api/talk/hint", {"prompt_id": "p-proj-01", "history": history})
+        self.assertEqual(hint["points"], ["what", "why"])
+
+        status, r = self.call("POST", "/api/talk/finish", {"prompt_id": "p-proj-01", "history": history,
+                                                           "seconds": 42, "stuck": 1})
+        self.assertEqual(status, 200, r)
+        self.assertEqual(r["session"]["words"], 6)
+        self.assertEqual(r["session"]["seconds"], 42)
+        self.assertEqual(r["feedback"]["score"], 4)
+        # What was said stays in private/, never in the synced data/journal.
+        self.assertEqual(self.journal("data"), [])
+        [entry] = self.journal("private")
+        self.assertEqual(entry["conversation"][1]["text"], "It moves servers to Azure.")
+        _, stats = self.call("GET", "/api/practice/stats")
+        self.assertEqual(stats["by_module"]["talk"]["sessions"], 1)
+
+    def test_public_scenario_journal_and_custom_is_private(self):
+        self.call("PUT", "/api/settings", {"openai_key": "sk-test"})
+        history = [{"who": "ai", "text": "Hi"}, {"who": "me", "text": "All good."}]
+        status, _ = self.call("POST", "/api/talk/finish", {"prompt_id": "c-updates-01", "history": history})
+        self.assertEqual(status, 200)
+        self.assertEqual(len(self.journal("data")), 1)
+
+        custom = {"role": "Your manager.", "setting": "Desk.", "task": "Talk about my project.", "turns": 9}
+        _, r = self.call("POST", "/api/talk/turn", {"custom": custom, "history": []})
+        self.assertEqual(r["done"], False, "an empty history asks for the opening line")
+        self.assertEqual(self.calls[-1][3], 6, "turns are capped at 6")
+        self.assertEqual(self.call("POST", "/api/talk/finish", {"custom": custom, "history": history})[0], 200)
+        self.assertEqual(len(self.journal("data")), 1)
+        self.assertEqual(len(self.journal("private")), 1)
+
+    def test_bad_requests(self):
+        self.call("PUT", "/api/settings", {"openai_key": "sk-test"})
+        self.assertEqual(self.call("POST", "/api/talk/turn", {"prompt_id": "s-st_basics-01", "history": []})[0], 404)
+        self.assertEqual(self.call("POST", "/api/talk/turn", {"history": []})[0], 400)
+        self.assertEqual(self.call("POST", "/api/talk/turn", {"custom": {"role": "x"}, "history": []})[0], 400)
+        self.assertEqual(self.call("POST", "/api/talk/turn", {"prompt_id": "c-updates-01",
+                                                              "history": [{"who": "boss", "text": "x"}]})[0], 400)
+        self.assertEqual(self.call("POST", "/api/talk/finish", {"prompt_id": "c-updates-01",
+                                                                "history": [{"who": "ai", "text": "Hi"}]})[0], 400)
+
+    def test_private_audio_is_cached_in_private(self):
+        self.call("PUT", "/api/settings", {"openai_key": "sk-test"})
+        self.assertEqual(self.call("POST", "/api/tts", {"text": "secret plan", "private": True})[0], 200)
+        self.assertEqual(self.call("POST", "/api/tts", {"text": "public line"})[0], 200)
+        self.assertEqual(len(list((self.root / "private" / "tts").glob("*.mp3"))), 1)
+        self.assertEqual(len(list((self.root / "cache" / "tts").glob("*.mp3"))), 1)
+
+
 class SyncTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -316,6 +594,20 @@ class SyncTest(unittest.TestCase):
 
     def pushed(self):
         return sorted(git(self.remote, "ls-tree", "-r", "--name-only", "main").split())
+
+    def test_private_folder_is_never_uploaded(self):
+        (self.repo / "private" / "journal").mkdir(parents=True)
+        (self.repo / "private" / "journal" / "2026-11.json").write_text("{}")
+        (self.repo / "notes.txt").write_text("public\n")
+        result = sync(self.repo)  # .gitignore here does not list private/
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(self.pushed(), [".gitignore", "notes.txt"])
+        # Once tracked by hand, sync refuses instead of uploading it again.
+        git(self.repo, "add", "-f", "private")
+        git(self.repo, "commit", "-m", "oops")
+        result = sync(self.repo)
+        self.assertFalse(result["ok"])
+        self.assertIn("private/ is tracked", result["message"])
 
     def test_nothing_to_sync(self):
         result = sync(self.repo)

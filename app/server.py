@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import ai, cloze, practice, words
+from . import ai, cloze, images, practice, translate, words
 from .store import JsonStore
 from .sync import sync
 
@@ -22,7 +22,7 @@ DEFAULT_SETTINGS = {
     # Read-aloud: "openai" (natural voice, cached) or "browser" (built-in speech synthesis).
     "tts": "openai", "voice": ai.TTS_VOICES[0], "pace": "normal", "tts_model": ai.TTS_MODEL,
     # Filled into example answers that contain {name} / {hometown} (small talk introductions).
-    "my_name": "", "hometown": "",
+    "my_name": "", "hometown": "", "my_role": "", "my_company": "",
     "letter_hint": True,  # show the first letter of each cloze blank
 }
 TTS_ENGINES = ("openai", "browser")
@@ -48,25 +48,42 @@ class App:
     """All state and request logic. `root` is the repository directory."""
 
     def __init__(self, root: Path, today=date.today, explain=ai.explain,
-                 feedback=ai.feedback, transcribe=ai.transcribe, speech=ai.speech):
+                 feedback=ai.feedback, transcribe=ai.transcribe, speech=ai.speech,
+                 grade=ai.grade_translation,
+                 wiki_photo=images.wiki_photo, ai_picture=images.ai_picture,
+                 talk_reply=ai.talk_reply, talk_hint=ai.talk_hint, talk_feedback=ai.talk_feedback):
         self.root = Path(root)
         self.data_dir = self.root / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.static_dir = Path(__file__).resolve().parent.parent / "static"
         content = Path(__file__).resolve().parent.parent
         self.questions = cloze.load_questions(content / "questions")
-        self.prompts = practice.load_prompts(content / "prompts")
+        # private/ is git-ignored and never synced: role-plays and notes about real work projects,
+        # and everything said or written in them (journal, read-aloud audio).
+        self.private_dir = self.root / "private"
+        self.prompts = practice.load_prompts(content / "prompts", self.private_dir / "prompts")
+        self.sentences = translate.load(content / "translate")
+        self.packs = words.load_packs(content / "vocab")
         self.practice = JsonStore(self.data_dir / "practice.json", practice.DEFAULT_PRACTICE)
         self.words = JsonStore(self.data_dir / "words.json", words.DEFAULT_WORDS)
         self.cloze = JsonStore(self.data_dir / "cloze.json", cloze.DEFAULT_PROGRESS)
+        self.translate = JsonStore(self.data_dir / "translate.json", translate.DEFAULT_PROGRESS)
         self.settings = JsonStore(self.data_dir / "settings.json", DEFAULT_SETTINGS)
         # The API key stays out of data/ so the sync button never uploads it.
         self.secrets = JsonStore(self.root / "config.local.json", {"openai_key": ""})
         self.today = today
         self.explain = explain
         self.feedback = feedback
+        self.grade = grade
         self.transcribe = transcribe
         self.speech = speech
+        self.talk_reply = talk_reply
+        self.talk_hint = talk_hint
+        self.talk_feedback = talk_feedback
+        self.wiki_photo = wiki_photo
+        self.ai_picture = ai_picture
+        self.images_dir = self.data_dir / "images"  # card pictures, synced with the rest of data/
+        self.wiki_cache = self.root / "cache" / "wiki"  # preview photos, git-ignored
         # Generated speech is cached here (git-ignored), so each sentence is paid for once.
         self.tts_cache = self.root / "cache" / "tts"
         self.tts_model_fallback = None  # set once the chosen speech model stops working
@@ -77,6 +94,77 @@ class App:
         if qid not in self.questions:
             raise ApiError(404, "question not found")
         return self.questions[qid]
+
+    def _sentence(self, qid) -> dict:
+        if qid not in self.sentences:
+            raise ApiError(404, "sentence not found")
+        return self.sentences[qid]
+
+    def _load_words(self) -> dict:
+        data = self.words.load()
+        for word in data["words"].values():  # cards saved before tags, packs and pictures existed
+            for field, default in (("zh", ""), ("tags", []), ("wiki", ""), ("emoji", ""),
+                                   ("image", None), ("order", 0)):
+                word.setdefault(field, default)
+        return data
+
+    def _remove_image(self, word: dict) -> None:
+        if word.get("image"):
+            (self.images_dir / word["image"]["file"]).unlink(missing_ok=True)
+            word["image"] = None
+
+    def _wiki_image(self, title: str, search: str, reuse: bool = True) -> tuple[bytes, str]:
+        """A Wikipedia photo, kept in cache/wiki/ (not synced) so previews and cards fetch it once."""
+        name = hashlib.sha256(title.encode("utf-8")).hexdigest()[:24]
+        cached = next(iter(sorted(self.wiki_cache.glob(name + ".*"))), None) if self.wiki_cache.is_dir() else None
+        if reuse and cached:
+            return cached.read_bytes(), f"Photo: Wikipedia, {title}"
+        image, credit = self.wiki_photo(title, search)
+        if credit == f"Photo: Wikipedia, {title}":  # cache only the article that was asked for
+            self.wiki_cache.mkdir(parents=True, exist_ok=True)
+            tmp = self.wiki_cache / f"{name}.{threading.get_ident()}.tmp"
+            tmp.write_bytes(image)
+            tmp.replace(self.wiki_cache / f"{name}.{images.sniff(image)}")
+        return image, credit
+
+    def _set_image(self, word_id: str, body: dict) -> dict:
+        """Give a card a picture: an upload, a Wikipedia photo or an AI picture."""
+        source = body.get("source")
+        if source not in ("upload", "wiki", "ai"):
+            raise ApiError(400, "source must be upload, wiki or ai")
+        with self.lock:
+            word = self._load_words()["words"].get(word_id)
+        if word is None:
+            raise ApiError(404, "word not found")
+        # The network calls run outside the lock.
+        try:
+            if source == "upload":
+                image, credit = base64.b64decode(str(body.get("data_b64") or ""), validate=True), "Your picture"
+            elif source == "wiki":
+                image, credit = self._wiki_image(str(body.get("title") or word["wiki"] or word["term"]),
+                                                 word["term"], reuse=not body.get("another"))
+            else:
+                image, credit = self.ai_picture(word, self.secrets.load()["openai_key"])
+            ext = images.sniff(image)
+        except (binascii.Error, ValueError) as e:
+            raise ApiError(400, "data_b64 is not valid base64") from e
+        except images.ImageError as e:
+            raise ApiError(400 if source == "upload" else 502, str(e)) from e
+        except ai.AIError as e:
+            raise ApiError(502, str(e)) from e
+        with self.lock:
+            data = self._load_words()
+            word = data["words"].get(word_id)
+            if word is None:
+                raise ApiError(404, "word not found")
+            self._remove_image(word)
+            self.images_dir.mkdir(parents=True, exist_ok=True)
+            name = f"{word_id}.{ext}"
+            (self.images_dir / name).write_bytes(image)
+            word["image"] = {"file": name, "by": source, "credit": credit,
+                             "v": hashlib.sha256(image).hexdigest()[:8]}
+            self.words.save(data)
+        return {"word": word}
 
     def _settings_view(self) -> dict:
         return self.settings.load() | {"has_key": bool(self.secrets.load()["openai_key"]),
@@ -107,8 +195,24 @@ class App:
             return {"text": text}
         if route == ("POST", "tts"):
             return self._tts(body)
+        if route == ("POST", "translate", "check"):
+            return self._translate_check(body)
         if route == ("POST", "practice", "submit"):
             return self._practice_submit(body)
+        if method == "POST" and len(parts) == 2 and parts[0] == "talk" and parts[1] in ("turn", "hint", "finish"):
+            return self._talk(parts[1], body)  # AI calls run outside the lock
+        if method == "POST" and len(parts) == 3 and parts[0] == "words" and parts[2] == "image":
+            return self._set_image(parts[1], body)
+        if route == ("GET", "wiki", "photo"):
+            # Photo for a pack card in the preview, before the card is in the word bank.
+            title = str(query.get("title") or "").strip()
+            if not title:
+                raise ApiError(400, "title is required")
+            try:
+                image, _ = self._wiki_image(title, "")
+            except images.ImageError as e:
+                raise ApiError(404 if e.status in (None, 404) else 502, str(e)) from e
+            return RawResponse(image, images.MIME_BY_EXT[images.sniff(image)])
         with self.lock:
             return self._handle_locked(method, parts, query, body)
 
@@ -125,7 +229,9 @@ class App:
         if voice not in ai.TTS_VOICES or accent not in ai.ACCENTS or pace not in ai.PACES:
             raise ApiError(400, "unknown voice, accent or pace")
         key = hashlib.sha256(json.dumps([voice, accent, pace, text]).encode("utf-8")).hexdigest()
-        path = self.tts_cache / f"{key}.mp3"
+        # Lines from private practice are cached in private/, which sync never uploads.
+        cache = self.private_dir / "tts" if body.get("private") else self.tts_cache
+        path = cache / f"{key}.mp3"
         if path.is_file():
             return RawResponse(path.read_bytes(), "audio/mpeg")
         model = self.tts_model_fallback or settings["tts_model"]
@@ -135,7 +241,7 @@ class App:
             raise ApiError(502, str(e)) from e
         if used != model:
             self.tts_model_fallback = used
-        self.tts_cache.mkdir(parents=True, exist_ok=True)
+        cache.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(f".{threading.get_ident()}.tmp")  # unique per concurrent request
         tmp.write_bytes(audio)
         tmp.replace(path)
@@ -169,6 +275,8 @@ class App:
             task = prompt["task"] + (f'\nLine given to the learner: "{prompt["say"]}"' if prompt.get("say") else "")
             if prompt["task"].startswith("Translate"):
                 task += f"\nChinese sentence: {prompt['zh']}"
+            if prompt["focus"] == "showcase" and prompt.get("example"):
+                task += f"\nReference notes (the points and facts to get across):\n{prompt['example']}"
             try:
                 feedback = self.feedback(prompt["focus"], task, text, mode, key, self.settings.load()["model"])
             except ai.AIError as e:
@@ -181,15 +289,137 @@ class App:
                 raise ApiError(400, "this level is still locked")
             session = practice.record_session(data, prompt, text, seconds, mode, stuck, feedback, today)
             self.practice.save(data)
-            journal = JsonStore(self.data_dir / "journal" / f"{today:%Y-%m}.json", {"entries": []})
-            entries = journal.load()
-            entries["entries"].append({"session": session["id"], "date": session["date"],
-                                       "prompt_id": prompt["id"], "task": prompt["task"],
-                                       "text": text, "feedback": feedback})
-            journal.save(entries)
+            self._journal(prompt, today, {"session": session["id"], "date": session["date"],
+                                          "prompt_id": prompt["id"], "task": prompt["task"],
+                                          "text": text, "feedback": feedback})
             total_xp = sum(s["xp"] for s in data["sessions"])
         return {"session": session, "feedback": feedback, "ai_error": ai_error,
                 "rank": practice.rank(total_xp)}
+
+    def _journal(self, prompt: dict, today: date, entry: dict) -> None:
+        """Keep what was written or said, with its feedback: data/journal/, or private/journal/
+        for private practice. Call with the lock held."""
+        folder = self.private_dir if prompt.get("private") else self.data_dir
+        journal = JsonStore(folder / "journal" / f"{today:%Y-%m}.json", {"entries": []})
+        entries = journal.load()
+        entries["entries"].append(entry)
+        journal.save(entries)
+
+    # ---- conversation ----------------------------------------------------
+    def _talk_scenario(self, body: dict) -> dict:
+        """A scenario from the bank (prompt_id) or one the learner made up ("custom").
+        Custom conversations are about the learner's own work, so they are always private."""
+        if body.get("prompt_id"):
+            prompt = practice.find_prompt(self.prompts, body["prompt_id"])
+            if prompt is None or prompt["module"] != "talk":
+                raise ApiError(404, "conversation not found")
+            return prompt
+        custom = body.get("custom")
+        if not isinstance(custom, dict):
+            raise ApiError(400, "prompt_id or custom is required")
+        out = {"id": "c-custom", "module": "talk", "track": "custom", "focus": "talk", "level": 3,
+               "private": True}
+        for field, longest in (("role", 600), ("setting", 6000), ("task", 1200)):
+            value = str(custom.get(field) or "").strip()
+            if not value or len(value) > longest:
+                raise ApiError(400, f"custom.{field} is required, at most {longest} characters")
+            out[field] = value
+        try:
+            out["turns"] = max(2, min(6, int(custom.get("turns") or 4)))
+        except (TypeError, ValueError) as e:
+            raise ApiError(400, "custom.turns must be a number") from e
+        return out
+
+    @staticmethod
+    def _talk_history(body: dict) -> list[dict]:
+        history = body.get("history")
+        if not isinstance(history, list) or len(history) > 40:
+            raise ApiError(400, "history must be a list of at most 40 lines")
+        out = []
+        for line in history:
+            if not isinstance(line, dict) or line.get("who") not in ("ai", "me"):
+                raise ApiError(400, "each history line needs who: ai or me")
+            text = " ".join(str(line.get("text") or "").split())
+            if len(text) > 4000:
+                raise ApiError(400, "a history line is too long")
+            out.append({"who": line["who"], "text": text})
+        return out
+
+    def _talk_key(self) -> str:
+        key = self.secrets.load()["openai_key"]
+        if not key:
+            raise ApiError(400, "Conversation practice needs an OpenAI key. Add it in Settings.")
+        return key
+
+    def _talk(self, action: str, body: dict) -> dict:
+        scenario = self._talk_scenario(body)
+        history = self._talk_history(body)
+        key, settings = self._talk_key(), self.settings.load()
+        mine = [m["text"] for m in history if m["who"] == "me"]
+        try:
+            if action == "turn":
+                if history and history[-1]["who"] != "me":
+                    raise ApiError(400, "it is the learner's turn")
+                turns_left = int(scenario.get("turns") or 4) - len(mine)
+                line = self.talk_reply(scenario, history, turns_left, settings["my_name"], key, settings["model"])
+                return {"line": line, "done": bool(history) and turns_left <= 0}
+            if action == "hint":
+                return self.talk_hint(scenario, history, key, settings["model"])
+            if not any(mine):
+                raise ApiError(400, "say something first")
+            feedback = self.talk_feedback(scenario, history, key, settings["model"])
+        except ai.AIError as e:
+            raise ApiError(502, str(e)) from e
+        # action == "finish": record the conversation like any other practice session.
+        try:
+            seconds = min(float(body.get("seconds") or 0), MAX_SESSION_SECONDS)
+            stuck = int(body.get("stuck") or 0)
+        except (TypeError, ValueError) as e:
+            raise ApiError(400, "seconds and stuck must be numbers") from e
+        if not math.isfinite(seconds):
+            raise ApiError(400, "seconds must be a finite number")
+        mode = "write" if body.get("mode") == "write" else "speak"
+        with self.lock:
+            today = self.today()
+            data = self.practice.load()
+            session = practice.record_session(data, scenario, " ".join(mine), seconds, mode, stuck,
+                                              feedback, today)
+            self.practice.save(data)
+            self._journal(scenario, today, {"session": session["id"], "date": session["date"],
+                                            "prompt_id": scenario["id"], "task": scenario["task"],
+                                            "conversation": history, "feedback": feedback})
+            total_xp = sum(s["xp"] for s in data["sessions"])
+        return {"session": session, "feedback": feedback, "rank": practice.rank(total_xp)}
+
+    def _translate_check(self, body: dict) -> dict:
+        """Grade one translation. Without an OpenAI key there is no verdict: the
+        learner compares with the reference and marks it themselves."""
+        q = self._sentence(body.get("id"))
+        answer = " ".join(str(body.get("answer") or "").split())
+        if not answer:
+            raise ApiError(400, "write your translation first")
+        if len(answer) > translate.MAX_ANSWER:
+            raise ApiError(400, f"at most {translate.MAX_ANSWER} characters")
+        result = {"verdict": None, "issues": [], "fixed": "", "ai_error": None}
+        if translate.matches_reference(q, answer):
+            result["verdict"] = "good"
+        else:
+            key = self.secrets.load()["openai_key"]
+            if key:
+                try:
+                    result |= self.grade(q["zh"], q["en"], answer, key, self.settings.load()["model"])
+                except ai.AIError as e:
+                    result["ai_error"] = str(e)
+        with self.lock:
+            progress = self.translate.load()
+            # Only a right answer is recorded here. After a wrong one the learner
+            # chooses: next (mark "tried") or save to the wrong book (mark "wrong").
+            if result["verdict"] == "good" and body.get("record", True):
+                cloze.record(progress, q["id"], "correct", self.today())
+            translate.remember_answer(progress, q["id"], answer, result["verdict"])
+            self.translate.save(progress)
+            in_book = translate.in_wrong_book(progress, q["id"])
+        return result | translate.reveal(q) | {"in_wrong_book": in_book}
 
     def _handle_locked(self, method: str, parts: list[str], query: dict, body: dict) -> dict:
         today = self.today()
@@ -198,8 +428,9 @@ class App:
             case ("GET", "summary"):
                 settings = self._settings_view()
                 return {
-                    "words": words.counts(self.words.load(), today, settings["new_per_day"]),
+                    "words": words.counts(self._load_words(), today, settings["new_per_day"]),
                     "cloze": cloze.stats(self.questions, self.cloze.load(), today),
+                    "translate": cloze.stats(self.sentences, self.translate.load(), today),
                     "has_key": settings["has_key"],
                 }
 
@@ -248,12 +479,82 @@ class App:
             case ("GET", "cloze", "wrongbook"):
                 return {"items": cloze.wrong_book(self.questions, self.cloze.load())}
 
+            # ---- sentence translation ----
+            case ("GET", "translate", "meta"):
+                return {"counts": translate.counts(self.sentences, self.translate.load(), query),
+                        "total": len(self.sentences)}
+            case ("GET", "translate", "next"):
+                progress = self.translate.load()
+                q = cloze.next_question(self.sentences, progress, query, today)
+                if q is None:
+                    return {"question": None}
+                status = progress["items"].get(q["id"], {}).get("status", "new")
+                return {"question": translate.public_view(q), "redo": status == "learning",
+                        "in_wrong_book": translate.in_wrong_book(progress, q["id"])}
+            case ("POST", "translate", "mark"):
+                # reveal, never, star; after a wrong answer "tried" (next) or
+                # "wrong" (save to the wrong book); "correct" when the learner
+                # marks their own answer right (no OpenAI key).
+                q = self._sentence(body.get("id"))
+                outcome = body.get("outcome")
+                if outcome not in ("reveal", "never", "star", "correct", "wrong", "tried"):
+                    raise ApiError(400, "bad outcome")
+                progress = self.translate.load()
+                cloze.record(progress, q["id"], outcome, today)
+                self.translate.save(progress)
+                return translate.reveal(q) | {"in_wrong_book": translate.in_wrong_book(progress, q["id"])}
+            case ("GET", "translate", "wrongbook"):
+                return {"items": translate.wrong_book(self.sentences, self.translate.load())}
+            case ("POST", "translate", "wrongbook", "remove"):
+                progress = self.translate.load()
+                if not cloze.remove_from_wrong_book(progress, str(body.get("id"))):
+                    raise ApiError(404, "not in the wrong book")
+                self.translate.save(progress)
+                return {"ok": True}
+
             # ---- words ----
             case ("GET", "words"):
-                data = self.words.load()
-                return {"words": sorted(data["words"].values(), key=lambda w: w["created"], reverse=True)}
+                data = self._load_words()
+                return {"words": sorted(data["words"].values(), key=lambda w: (w["created"], -w["order"]), reverse=True),
+                        "tags": words.tag_counts(data)}
+            case ("GET", "words", "tags"):
+                return {"tags": words.tag_counts(self._load_words())}
+            case ("GET", "words", "packs"):
+                return {"packs": words.pack_summaries(self.packs, self._load_words())}
+            case ("GET", "words", "packs", pack_id):
+                pack = self.packs.get(pack_id)
+                if pack is None:
+                    raise ApiError(404, "pack not found")
+                return {"id": pack_id} | pack | {"words": words.pack_preview(pack, self._load_words())}
+            case ("POST", "words", "packs", "add"):
+                pack = self.packs.get(str(body.get("id")))
+                if pack is None:
+                    raise ApiError(404, "pack not found")
+                topics, terms = body.get("topics"), body.get("terms")
+                if any(v is not None and not isinstance(v, list) for v in (topics, terms)):
+                    raise ApiError(400, "topics and terms must be lists")
+                data = self._load_words()
+                result = words.add_pack(data, pack, today, topics, terms)
+                self.words.save(data)
+                return result
+            case ("GET", "words", word_id, "image"):
+                word = self._load_words()["words"].get(word_id)
+                if not word or not word["image"]:
+                    raise ApiError(404, "no picture")
+                path = self.images_dir / word["image"]["file"]
+                if not path.is_file():
+                    raise ApiError(404, "picture file missing")
+                ext = path.suffix.lstrip(".")
+                return RawResponse(path.read_bytes(), images.MIME_BY_EXT.get(ext, "application/octet-stream"))
+            case ("DELETE", "words", word_id, "image"):
+                data = self._load_words()
+                if word_id not in data["words"]:
+                    raise ApiError(404, "word not found")
+                self._remove_image(data["words"][word_id])
+                self.words.save(data)
+                return {"word": data["words"][word_id]}
             case ("POST", "words"):
-                data = self.words.load()
+                data = self._load_words()
                 try:
                     word, duplicate = words.add_word(data, body, today)
                 except ValueError as e:
@@ -261,12 +562,14 @@ class App:
                 self.words.save(data)
                 return {"word": word, "duplicate": duplicate}
             case ("GET", "words", "next"):
-                data = self.words.load()
+                data = self._load_words()
                 limit = self.settings.load()["new_per_day"]
-                return {"word": words.next_word(data, today, limit),
-                        "counts": words.counts(data, today, limit)}
+                tags = words.parse_filter(query.get("tags"))
+                return {"word": words.next_word(data, today, limit, tags),
+                        "counts": words.counts(data, today, limit, tags),
+                        "tags": words.tag_counts(data)}
             case ("POST", "words", "rate"):
-                data = self.words.load()
+                data = self._load_words()
                 if body.get("id") not in data["words"]:
                     raise ApiError(404, "word not found")
                 try:
@@ -276,7 +579,7 @@ class App:
                 self.words.save(data)
                 return {"word": word}
             case ("PUT", "words", word_id):
-                data = self.words.load()
+                data = self._load_words()
                 if word_id not in data["words"]:
                     raise ApiError(404, "word not found")
                 try:
@@ -286,9 +589,11 @@ class App:
                 self.words.save(data)
                 return {"word": word}
             case ("DELETE", "words", word_id):
-                data = self.words.load()
-                if data["words"].pop(word_id, None) is None:
+                data = self._load_words()
+                word = data["words"].pop(word_id, None)
+                if word is None:
                     raise ApiError(404, "word not found")
+                self._remove_image(word)
                 self.words.save(data)
                 return {"ok": True}
 
@@ -306,7 +611,7 @@ class App:
                 return {"prompt": prompt}
             case ("GET", "practice", "stats"):
                 data = self.practice.load()
-                word_dates = [w["created"] for w in self.words.load()["words"].values()]
+                word_dates = [w["created"] for w in self._load_words()["words"].values()]
                 return practice.stats(data, today) | {
                     "growth": practice.growth(data["sessions"], word_dates, today)}
 
@@ -323,11 +628,11 @@ class App:
                     if not isinstance(body["letter_hint"], bool):
                         raise ApiError(400, "letter_hint must be true or false")
                     settings["letter_hint"] = body["letter_hint"]
-                for field in ("my_name", "hometown"):
+                for field, longest in (("my_name", 40), ("hometown", 40), ("my_role", 60), ("my_company", 60)):
                     if field in body:
                         value = " ".join(str(body[field] or "").split())
-                        if len(value) > 40 or any(c in value for c in "{}<>"):
-                            raise ApiError(400, f"{field} must be at most 40 characters, without {{}} or <>")
+                        if len(value) > longest or any(c in value for c in "{}<>"):
+                            raise ApiError(400, f"{field} must be at most {longest} characters, without {{}} or <>")
                         settings[field] = value
                 if "new_per_day" in body:
                     try:

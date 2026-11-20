@@ -1,0 +1,53 @@
+{
+ "seq": 0,
+ "words": {
+  "b78a486dbb": {
+   "created": "2026-11-11",
+   "definition": "software that protects computers from harmful programs",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Defender malware alerts triggered for Webstruxure.",
+     "zh": "Webstruxure 的 Defender 恶意软件警报被触发。"
+    },
+    {
+     "en": "The defender malware blocked a virus from attacking my computer.",
+     "zh": "防卫者恶意软件阻止了病毒攻击我的电脑。"
+    },
+    {
+     "en": "She installed defender malware to keep her files safe.",
+     "zh": "她安装了防卫者恶意软件以保护她的文件安全。"
+    },
+    {
+     "en": "Defender malware provides real-time protection against threats.",
+     "zh": "防卫者恶意软件提供实时保护以抵御威胁。"
+    }
+   ],
+   "id": "b78a486dbb",
+   "image": null,
+   "introduced": null,
+   "key": "defender malwar",
+   "my_examples": [],
+   "note": "malware,  恶意软件",
+   "order": 0,
+   "respelling": "de-FEN-der MAL-ware",
+   "source": "",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Manual"
+   ],
+   "term": "defender malware",
+   "wiki": "",
+   "zh": ""
+  }
+ }
+}

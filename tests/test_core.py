@@ -1,10 +1,12 @@
+import base64
 import json
 import random
+import sys
 import unittest
 from datetime import date, timedelta
 from pathlib import Path
 
-from app import ai, cloze, practice, srs, words
+from app import ai, cloze, images, practice, srs, translate, words
 from app.text import edit_distance, stem, stem_phrase
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -298,6 +300,111 @@ class QuestionBankTest(unittest.TestCase):
             seen[key] = q["id"]
 
 
+class TranslateTest(unittest.TestCase):
+    def setUp(self):
+        self.sentences = {
+            "t1": {"id": "t1", "type": "passive", "scene": "work", "level": 1, "zh": "会议取消了。",
+                   "en": "The meeting's been cancelled.", "alt": ["The meeting was called off."], "point": "被动"},
+            "t2": {"id": "t2", "type": "compare", "scene": "home", "level": 2, "zh": "这个更便宜。",
+                   "en": "This one's cheaper.", "alt": [], "point": "比较"},
+        }
+
+    def test_exact_match_ignores_case_punctuation_and_contractions(self):
+        q = self.sentences["t1"]
+        self.assertTrue(translate.matches_reference(q, "the meeting has been cancelled"))
+        self.assertTrue(translate.matches_reference(q, "The meeting was called off!"))
+        self.assertFalse(translate.matches_reference(q, "The meeting is cancelled."))
+        self.assertFalse(translate.matches_reference(q, "  "))
+
+    def test_star_saves_without_counting_a_mistake(self):
+        p = {"seq": 0, "items": {}}
+        item = cloze.record(p, "t1", "star", D0)
+        self.assertEqual((item["status"], item["wrong"], item["attempts"]), ("learning", 0, 0))
+        self.assertEqual(item["srs"]["due"], (D0 + timedelta(days=1)).isoformat(), "first review tomorrow")
+        self.assertTrue(translate.in_wrong_book(p, "t1"))
+        self.assertIsNone(cloze.next_question(self.sentences, p, {"type": "passive"}, D0),
+                          "not due again today")
+        row, = translate.wrong_book(self.sentences, p)
+        self.assertTrue(row["starred"])
+        self.assertTrue(cloze.remove_from_wrong_book(p, "t1"))
+        self.assertNotIn("starred", p["items"]["t1"])
+        self.assertEqual(translate.wrong_book(self.sentences, p), [])
+
+    def test_star_on_a_passed_sentence_restarts_its_schedule(self):
+        p = {"seq": 0, "items": {}}
+        cloze.record(p, "t2", "correct", D0)
+        cloze.record(p, "t2", "star", D0)
+        self.assertEqual(p["items"]["t2"]["srs"]["interval"], 1)
+        # Starring something already being redone keeps its schedule.
+        cloze.record(p, "t1", "wrong", D0)
+        before = dict(p["items"]["t1"]["srs"])
+        cloze.record(p, "t1", "star", D0)
+        self.assertEqual(p["items"]["t1"]["srs"], before)
+
+    def test_filters_counts_and_outcomes(self):
+        p = {"seq": 0, "items": {}}
+        self.assertEqual(cloze.next_question(self.sentences, p, {"type": "compare"}, D0)["id"], "t2")
+        cloze.record(p, "t2", "correct", D0)
+        translate.remember_answer(p, "t2", "This is cheaper.", "good")
+        self.assertEqual(p["items"]["t2"]["last_answer"], "This is cheaper.")
+        c = translate.counts(self.sentences, p, {"type": "compare"})
+        self.assertEqual(c["types"], {"passive": {"total": 1, "left": 1}, "compare": {"total": 1, "left": 0}})
+        self.assertEqual(list(c["scenes"]), ["home"])
+
+    def test_tried_moves_on_without_the_wrong_book(self):
+        p = {"seq": 0, "items": {}}
+        item = cloze.record(p, "t1", "tried", D0)
+        self.assertEqual((item["status"], item["wrong"]), ("tried", 1))
+        self.assertFalse(translate.in_wrong_book(p, "t1"))
+        self.assertFalse(cloze.is_left(p, "t1"))
+        self.assertIsNone(cloze.next_question(self.sentences, p, {"type": "passive"}, D0), "done, not served again")
+        stats = cloze.stats(self.sentences, p, D0)
+        self.assertEqual((stats["tried"], stats["unseen"]), (1, 1))
+        # A sentence already being redone stays scheduled and in the book.
+        cloze.record(p, "t2", "wrong", D0)
+        cloze.record(p, "t2", "tried", D0)
+        self.assertEqual(p["items"]["t2"]["status"], "learning")
+        self.assertTrue(translate.in_wrong_book(p, "t2"))
+
+    def test_grade_translation_parses_and_trims(self):
+        def post(payload, key):
+            self.assertIn("Learner: I has gone", payload["messages"][1]["content"])
+            return {"choices": [{"message": {"content": json.dumps({
+                "verdict": "fix", "issues": [{"original": "has", "better": "have", "why": "主谓一致"}] * 5,
+                "fixed": "I have gone."})}}]}
+        r = ai.grade_translation("我走了", "I'm off.", " I has gone ", "k", post=post)
+        self.assertEqual((r["verdict"], len(r["issues"]), r["fixed"]), ("fix", 3, "I have gone."))
+
+        def good(payload, key):
+            return {"choices": [{"message": {"content": json.dumps({
+                "verdict": "good", "issues": [{"original": "a", "better": "b", "why": "c"}], "fixed": "x"})}}]}
+        self.assertEqual(ai.grade_translation("z", "e", "a", "k", post=good),
+                         {"verdict": "good", "issues": [], "fixed": ""})
+
+        def odd(payload, key):
+            return {"choices": [{"message": {"content": json.dumps({"verdict": "great"})}}]}
+        self.assertEqual(ai.grade_translation("z", "e", "a", "k", post=odd)["verdict"], "fix")
+        with self.assertRaises(ai.AIError):
+            ai.grade_translation("z", "e", "a", "", post=good)
+
+
+class TranslateBankTest(unittest.TestCase):
+    def test_bank_passes_the_checker(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import check_bank
+        self.assertEqual(check_bank.check_translate(ROOT / "translate"), [])
+
+    def test_every_type_has_twenty_per_level(self):
+        sentences = translate.load(ROOT / "translate")
+        types = {q["type"] for q in sentences.values()}
+        self.assertEqual(types, {"subjectless", "topic", "existential", "questions", "polite", "relative",
+                                 "time_if", "reason_contrast", "tense", "passive", "compare"})
+        for t in types:
+            for level in (1, 2, 3):
+                n = sum(1 for q in sentences.values() if q["type"] == t and q["level"] == level)
+                self.assertEqual(n, 20, f"{t} L{level}")
+
+
 class WordsTest(unittest.TestCase):
     def setUp(self):
         self.data = {"seq": 0, "words": {}}
@@ -357,6 +464,149 @@ class WordsTest(unittest.TestCase):
         words.update_word(self.data, w["id"], {"my_examples": [" I was in the zone. ", ""], "term": "In the Zone"})
         self.assertEqual(w["my_examples"], ["I was in the zone."])
         self.assertEqual(w["key"], stem_phrase("in the zone"))
+
+
+    def test_tags_are_cleaned_and_merged(self):
+        self.assertEqual(words.clean_tags(" Manual , restaurant / Café  &  coffee,,manual"),
+                         ["Manual", "restaurant/Café & coffee"])
+        w, _ = self.add("flat white", tags=["Manual"])
+        self.add("Flat whites", tags=["Restaurant", "Restaurant/Coffee"], zh="馥芮白", wiki="Flat white")
+        self.assertEqual(w["tags"], ["Manual", "Restaurant", "Restaurant/Coffee"])
+        self.assertEqual((w["zh"], w["wiki"]), ("馥芮白", "Flat white"))
+        words.update_word(self.data, w["id"], {"tags": "Work/Meetings"})
+        self.assertEqual(w["tags"], ["Work/Meetings"])
+
+    def test_tag_filter_and_counts(self):
+        self.add("aioli", tags=["Restaurant", "Restaurant/Sauces"])
+        self.add("excavator", tags=["Construction"])
+        legacy, _ = self.add("in the zone")
+        del legacy["tags"]  # made before tags existed
+        self.assertEqual(words.tag_counts(self.data),
+                         {"Construction": 1, "Restaurant": 1, "Restaurant/Sauces": 1, words.UNTAGGED: 1})
+        self.assertEqual(words.next_word(self.data, D0, 5, ["restaurant"])["term"], "aioli")
+        self.assertEqual(words.next_word(self.data, D0, 5, ["Restaurant/Sauces"])["term"], "aioli")
+        self.assertIsNone(words.next_word(self.data, D0, 5, ["Restaurant/Coffee"]))
+        self.assertIsNone(words.next_word(self.data, D0, 5, ["Rest"]))  # whole tag parts only
+        self.assertEqual(words.next_word(self.data, D0, 5, [words.UNTAGGED])["term"], "in the zone")
+        self.assertEqual(words.counts(self.data, D0, 5, ["Construction"])["total"], 1)
+        self.assertEqual(words.parse_filter(" Restaurant, ,Data  reporting"), ["Restaurant", "Data reporting"])
+
+    def test_daily_new_limit_is_shared_by_all_tags(self):
+        a, _ = self.add("aioli", tags=["Restaurant"])
+        self.add("excavator", tags=["Construction"])
+        words.rate_word(self.data, a["id"], "remember", D0)
+        self.assertIsNone(words.next_word(self.data, D0, 1, ["Construction"]))
+        self.assertEqual(words.counts(self.data, D0, 1, ["Construction"])["new_today_left"], 0)
+
+    def test_packs_add_in_order_with_topic_tags(self):
+        pack = {"tag": "Restaurant", "name": "R", "description": "", "words": [
+            {"term": "long black", "topic": "Coffee", "zh": "长黑", "definition": "d", "examples": []},
+            {"term": "aioli", "topic": "Sauces", "zh": "蒜泥蛋黄酱", "definition": "d", "examples": [], "wiki": "Aioli"},
+            {"term": "flat white", "topic": "Coffee", "zh": "馥芮白", "definition": "d", "examples": []},
+        ]}
+        self.add("aioli", tags=["Manual"])
+        self.assertEqual(words.add_pack(self.data, pack, D0, ["Coffee"]), {"added": 2, "merged": 0})
+        self.assertEqual(words.add_pack(self.data, pack, D0), {"added": 0, "merged": 3})
+        aioli = words.find_duplicate(self.data, "aioli")
+        self.assertEqual(aioli["tags"], ["Manual", "Restaurant", "Restaurant/Sauces"])
+        self.assertEqual(aioli["wiki"], "Aioli")
+        order = []
+        while (w := words.next_word(self.data, D0, 10, ["Restaurant/Coffee"])) is not None:
+            order.append(w["term"])
+            words.rate_word(self.data, w["id"], "remember", D0)
+        self.assertEqual(order, ["long black", "flat white"])
+        words.add_pack(self.data, {"tag": "T", "words": [{"term": "I’m  KPI", "topic": "x"}]}, D0)
+        self.assertIsNotNone(next(w for w in self.data["words"].values() if w["term"] == "I'm KPI"))
+        self.assertEqual(words.add_pack(self.data, pack, D0 + timedelta(days=1), terms=["nope"]), {"added": 0, "merged": 0})
+        summary = words.pack_summaries({"r": pack}, self.data)[0]
+        self.assertEqual((summary["count"], summary["in_bank"], summary["topics"]), (3, 3, {"Coffee": 2, "Sauces": 1}))
+
+
+class ImagesTest(unittest.TestCase):
+    JPEG = b"\xff\xd8\xff\xe0 fake jpeg"
+
+    def test_sniff(self):
+        self.assertEqual(images.sniff(self.JPEG), "jpg")
+        self.assertEqual(images.sniff(b"RIFF\0\0\0\0WEBPVP8 "), "webp")
+        for bad in (b"", b"<svg/>", b"\xff\xd8\xff" + b"0" * images.MAX_IMAGE_BYTES):
+            with self.assertRaises(images.ImageError):
+                images.sniff(bad)
+
+    def test_wiki_photo_falls_back_to_search_and_checks_host(self):
+        def get(url):
+            if "summary/Flat_whites" in url:
+                return b'{"type": "disambiguation"}'
+            if "srsearch=" in url:
+                return json.dumps({"query": {"search": [{"title": "Flat white"}]}}).encode()
+            if "summary/Flat_white" in url:
+                return json.dumps({"type": "standard", "title": "Flat white",
+                                   "thumbnail": {"source": "https://upload.wikimedia.org/x.jpg"}}).encode()
+            if url == "https://upload.wikimedia.org/x.jpg":
+                return self.JPEG
+            raise AssertionError(url)
+
+        image, credit = images.wiki_photo("Flat whites", "flat white", get=get)
+        self.assertEqual((image, credit), (self.JPEG, "Photo: Wikipedia, Flat white"))
+
+        def evil(url):
+            return json.dumps({"type": "standard", "thumbnail": {"source": "https://evil.example/x.jpg"}}).encode()
+        with self.assertRaises(images.ImageError):
+            images.wiki_photo("X", get=evil)
+
+        def busy(url):
+            raise images.ImageError("Wikipedia is busy", 429)
+        with self.assertRaisesRegex(images.ImageError, "busy"):
+            images.wiki_photo("Flat white", get=busy)
+
+    def test_ai_picture(self):
+        sent = {}
+
+        def post(payload, key):
+            sent.update(payload)
+            return {"data": [{"b64_json": base64.b64encode(b"RIFF\0\0\0\0WEBPVP8 ").decode()}]}
+
+        word = {"term": "excavator", "definition": "A digging machine.", "zh": "挖掘机",
+                "tags": ["Construction", "Construction/Plant"]}
+        image, credit = images.ai_picture(word, "sk", post=post)
+        self.assertTrue(image.startswith(b"RIFF"))
+        self.assertEqual((sent["model"], sent["quality"]), (images.IMAGE_MODEL, "low"))
+        self.assertIn('"excavator"', sent["prompt"])
+        self.assertIn("context of Construction.", sent["prompt"])
+        with self.assertRaises(ai.AIError):
+            images.ai_picture(word, "", post=post)
+
+
+class VocabPackTest(unittest.TestCase):
+    def test_packs_pass_the_checker(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import check_bank
+        self.assertEqual(check_bank.check_vocab(ROOT / "vocab"), [])
+        packs = words.load_packs(ROOT / "vocab")
+        self.assertEqual({p["tag"] for p in packs.values()},
+                         {"Restaurant", "Construction", "Data reporting", "Self-introduction", "Meeting language"})
+
+    def test_data_speaking_tracks(self):
+        bank = practice.load_prompts(ROOT / "prompts")
+        data = {k: t for k, t in bank["speak"]["tracks"].items() if k.startswith("data_")}
+        self.assertEqual(set(data), {"data_numbers", "data_charts", "data_meeting"})
+        for t in data.values():
+            self.assertEqual((t["group"], t["focus"]), ("Presenting data", "data"))
+            self.assertTrue(all(p.get("example") for p in t["prompts"]))
+
+    def test_self_introduction_tracks(self):
+        bank = practice.load_prompts(ROOT / "prompts")
+        intro = {k: t for k, t in bank["speak"]["tracks"].items() if k.startswith("intro_")}
+        self.assertEqual(set(intro), {"intro_client", "intro_role", "intro_more"})
+        packs = words.load_packs(ROOT / "vocab")
+        for t in intro.values():
+            self.assertEqual((t["group"], t["focus"]), ("Introducing yourself", "intro"))
+            self.assertIn(t["pack"], packs)
+            self.assertTrue(all(p.get("example") for p in t["prompts"]))
+        # Every track's phrase panel points at a pack that exists.
+        for module in bank.values():
+            for t in module["tracks"].values():
+                if t.get("pack"):
+                    self.assertIn(t["pack"], packs)
 
 
 class AiTest(unittest.TestCase):
@@ -511,13 +761,20 @@ class PromptBankTest(unittest.TestCase):
         for module, info in bank.items():
             for track, t in info["tracks"].items():
                 with self.subTest(f"{module}/{track}"):
-                    self.assertGreaterEqual(len(t["prompts"]), 20)
+                    # Conversations run several turns each, so a scenario track needs fewer.
+                    self.assertGreaterEqual(len(t["prompts"]), 7 if module == "talk" else 20)
                     for p in t["prompts"]:
                         self.assertNotIn(p["id"], ids)
                         ids.add(p["id"])
                         self.assertTrue(p["task"].strip() and p["zh"].strip())
         levels = [f"l{i}" for i in range(1, 7)]
-        self.assertEqual(list(bank["write"]["tracks"]), levels)
+        self.assertEqual(list(bank["write"]["tracks"]),
+                         levels + ["ww_teams", "ww_status", "ww_risk", "ww_notes", "ww_email"])
+        self.assertTrue(all(t["focus"] == "workwriting" and all(p.get("example") for p in t["prompts"])
+                            for k, t in bank["write"]["tracks"].items() if k.startswith("ww_")))
+        meeting = {k: t for k, t in bank["speak"]["tracks"].items() if k.startswith("mt_")}
+        self.assertEqual(len(meeting), 6)
+        self.assertTrue(all(p.get("say") and p.get("example") for t in meeting.values() for p in t["prompts"]))
         self.assertEqual(list(bank["speak"]["tracks"])[:6], levels)
         self.assertTrue(bank["write"]["ladder"] and bank["speak"]["ladder"])
         self.assertEqual(len(bank["toast"]["tracks"]["table_topics"]["prompts"]), 100)
@@ -579,8 +836,72 @@ class CheckerTest(unittest.TestCase):
         self.assertIn("s-st_x-06: example may only use the placeholders", out)
         self.assertNotIn("s-st_x-05", out)
         self.assertIn("s-st_x-02: example must be English", out)
-        self.assertIn("s-st_x-03: example should be a short spoken answer", out)
+        self.assertIn("s-st_x-03: example should be 3-60 words", out)
         self.assertNotIn("s-st_x-01", out)
+
+
+class PrivateTracksTest(unittest.TestCase):
+    def test_private_tracks_are_added_and_marked(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp) / "speak"
+            folder.mkdir()
+            (folder / "_meta.json").write_text(json.dumps({"tracks": {"mine": {"name": "Mine", "focus": "showcase"}}}))
+            (folder / "mine.json").write_text(json.dumps([{"id": "p-1", "level": 3, "task": "Talk.", "zh": "说。"}]))
+            bank = practice.load_prompts(ROOT / "prompts", Path(tmp))
+            mine = bank["speak"]["tracks"]["mine"]
+            self.assertTrue(mine["private"])
+            self.assertEqual(mine["prompts"][0] | {}, mine["prompts"][0])
+            self.assertTrue(mine["prompts"][0]["private"])
+            self.assertEqual(mine["prompts"][0]["focus"], "showcase")
+            self.assertNotIn("private", bank["speak"]["tracks"]["l1"]["prompts"][0])
+            self.assertTrue(practice.meta(bank, practice.DEFAULT_PRACTICE | {"done": {}, "sessions": []})
+                            ["speak"]["tracks"][-1]["private"])
+            (folder / "_meta.json").write_text(json.dumps({"tracks": {"l1": {"name": "Clash"}}}))
+            with self.assertRaises(ValueError):
+                practice.load_prompts(ROOT / "prompts", Path(tmp))
+
+
+class TalkAiTest(unittest.TestCase):
+    scenario = {"role": "Tom, your manager.", "setting": "Desk.", "task": "Give an update.", "brief": "40 servers."}
+
+    def test_reply_last_line_and_brief(self):
+        seen = {}
+
+        def post(payload, key):
+            seen["system"], seen["user"] = payload["messages"][0]["content"], payload["messages"][1]["content"]
+            return {"choices": [{"message": {"content": '{"line": "  Thanks,   talk soon. "}'}}]}
+
+        history = [{"who": "ai", "text": "How's it going?"}, {"who": "me", "text": "Good."}]
+        line = ai.talk_reply(self.scenario, history, 0, "Ping", "k", post=post)
+        self.assertEqual(line, "Thanks, talk soon.")
+        self.assertIn("Tom, your manager.", seen["system"])
+        self.assertIn("40 servers.", seen["system"])
+        self.assertIn("The learner's name is Ping.", seen["system"])
+        self.assertIn("Learner: Good.", seen["user"])
+        self.assertIn("last line", seen["user"])
+        ai.talk_reply(self.scenario, [], 3, "", "k", post=post)
+        self.assertIn("Open the conversation", seen["user"])
+
+        def empty(payload, key):
+            return {"choices": [{"message": {"content": '{"line": ""}'}}]}
+
+        with self.assertRaises(ai.AIError):
+            ai.talk_reply(self.scenario, history, 1, "", "k", post=empty)
+
+    def test_hint_and_feedback_are_cleaned(self):
+        def post(payload, key):
+            content = ('{"score": 9, "comment": "好", "handling": "先回答", "turns": [{"you": "a", "better": "b"}, 3],'
+                       '"issues": [{"original": "x", "better": "y", "why": "z"}], "vocab": "none",'
+                       '"starter": "So…", "points": ["a", "b", "c", "d"], "zh": "说"}')
+            return {"choices": [{"message": {"content": content}}]}
+
+        f = ai.talk_feedback(self.scenario, [{"who": "me", "text": "hi"}], "k", post=post)
+        self.assertEqual(f["score"], 5)
+        self.assertEqual(f["turns"], [{"you": "a", "better": "b"}])
+        self.assertEqual(f["vocab"], [])
+        h = ai.talk_hint(self.scenario, [], "k", post=post)
+        self.assertEqual(h, {"starter": "So…", "points": ["a", "b", "c"], "zh": "说"})
 
 
 class AiFeedbackTest(unittest.TestCase):

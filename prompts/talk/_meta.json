@@ -1,0 +1,8 @@
+{"name": "Conversation", "tracks": {
+ "updates": {"name": "Project updates", "group": "Work"},
+ "explain": {"name": "Explaining your work", "group": "Work"},
+ "qa": {"name": "Q&A after a talk", "group": "Work"},
+ "pushback": {"name": "Pushback & tricky asks", "group": "Work"},
+ "meeting": {"name": "In a meeting", "group": "Meetings"},
+ "chat": {"name": "Colleague chat", "group": "Everyday"}
+}}

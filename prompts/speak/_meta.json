@@ -14,5 +14,17 @@
  "st_neighbours": {"name": "Neighbours, friends & parties", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
  "st_kiwi": {"name": "Kiwi topics", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
  "st_reactions": {"name": "Reacting & keeping it going", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
- "st_tricky": {"name": "Tricky moments & exits", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30}
+ "st_tricky": {"name": "Tricky moments & exits", "group": "Small talk", "focus": "smalltalk", "green": 10, "yellow": 20, "red": 30},
+ "data_numbers": {"name": "Numbers & changes", "group": "Presenting data", "focus": "data", "pack": "data_reporting", "green": 10, "yellow": 25, "red": 40},
+ "data_charts": {"name": "Walking through a chart", "group": "Presenting data", "focus": "data", "pack": "data_reporting", "green": 30, "yellow": 50, "red": 75},
+ "data_meeting": {"name": "Insights, caveats & Q&A", "group": "Presenting data", "focus": "data", "pack": "data_reporting", "green": 15, "yellow": 30, "red": 50},
+ "intro_client": {"name": "Client meetings & kick-offs", "group": "Introducing yourself", "focus": "intro", "pack": "self_intro", "green": 20, "yellow": 40, "red": 60},
+ "intro_role": {"name": "Your role & background", "group": "Introducing yourself", "focus": "intro", "pack": "self_intro", "green": 20, "yellow": 40, "red": 60},
+ "intro_more": {"name": "Company, colleagues & other settings", "group": "Introducing yourself", "focus": "intro", "pack": "self_intro", "green": 20, "yellow": 40, "red": 60},
+ "mt_joining": {"name": "Joining in & interrupting", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30},
+ "mt_clarify": {"name": "Clarifying & checking", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30},
+ "mt_opinion": {"name": "Agreeing, disagreeing & pushing back", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30},
+ "mt_unknown": {"name": "Not knowing & following up", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30},
+ "mt_actions": {"name": "Next steps & wrapping up", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30},
+ "mt_online": {"name": "Online meeting moments", "group": "Meeting language", "focus": "meeting", "pack": "meeting_language", "green": 10, "yellow": 20, "red": 30}
 }}

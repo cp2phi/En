@@ -4,5 +4,10 @@
  "l3": {"name": "L3 Email"},
  "l4": {"name": "L4 Story or opinion"},
  "l5": {"name": "L5 Multi-paragraph piece"},
- "l6": {"name": "L6 Speech script"}
+ "l6": {"name": "L6 Speech script"},
+ "ww_teams": {"name": "Teams messages", "group": "Work writing", "focus": "workwriting", "example_words": 80},
+ "ww_status": {"name": "Status updates & weekly reports", "group": "Work writing", "focus": "workwriting", "example_words": 180},
+ "ww_risk": {"name": "Raising risks & issues", "group": "Work writing", "focus": "workwriting", "example_words": 180},
+ "ww_notes": {"name": "Meeting notes & actions", "group": "Work writing", "focus": "workwriting", "example_words": 180},
+ "ww_email": {"name": "Work emails: asks, follow-ups & pushback", "group": "Work writing", "focus": "workwriting", "example_words": 180}
 }}

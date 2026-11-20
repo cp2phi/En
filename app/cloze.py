@@ -20,7 +20,10 @@ from .text import edit_distance, normalize, stem_phrase
 BLANK = re.compile(r"\{([^{}]+)\}")
 # A wrong question leaves the review loop once its interval reaches this many days.
 GRADUATE_INTERVAL = 15
-OUTCOMES = ("correct", "wrong", "reveal", "guessed", "never")
+# "star": the learner saves the question to the wrong book to review later.
+# "tried": answered wrong, and the learner chose to move on without saving it:
+# done, not in the wrong book (a question already being redone stays scheduled).
+OUTCOMES = ("correct", "wrong", "reveal", "guessed", "never", "star", "tried")
 # Word classes where the first letter would give the answer away.
 NO_LETTER_HINT = {"preposition"}
 # Particles: "d" for "down" would decide "down to Hamilton" vs "up to Auckland" for the
@@ -133,6 +136,7 @@ def remove_from_wrong_book(progress: dict, qid: str) -> bool:
     if not item or not in_wrong_book(item):
         return False
     item["in_wrong_book"] = False
+    item.pop("starred", None)
     return True
 
 
@@ -145,6 +149,15 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
     item = progress["items"].setdefault(
         qid, {"status": "new", "attempts": 0, "wrong": 0, "srs": srs.new_state()}
     )
+    if outcome == "star":
+        # Into the wrong book without counting as a mistake; first review tomorrow
+        # unless it is already being redone.
+        item["in_wrong_book"] = True
+        item["starred"] = True
+        if item["status"] != "learning":
+            item["status"] = "learning"
+            item["srs"] = srs.rate(srs.new_state(), "remember", today, seq)
+        return item
     item["attempts"] += 1
 
     if outcome == "never":
@@ -160,6 +173,15 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
             item["status"] = "passed"
             item["srs"]["last_seq"] = seq
             item["srs"]["last_reviewed"] = today.isoformat()
+    elif outcome == "tried" and item["status"] != "learning":
+        item["status"] = "tried"
+        item["wrong"] += 1
+        item.setdefault("in_wrong_book", False)  # without the flag, any miss would count as in the book
+        item["srs"]["last_seq"] = seq
+        item["srs"]["last_reviewed"] = today.isoformat()
+    elif outcome == "tried":
+        item["wrong"] += 1
+        item["srs"] = srs.rate(item["srs"], "forget", today, seq)
     else:  # wrong, reveal, guessed
         item["status"] = "learning"
         item["wrong"] += 1
@@ -169,7 +191,7 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
 
 
 def _matches(q: dict, filters: dict) -> bool:
-    for key in ("pos", "scene"):
+    for key in ("pos", "type", "scene"):  # "type": sentence type (translation)
         if filters.get(key) and q[key] != filters[key]:
             return False
     if filters.get("level") and q["level"] != int(filters["level"]):
@@ -257,7 +279,7 @@ def counts(questions: dict, progress: dict, filters: dict) -> dict:
 
 
 def stats(questions: dict, progress: dict, today: date) -> dict:
-    out = {"total": len(questions), "passed": 0, "learning": 0, "never": 0, "due": 0}
+    out = {"total": len(questions), "passed": 0, "learning": 0, "never": 0, "tried": 0, "due": 0}
     for qid, item in progress["items"].items():
         if qid not in questions:
             continue
@@ -265,5 +287,5 @@ def stats(questions: dict, progress: dict, today: date) -> dict:
             out[item["status"]] += 1
         if item["status"] == "learning" and srs.is_due(item["srs"], today):
             out["due"] += 1
-    out["unseen"] = out["total"] - out["passed"] - out["learning"] - out["never"]
+    out["unseen"] = out["total"] - out["passed"] - out["learning"] - out["never"] - out["tried"]
     return out

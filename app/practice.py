@@ -6,6 +6,14 @@ track "l<N>" opens after UNLOCK_SESSIONS good sessions on track "l<N-1>".
 Other tracks in a ladder module (e.g. the small-talk scenes) are always open.
 A track may set "group" (a heading in the UI) and "focus" (what the AI
 feedback concentrates on, see ai.MODULE_FOCUS).
+
+The "talk" module holds conversation scenarios: the AI plays the person in
+"role" and asks follow-up questions for "turns" answers (see ai.talk_reply).
+
+private/prompts/<module>/ (git-ignored, never synced) may add more tracks to
+a module, e.g. role-plays about a real work project. Its tracks and prompts
+are marked "private": their journal entries and read-aloud audio stay in
+private/ as well.
 """
 
 import json
@@ -14,8 +22,8 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-MODULES = ("write", "speak", "improv", "toast")
-SPOKEN = ("speak", "improv", "toast")
+MODULES = ("write", "speak", "improv", "toast", "talk")
+SPOKEN = ("speak", "improv", "toast", "talk")
 UNLOCK_SESSIONS = 5
 # Fewest English words for a session to count towards unlocking the next level.
 MIN_WORDS = {
@@ -31,23 +39,33 @@ FILLER = re.compile(r"\b(?:um+|uh+|erm*|ah+|hmm+|you know|i mean|kind of|sort of
 DEFAULT_PRACTICE = {"sessions": [], "done": {}, "vocab": {"write": {}, "spoken": {}}}
 
 
-def load_prompts(root: Path) -> dict:
-    """Return {module: {"name", "ladder", "tracks": {track: {"name", ..., "prompts": [...]}}}}."""
+def load_prompts(root: Path, private: Path | None = None) -> dict:
+    """Return {module: {"name", "ladder", "tracks": {track: {"name", ..., "prompts": [...]}}}}.
+
+    Tracks from `private` (same layout as `root`) are added after the public ones
+    and marked "private"; a module needs its public _meta.json to appear at all."""
     bank: dict = {}
     for module in MODULES:
-        folder = Path(root) / module
-        meta_path = folder / "_meta.json"
+        meta_path = Path(root) / module / "_meta.json"
         if not meta_path.exists():
             continue
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        tracks = {}
-        for track, info in meta["tracks"].items():
-            path = folder / f"{track}.json"
-            items = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
-            tracks[track] = info | {
-                "prompts": [item | {"module": module, "track": track,
-                                    "focus": info.get("focus") or module} for item in items]
-            }
+        tracks: dict = {}
+        sources = [(Path(root) / module, meta, {})]
+        private_meta = Path(private) / module / "_meta.json" if private else None
+        if private_meta and private_meta.exists():
+            sources.append((private_meta.parent, json.loads(private_meta.read_text(encoding="utf-8")),
+                            {"private": True}))
+        for folder, info_all, extra in sources:
+            for track, info in info_all["tracks"].items():
+                if track in tracks:
+                    raise ValueError(f"track {module}/{track} is declared twice")
+                path = folder / f"{track}.json"
+                items = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+                tracks[track] = info | extra | {
+                    "prompts": [item | extra | {"module": module, "track": track,
+                                                "focus": info.get("focus") or module} for item in items]
+                }
         bank[module] = {"name": meta["name"], "ladder": bool(meta.get("ladder")), "tracks": tracks}
     return bank
 
@@ -98,6 +116,9 @@ def meta(bank: dict, data: dict) -> dict:
                 "timing": [t[k] for k in ("green", "yellow", "red")] if "green" in t else None,
                 "level": track_level(track) if info["ladder"] else None,
                 "group": t.get("group") or ("Levels" if info["ladder"] and track_level(track) else ""),
+                "pack": t.get("pack"),  # a word pack shown as "Useful phrases" beside the prompts
+                "private": bool(t.get("private")),
+                "focus": t.get("focus") or module,
             })
         out[module] = {"name": info["name"], "ladder": info["ladder"], "tracks": tracks,
                        "unlock_sessions": UNLOCK_SESSIONS}

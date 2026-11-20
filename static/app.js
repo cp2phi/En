@@ -17,6 +17,14 @@ const SCENE_NAMES = {
   plural: "Plurals", misc: "Other grammar",
   calls: "Video calls & meetings", directions: "Directions & places (NZ)", everyday: "Everyday on / off / up / down",
 };
+// Sentence translation: one file per sentence type, in this order.
+const TYPE_NAMES = {
+  subjectless: "No subject in Chinese (下雨了 / 该走了)", topic: "Topic first & 把 (这事我来办)",
+  existential: "有: there is / have", questions: "Questions", polite: "Polite requests & suggestions",
+  relative: "Relative clauses (…的那个)", time_if: "Time & if clauses", reason_contrast: "Because / although",
+  tense: "Tenses (已经 / 还没 / 一直)", passive: "Passive without 被", compare: "Comparisons",
+};
+const TYPE_ORDER = Object.keys(TYPE_NAMES);
 const KIND_TEXT = {
   correct: "correct", grammar: "right word, wrong form", spelling: "spelling mistake",
   word: "wrong word", empty: "empty",
@@ -26,13 +34,17 @@ const view = document.getElementById("view");
 let settings = { accent: "us", new_per_day: 20, model: "", has_key: false, tts: "browser" };
 let prefill = null; // card draft handed from another page to the add page
 
-// Example answers may contain {name} and {hometown}, filled in from Settings.
+// Example answers may contain {name}, {hometown}, {role} and {company}, filled in from Settings.
+const PLACEHOLDERS = { name: ["my_name", "your name"], hometown: ["hometown", "your hometown"],
+  role: ["my_role", "your job title"], company: ["my_company", "your company"] };
 function personalise(text) {
-  return text
-    .replaceAll("{name}", settings.my_name || "[your name]")
-    .replaceAll("{hometown}", settings.hometown || "[your hometown]");
+  return Object.entries(PLACEHOLDERS).reduce((t, [key, [field, label]]) =>
+    t.replaceAll(`{${key}}`, settings[field] || `[${label}]`), text);
 }
+const missingDetails = (text) => Object.entries(PLACEHOLDERS).some(([key, [field]]) =>
+  text.includes(`{${key}}`) && !settings[field]);
 const clozeFilters = { pos: "", scene: "", level: "", mode: "" };
+const translateFilters = { type: "", scene: "", level: "", mode: "" };
 
 // ---- helpers ----------------------------------------------------------
 function h(tag, attrs, ...kids) {
@@ -103,7 +115,8 @@ function browserSpeak(text, accent, pace) {
   speechSynthesis.speak(utterance);
 }
 
-// options: {tts, voice, pace} override the saved settings (used by the settings preview).
+// options: {tts, voice, pace} override the saved settings (used by the settings preview);
+// {private: true} keeps the generated audio in private/ (lines about real work projects).
 async function speak(text, accent, options = {}) {
   stopSpeaking();
   if (!text) return;
@@ -113,13 +126,13 @@ async function speak(text, accent, options = {}) {
   const pace = options.pace || settings.pace;
   if ((options.tts || settings.tts) === "openai" && settings.has_key) {
     const voice = options.voice || settings.voice;
-    const cacheKey = JSON.stringify([voice, a, pace, text]);
+    const cacheKey = JSON.stringify([voice, a, pace, text, !!options.private]);
     try {
       let url = audioUrls.get(cacheKey);
       if (!url) {
         const response = await fetch("/api/tts", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, accent: a, voice, pace }),
+          body: JSON.stringify({ text, accent: a, voice, pace, private: !!options.private }),
         });
         if (!response.ok) throw new Error((await response.json()).error || "Could not generate speech");
         url = URL.createObjectURL(await response.blob());
@@ -168,14 +181,17 @@ async function homeView() {
       stat(s.words.new_today_left, "new words left today"),
       stat(s.cloze.due, "cloze questions to redo"),
       stat(s.cloze.unseen, "cloze questions not yet done"),
+      stat(s.translate.due, "translations to redo"),
     ),
     h("div", { class: "card" },
       h("div", {}, `Cloze bank: ${s.cloze.total} questions · ${s.cloze.passed} passed · ${s.cloze.learning} learning · ${s.cloze.never} hidden`),
+      h("div", {}, `Translation bank: ${s.translate.total} sentences · ${s.translate.passed} passed · ${s.translate.learning} learning`),
       h("div", {}, `Word bank: ${s.words.total} words · ${s.words.never} hidden`),
       s.has_key ? null : h("p", { class: "muted" }, "No OpenAI key yet, so AI explanations and feedback are off. Add it in Settings."),
     ),
     h("div", { class: "row" },
       h("a", { href: "#cloze" }, h("button", { class: "primary", type: "button" }, "Start cloze")),
+      h("a", { href: "#translate" }, h("button", { type: "button" }, "Translate sentences")),
       h("a", { href: "#review" }, h("button", { type: "button" }, "Review words")),
     ),
   );
@@ -319,7 +335,7 @@ async function clozeView() {
         next,
         firstTry ? guessed : null,
         h("button", { type: "button", onclick: () => {
-          prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }] };
+          prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }], tags: ["Cloze"] };
           location.hash = "#add";
         } }, "Add to word bank"),
         h("button", { class: "link", type: "button", onclick: never }, "Never show again"),
@@ -335,52 +351,443 @@ async function clozeView() {
   await loadQuestion();
 }
 
-async function wrongbookView() {
-  const { items } = await api("GET", "cloze/wrongbook");
+// ---- sentence translation -------------------------------------------
+const VERDICT_TEXT = {
+  good: ["good", "✅ Correct and natural."],
+  fix: ["warn", "⚠️ Almost. Fix these:"],
+  wrong: ["bad", "❌ Not quite. The meaning is off:"],
+};
+const translateMeta = () => api("GET", "translate/meta?" + new URLSearchParams(
+  Object.entries({ type: translateFilters.type, scene: translateFilters.scene }).filter(([, v]) => v)));
+
+async function translateView() {
+  let { counts } = await translateMeta();
+  if (translateFilters.scene && !(translateFilters.scene in counts.scenes)) translateFilters.scene = "";
+  if (translateFilters.level && !(translateFilters.level in counts.levels)) translateFilters.level = "";
+  const names = { types: (k) => TYPE_NAMES[k] || k, scenes: (k) => SCENE_NAMES[k] || k, levels: (k) => "L" + k };
+  const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left})`; // total / not yet attempted
+  const select = (group, key, placeholder, rerender) => {
+    const entries = Object.entries(counts[group]);
+    if (group === "types") entries.sort(([a], [b]) => (TYPE_ORDER.indexOf(a) + 1 || 99) - (TYPE_ORDER.indexOf(b) + 1 || 99));
+    return h("select", { "aria-label": placeholder, "data-group": group,
+      onchange: (e) => { translateFilters[key] = e.target.value; if (rerender) translateView(); else loadQuestion(); } },
+      h("option", { value: "" }, placeholder),
+      entries.map(([k, c]) => h("option", { value: k, selected: translateFilters[key] === k }, label(group, k, c))));
+  };
+  async function refreshCounts() {
+    ({ counts } = await translateMeta());
+    for (const sel of view.querySelectorAll("select[data-group]")) {
+      for (const opt of sel.options) {
+        const c = counts[sel.dataset.group][opt.value];
+        if (opt.value && c) opt.textContent = label(sel.dataset.group, opt.value, c);
+      }
+    }
+  }
+  const wrongbook = translateFilters.mode === "wrongbook";
+  const box = h("div", {});
   show(
-    h("h1", {}, `Wrong book (${items.length})`),
-    items.length
-      ? h("div", { class: "row", style: "margin-bottom:16px" },
-          h("button", { class: "primary", type: "button", onclick: () => {
+    h("h1", {}, wrongbook ? "Redo saved and wrong translations" : "Translate the sentence"),
+    h("div", { class: "row", style: "margin-bottom:16px" },
+      select("types", "type", "All sentence types", true),
+      select("scenes", "scene", "All scenes", true),
+      select("levels", "level", "All levels", false),
+      wrongbook
+        ? h("button", { type: "button", onclick: () => { translateFilters.mode = ""; translateView(); } }, "Back to normal practice")
+        : null,
+    ),
+    box,
+  );
+
+  async function loadQuestion() {
+    refreshCounts();
+    const params = new URLSearchParams(Object.entries(translateFilters).filter(([, v]) => v));
+    const r = await api("GET", "translate/next?" + params);
+    if (!r.question) {
+      fill(box, h("div", { class: "card" },
+        wrongbook ? "Nothing in the wrong book here." : "You have done every sentence in this range. Try another type, scene or level."));
+      return;
+    }
+    renderQuestion(r.question, r.redo, r.in_wrong_book);
+  }
+
+  function renderQuestion(q, redo, inBook) {
+    let attempted = false;
+    // Whether this question's result is recorded: a right first answer, a revealed
+    // answer, or the learner's choice after a wrong one (next, or save + next).
+    let settled = false;
+    let tries = 0;
+    const input = h("textarea", { class: "translation", rows: 2, autocomplete: "off", spellcheck: "false",
+      placeholder: "Type the whole sentence in English. Enter to check, Shift+Enter for a new line.",
+      onkeydown: (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); check(); } } });
+    const feedback = h("div", { class: "feedback" });
+    const actions = h("div", { class: "row" });
+    const tags = h("div", {});
+    const card = h("div", { class: "card" },
+      tags, h("div", { class: "zh translate-zh" }, q.zh), input, feedback, actions);
+
+    function drawTags() {
+      fill(tags,
+        h("span", { class: "tag" }, TYPE_NAMES[q.type] || q.type),
+        h("span", { class: "tag" }, SCENE_NAMES[q.scene] || q.scene),
+        h("span", { class: "tag" }, "L" + q.level),
+        redo ? h("span", { class: "tag redo" }, "Redo") : null);
+    }
+
+    const starButton = () => h("button", { type: "button", title: inBook ? "Take it off the wrong book" : "Save to the wrong book to review later",
+      onclick: async (e) => {
+        if (inBook) {
+          await api("POST", "translate/wrongbook/remove", { id: q.id });
+          inBook = false;
+          toast("Removed from the wrong book");
+        } else {
+          await api("POST", "translate/mark", { id: q.id, outcome: "star" });
+          inBook = true;
+          toast("Saved to the wrong book");
+        }
+        e.target.replaceWith(starButton());
+      } }, inBook ? "★ In wrong book" : "☆ Save");
+
+    const never = async () => {
+      await api("POST", "translate/mark", { id: q.id, outcome: "never" });
+      toast("This sentence won't appear again");
+      loadQuestion();
+    };
+
+    function answering() {
+      input.disabled = false;
+      fill(feedback);
+      fill(actions,
+        h("button", { class: "primary", type: "button", onclick: check }, "Check"),
+        h("button", { type: "button", onclick: showAnswer }, "Show answer"),
+        starButton(),
+        h("button", { class: "link", type: "button", onclick: never }, "Never show again"));
+      input.focus();
+    }
+
+    async function check() {
+      const answer = input.value.trim();
+      if (!answer) return input.focus();
+      input.disabled = true;
+      fill(actions, h("span", { class: "muted" }, "Checking…"));
+      let r;
+      try {
+        r = await api("POST", "translate/check", { id: q.id, answer, record: !attempted });
+        tries += 1;
+      } catch (e) {
+        toast(e.message);
+        return answering();
+      }
+      inBook = r.in_wrong_book;
+      if (r.verdict === "good" && !attempted) settled = true;
+      attempted = true;
+      finish(r, answer);
+    }
+
+    async function showAnswer() {
+      const r = await api("POST", "translate/mark", { id: q.id, outcome: "reveal" });
+      inBook = r.in_wrong_book;
+      attempted = true;
+      settled = true;
+      input.disabled = true;
+      finish(r, null);
+    }
+
+    // r: the reference (en, alt, point) plus, after a check, verdict / issues / fixed.
+    function finish(r, answer) {
+      speak(r.en);
+      const verdict = r.verdict && VERDICT_TEXT[r.verdict];
+      const selfMark = answer && !r.verdict; // no key, or the AI call failed
+      const markBox = h("div", { class: "row" });
+      if (selfMark) {
+        const firstTry = !settled && tries === 1;
+        const gotIt = async () => {
+          if (firstTry) {
+            const m = await api("POST", "translate/mark", { id: q.id, outcome: "correct" });
+            inBook = m.in_wrong_book;
+            settled = true;
+          }
+          fill(markBox, h("span", { class: "good" }, "Marked right."));
+          drawActions(r);
+        };
+        const notQuite = () => {
+          fill(markBox, h("span", { class: "bad" }, "Marked wrong."));
+          drawActions(r);
+        };
+        fill(markBox, h("span", { class: "muted" }, "Compare with the answer below. Did you get it?"),
+          h("button", { class: "good", type: "button", onclick: gotIt }, "I got it"),
+          h("button", { class: "bad", type: "button", onclick: notQuite }, "Not quite"));
+      }
+      fill(feedback,
+        r.ai_error ? h("div", { class: "bad" }, "No AI check: " + r.ai_error) : null,
+        answer && !r.verdict && !r.ai_error ? h("div", { class: "muted" }, "No OpenAI key, so there is no AI check.") : null,
+        verdict ? h("div", { class: "verdict " + verdict[0] }, verdict[1]) : null,
+        r.issues && r.issues.length ? h("div", { class: "issues" }, r.issues.map((i) => h("div", { class: "issue" },
+          h("span", { class: "wrong-part" }, i.original), " → ", h("b", {}, i.better),
+          i.why ? h("span", { class: "muted" }, "  " + i.why) : null))) : null,
+        r.fixed ? h("div", { class: "fixed" }, h("span", { class: "muted" }, "Yours, fixed: "), r.fixed,
+          h("button", { class: "link", type: "button", onclick: () => speak(r.fixed) }, "🔊")) : null,
+        selfMark ? markBox : null,
+        h("div", { class: "answer" }, r.en,
+          h("button", { class: "link", type: "button", onclick: () => speak(r.en) }, "🔊")),
+        r.alt.length ? h("div", { class: "muted" }, "Also: " + r.alt.join(" / ")) : null,
+        r.point ? h("div", { class: "note" }, "💡 " + r.point) : null,
+        !answer ? h("div", { class: "muted" }, "Revealed sentences go to the wrong book and come back later today, then at growing intervals.") : null,
+      );
+      if (selfMark) fill(actions); // the learner marks it first
+      else drawActions(r);
+    }
+
+    // After a wrong answer nothing is recorded yet: the learner picks "Next" (done,
+    // not saved) or "Save to wrong book & next".
+    async function decide(outcome) {
+      if (!settled) await api("POST", "translate/mark", { id: q.id, outcome });
+      settled = true;
+      if (outcome === "wrong") toast("Saved to the wrong book");
+      loadQuestion();
+    }
+
+    function drawActions(r) {
+      const choose = !settled;
+      const next = h("button", { class: "primary", type: "button",
+        onclick: choose ? () => decide("tried") : loadQuestion }, "Next");
+      fill(actions,
+        next,
+        choose && !inBook
+          ? h("button", { class: "warn", type: "button", onclick: () => decide("wrong") }, "Save to wrong book & next")
+          : null,
+        h("button", { type: "button", onclick: answering }, "Try again"),
+        choose ? null : starButton(),
+        h("button", { type: "button", title: "Capture a word or pattern from this sentence", onclick: () => {
+          prefill = { sentence: r.en, examples: [{ en: r.en, zh: r.zh }], tags: ["Translate"] };
+          location.hash = "#add";
+        } }, "Add to word bank"),
+        h("button", { class: "link", type: "button", onclick: never }, "Never show again"));
+      next.focus();
+    }
+
+    drawTags();
+    fill(box, card);
+    answering();
+  }
+
+  await loadQuestion();
+}
+
+// ---- wrong book --------------------------------------------------------
+let wrongbookTab = "translate";
+
+async function wrongbookView() {
+  const [clozeBook, translateBook] = await Promise.all([api("GET", "cloze/wrongbook"), api("GET", "translate/wrongbook")]);
+  const tab = (id, text, n) => h("button", { type: "button", class: "chip" + (wrongbookTab === id ? " on" : ""),
+    onclick: () => { wrongbookTab = id; wrongbookView(); } }, `${text} (${n})`);
+  const remove = (path, id, what) => h("button", { class: "link", type: "button", title: "Take it off the wrong book", onclick: async () => {
+    if (!confirm(`Remove this ${what} from the wrong book? It comes back if you get it wrong again.`)) return;
+    await api("POST", path, { id });
+    toast("Removed from the wrong book");
+    wrongbookView();
+  } }, "Remove");
+  const redoAll = (onclick) => h("div", { class: "row", style: "margin-bottom:16px" },
+    h("button", { class: "primary", type: "button", onclick }, "Redo them all"));
+
+  const translateRows = translateBook.items;
+  const clozeRows = clozeBook.items;
+  const body = wrongbookTab === "translate"
+    ? [translateRows.length
+        ? redoAll(() => {
+            Object.assign(translateFilters, { type: "", scene: "", level: "", mode: "wrongbook" });
+            location.hash = "#translate";
+          })
+        : h("div", { class: "card" }, "Nothing here yet. Sentences whose answer you reveal land here, and so do the ones you save (☆, or Save to wrong book after a wrong answer)."),
+      translateRows.map((item) => h("div", { class: "card" },
+        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
+          h("div", { class: "zh", style: "margin:0" }, item.zh),
+          remove("translate/wrongbook/remove", item.id, "sentence")),
+        h("div", { class: "muted" },
+          [TYPE_NAMES[item.type] || item.type, SCENE_NAMES[item.scene] || item.scene, "L" + item.level,
+            item.starred ? "★ saved" : null, item.wrong ? `wrong ${item.wrong}×` : null].filter(Boolean).join(" · ")),
+        h("div", { class: "answer" }, item.en,
+          h("button", { class: "link", type: "button", onclick: () => speak(item.en) }, "🔊")),
+        item.last_answer ? h("div", { class: "muted" }, "Your last answer: " + item.last_answer) : null,
+        item.point ? h("div", { class: "note" }, "💡 " + item.point) : null))]
+    : [clozeRows.length
+        ? redoAll(() => {
             Object.assign(clozeFilters, { pos: "", scene: "", level: "", mode: "wrongbook" });
             location.hash = "#cloze";
-          } }, "Redo them all"))
-      : h("div", { class: "card" }, "No wrong answers yet."),
-    items.map((item) => h("div", { class: "card" },
-      h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
-        h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
-        h("button", { class: "link", type: "button", title: "Take this question off the wrong book", onclick: async () => {
-          if (!confirm("Remove this question from the wrong book? It comes back if you get it wrong again.")) return;
-          await api("POST", "cloze/wrongbook/remove", { id: item.id });
-          toast("Removed from the wrong book");
-          wrongbookView();
-        } }, "Remove")),
-      h("div", { class: "answer" }, item.sentence,
-        h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊")))),
+          })
+        : h("div", { class: "card" }, "No wrong answers yet."),
+      clozeRows.map((item) => h("div", { class: "card" },
+        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
+          h("div", { class: "muted" }, item.zh, ` · wrong ${item.wrong}×`),
+          remove("cloze/wrongbook/remove", item.id, "question")),
+        h("div", { class: "answer" }, item.sentence,
+          h("button", { class: "link", type: "button", onclick: () => speak(item.sentence) }, "🔊"))))];
+  show(
+    h("h1", {}, "Wrong book"),
+    h("div", { class: "row chips", style: "margin-bottom:16px" },
+      tab("translate", "Translation", translateRows.length), tab("cloze", "Cloze", clozeRows.length)),
+    ...body,
   );
 }
 
-// ---- words: review ----------------------------------------------------
+// ---- words: tags, pictures, review -----------------------------------
+const UNTAGGED = "~untagged";
+const tagName = (t) => (t === UNTAGGED ? "No tag" : t.split("/").pop());
+
+function loadSaved(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function remember(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode: not remembered */ }
+}
+
+// Tag chips: top-level tags in the first row; picking one shows its sub-topics below.
+// counts: {tag: n}. selected: array of tags (shared, mutated). onchange() after each click.
+function tagFilter(counts, selected, onchange) {
+  const box = h("div", { class: "tagfilter" });
+  const chip = (tag, label) => h("button", {
+    type: "button", class: "chip" + (selected.includes(tag) ? " on" : ""), "aria-pressed": String(selected.includes(tag)),
+    onclick: () => {
+      const i = selected.indexOf(tag);
+      if (i >= 0) selected.splice(i, 1);
+      else {
+        // A parent and its own children are never selected together.
+        for (let j = selected.length - 1; j >= 0; j--) {
+          if (selected[j].startsWith(tag + "/") || tag.startsWith(selected[j] + "/")) selected.splice(j, 1);
+        }
+        selected.push(tag);
+      }
+      draw();
+      onchange();
+    },
+  }, `${label} (${counts[tag]})`);
+  function draw() {
+    // Drop selections that no longer exist (e.g. after deleting the last card with that tag).
+    for (let j = selected.length - 1; j >= 0; j--) if (!(selected[j] in counts)) selected.splice(j, 1);
+    const tops = Object.keys(counts).filter((t) => !t.includes("/"));
+    const open = tops.filter((t) => selected.some((x) => x === t || x.startsWith(t + "/")));
+    fill(box,
+      h("div", { class: "row chips" },
+        h("button", { type: "button", class: "chip" + (selected.length ? "" : " on"),
+          onclick: () => { selected.splice(0); draw(); onchange(); } }, "All"),
+        tops.map((t) => chip(t, tagName(t)))),
+      open.map((top) => {
+        const subs = Object.keys(counts).filter((t) => t.startsWith(top + "/"));
+        return subs.length ? h("div", { class: "row chips sub" },
+          h("span", { class: "muted" }, top + ":"), subs.map((t) => chip(t, t.slice(top.length + 1)))) : null;
+      }));
+  }
+  draw();
+  return box;
+}
+
+function tagList(tags) {
+  return (tags || []).length ? h("div", {}, tags.map((t) => h("span", { class: "tag" }, t))) : null;
+}
+
+// Shrink a picture in the browser before uploading (keeps data/images/ small).
+function shrinkImage(file, max = 800) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(img.src);
+      resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    img.onerror = () => reject(new Error("That file is not a picture this browser can read."));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// The card's picture plus buttons to find, generate, upload or remove one.
+// onchange(word) runs with the updated card.
+function pictureBox(word, onchange) {
+  const box = h("div", { class: "picture" });
+  const status = h("span", { class: "muted" });
+  async function set(body, busy) {
+    status.textContent = busy;
+    try {
+      const r = await api("POST", `words/${word.id}/image`, body);
+      Object.assign(word, r.word);
+      draw();
+      onchange?.(word);
+    } catch (e) {
+      status.textContent = e.message;
+    }
+  }
+  const upload = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await set({ source: "upload", data_b64: await shrinkImage(file) }, "Uploading…");
+    } catch (err) {
+      status.textContent = err.message;
+    }
+  } });
+  function draw() {
+    const img = word.image;
+    fill(box,
+      img ? h("figure", {},
+        h("img", { class: "card-img", src: `/api/words/${word.id}/image?v=${img.v}`, alt: word.term, loading: "lazy" }),
+        h("figcaption", { class: "muted" }, img.credit)) : null,
+      h("div", { class: "row picture-tools" },
+        img && img.by === "wiki" ? null : h("button", { class: "link", type: "button", title: "Free: the lead photo of the matching Wikipedia article",
+          onclick: () => set({ source: "wiki" }, "Looking on Wikipedia…") }, "🔎 Find a photo (free)"),
+        h("button", { class: "link", type: "button", title: "Uses your OpenAI key, about US$0.005 per picture",
+          onclick: () => set({ source: "ai" }, "Drawing… (about 10–30 seconds)") }, "🎨 AI picture (~US$0.005)"),
+        h("button", { class: "link", type: "button", onclick: () => upload.click() }, "📁 Upload"),
+        img ? h("button", { class: "link", type: "button", onclick: async () => {
+          const r = await api("DELETE", `words/${word.id}/image`);
+          Object.assign(word, r.word);
+          draw();
+          onchange?.(word);
+        } }, "Remove picture") : null,
+        upload, status));
+    status.textContent = "";
+  }
+  draw();
+  // Pack cards name a Wikipedia article: fetch its photo the first time the card is shown.
+  if (!word.image && word.wiki && !pictureBox.tried.has(word.id)) {
+    pictureBox.tried.add(word.id);
+    set({ source: "wiki" }, "Loading photo…");
+  }
+  return box;
+}
+pictureBox.tried = new Set(); // one automatic attempt per card per page load
+
 function cardDetails(word) {
   return [
     word.respelling ? h("div", { class: "muted" }, word.respelling) : null,
+    word.zh ? h("div", { class: "zh" }, (word.emoji ? word.emoji + " " : "") + word.zh) : null,
     word.definition ? h("p", {}, word.definition) : null,
+    pictureBox(word),
     word.examples.map((ex) => h("div", { class: "example" }, ex.en,
       h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
       h("span", { class: "muted" }, ex.zh))),
     word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ " + ex)),
     word.note ? h("pre", {}, word.note) : null,
+    tagList(word.tags),
   ];
 }
 
+const reviewTags = loadSaved("reviewTags", []);
+
 async function reviewView() {
-  const { word, counts } = await api("GET", "words/next");
+  const query = reviewTags.length ? "?tags=" + encodeURIComponent(reviewTags.join(",")) : "";
+  const { word, counts, tags } = await api("GET", "words/next" + query);
   const header = h("h1", {}, "Review words");
+  const filter = Object.keys(tags).length
+    ? tagFilter(tags, reviewTags, () => { remember("reviewTags", reviewTags); reviewView(); }) : null;
   const info = h("div", { class: "muted", style: "margin-bottom:12px" },
-    `Due ${counts.due} · New left today ${counts.new_today_left} · In word bank ${counts.total}`);
+    `Due ${counts.due} · New left today ${counts.new_today_left} · ${reviewTags.length ? "Cards with these tags" : "In word bank"} ${counts.total}`);
   if (!word) {
-    show(header, info, h("div", { class: "card" },
-      counts.total ? "All done for today." : "Your word bank is empty. Add a few words in Add / Capture first."));
+    show(header, filter, info, h("div", { class: "card" },
+      counts.total ? "All done for today" + (reviewTags.length ? " with these tags." : ".")
+        : reviewTags.length ? "No cards with these tags."
+          : "Your word bank is empty. Add a few words in Add / Capture, or add a word pack in Word bank."));
     return;
   }
   const back = h("div", {});
@@ -398,10 +805,9 @@ async function reviewView() {
       mine.value = "";
       toast("Example saved");
     });
-    fill(back, ...cardDetails(word).flat().filter(Boolean), mine);
-    const forget = h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "Forgot");
-    fill(actions, 
-      forget,
+    fill(back, cardDetails(word), mine);
+    fill(actions,
+      h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "Forgot"),
       h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "Fuzzy"),
       h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "Remembered"),
       h("button", { class: "link", type: "button", onclick: () => rate("never") }, "Never show again"),
@@ -409,7 +815,7 @@ async function reviewView() {
   };
   const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "Show answer");
   actions.append(showButton);
-  show(header, info, h("div", { class: "card" },
+  show(header, filter, info, h("div", { class: "card" },
     h("div", { class: "term" }, word.term, speakButtons(word.term)), back, actions));
   speak(word.term);
   showButton.focus();
@@ -421,10 +827,14 @@ function addView() {
   prefill = null;
   const field = (attrs) => h("input", { class: "wide", ...attrs });
   const sentence = h("textarea", { rows: 2, placeholder: "Paste the sentence you heard or read. A fragment is fine (optional)" });
+  sentence.value = draft.sentence || "";
   const focus = field({ placeholder: "Which part don't you understand? A word, phrase or pattern (blank = the whole sentence)" });
   const term = field({ value: draft.term || "" });
   const respelling = field({ placeholder: "e.g. post-POHN" });
   const definition = field({});
+  const zh = field({ value: draft.zh || "", placeholder: "Chinese meaning (optional)" });
+  const tags = field({ value: (draft.tags || ["Manual"]).join(", "),
+    placeholder: "Comma-separated, e.g. Manual, Work/Meetings" });
   const note = h("textarea", { rows: 3 });
   const examplesBox = h("div", {});
   const notesBox = h("div", {});
@@ -467,7 +877,8 @@ function addView() {
     });
     try {
       const r = await api("POST", "words", {
-        term: term.value, respelling: respelling.value, definition: definition.value,
+        term: term.value, respelling: respelling.value, definition: definition.value, zh: zh.value,
+        tags: tags.value.split(","),
         examples, note: [...picked, note.value.trim()].filter(Boolean).join("\n"),
       });
       toast(r.duplicate ? "Already in your word bank. New examples were merged in" : "Added to your word bank");
@@ -488,39 +899,192 @@ function addView() {
       h("label", {}, "Word / phrase / pattern"), term,
       h("label", {}, "Pronunciation respelling"), respelling,
       h("label", {}, "English definition"), definition,
+      h("label", {}, "Chinese meaning"), zh,
       h("label", {}, "Examples"), examplesBox,
       h("button", { class: "link", type: "button", onclick: () => addExample() }, "+ Add an example"),
       notesBox,
       h("label", {}, "Note"), note,
+      h("label", {}, "Tags (use / for a sub-topic, e.g. Restaurant/Coffee)"), tags,
       h("div", { class: "row", style: "margin-top:12px" },
         h("button", { class: "primary", type: "button", onclick: save }, "Save to word bank"))),
   );
 }
 
-async function wordsView() {
-  const { words } = await api("GET", "words");
-  const body = h("tbody", {});
-  const draw = (filter) => fill(body, ...words
-    .filter((w) => !filter || w.term.includes(filter.toLowerCase()))
-    .map((w) => h("tr", {},
-      h("td", {}, h("b", {}, w.term), h("div", { class: "muted" }, w.respelling)),
-      h("td", {}, w.definition, w.examples[0] ? h("div", { class: "muted" }, w.examples[0].en) : null),
-      h("td", { class: "muted" }, w.srs.never ? "Hidden" : w.srs.due ? "Next " + w.srs.due : "New"),
-      h("td", {}, h("button", { class: "link", type: "button", onclick: async () => {
-        if (!confirm(`Delete "${w.term}"?`)) return;
-        await api("DELETE", "words/" + w.id);
+function addedToast(r) {
+  toast(`Added ${r.added} new card${r.added === 1 ? "" : "s"}`
+    + (r.merged ? `, ${r.merged} already in your bank got the tag` : ""));
+}
+
+// One pack on the Word bank page: "Add all", or preview its cards and pick some.
+function packCard(p) {
+  const left = p.count - p.in_bank;
+  const preview = h("div", { class: "pack-preview", hidden: true });
+  const previewButton = h("button", { type: "button", class: "primary", onclick: async () => {
+    if (!preview.dataset.loaded) {
+      previewButton.disabled = true;
+      try { await loadPreview(); } catch (e) { toast(e.message); return; } finally { previewButton.disabled = false; }
+    }
+    preview.hidden = !preview.hidden;
+    previewButton.textContent = preview.hidden ? "Preview & choose" : "Hide preview";
+  } }, "Preview & choose");
+
+  async function loadPreview() {
+    const pack = await api("GET", "words/packs/" + encodeURIComponent(p.id));
+    preview.dataset.loaded = "1";
+    const selected = new Set(); // terms ticked for adding
+    const topics = [...new Set(pack.words.map((w) => w.topic))];
+    const fresh = (list) => list.filter((w) => !w.in_bank);
+    const topicChecks = [];
+    const addButton = h("button", { class: "primary", type: "button", disabled: true, onclick: async () => {
+      addButton.disabled = true;
+      addedToast(await api("POST", "words/packs/add", { id: p.id, terms: [...selected] }));
+      wordsView();
+    } }, "Add 0 selected cards");
+    function update() {
+      addButton.textContent = `Add ${selected.size} selected card${selected.size === 1 ? "" : "s"}`;
+      addButton.disabled = !selected.size;
+      for (const { box, items, rows } of topicChecks) {
+        const n = items.filter((w) => selected.has(w.term)).length;
+        box.checked = n > 0 && n === items.length;
+        box.indeterminate = n > 0 && n < items.length;
+        rows.forEach(([w, check]) => { check.checked = selected.has(w.term); });
+      }
+    }
+    const setAll = (list, on) => { list.forEach((w) => (on ? selected.add(w.term) : selected.delete(w.term))); update(); };
+
+    function cardRow(w) {
+      const check = w.in_bank ? null : h("input", { type: "checkbox", "aria-label": "Select " + w.term,
+        onchange: (e) => { if (e.target.checked) selected.add(w.term); else selected.delete(w.term); update(); } });
+      const ex = w.examples[0];
+      const row = h("label", { class: "pack-row" + (w.in_bank ? " in-bank" : "") },
+        h("div", {}, check || h("span", { class: "good", title: "Already in your word bank" }, "✓")),
+        w.wiki ? h("img", { class: "pack-thumb", loading: "lazy", alt: "", src: "/api/wiki/photo?title=" + encodeURIComponent(w.wiki),
+          onerror: (e) => e.target.remove() }) : h("div", { class: "pack-thumb empty" }, w.emoji || ""),
+        h("div", {},
+          h("div", {}, h("b", {}, w.term), w.respelling ? h("span", { class: "muted" }, "  " + w.respelling) : null,
+            h("button", { class: "link", type: "button", onclick: (e) => { e.preventDefault(); speak(w.term); } }, "🔊"),
+            w.in_bank ? h("span", { class: "muted" }, " in your bank") : null),
+          h("div", {}, w.zh),
+          h("div", { class: "muted" }, w.definition),
+          ex ? h("div", { class: "pack-ex" }, ex.en, h("span", { class: "muted" }, " " + ex.zh)) : null,
+          w.note ? h("div", { class: "muted pack-note" }, "💡 " + w.note) : null));
+      return [row, check];
+    }
+
+    const topicBlocks = topics.map((t) => {
+      const all = pack.words.filter((w) => w.topic === t);
+      const items = fresh(all);
+      const list = h("div", {});
+      const rows = [];
+      const box = h("input", { type: "checkbox", disabled: !items.length, "aria-label": "Select all in " + t,
+        onclick: (e) => { e.stopPropagation(); setAll(items, e.target.checked); } });
+      topicChecks.push({ box, items, rows });
+      // Cards (and their photos) are built the first time a topic is opened.
+      const block = h("details", { class: "pack-topic", ontoggle: () => {
+        if (!block.open || list.childElementCount) return;
+        for (const w of all) {
+          const [row, check] = cardRow(w);
+          if (check) rows.push([w, check]);
+          list.append(row);
+        }
+        update();
+      } }, h("summary", {}, box, ` ${t} `,
+        h("span", { class: "muted" }, `${all.length} cards` + (all.length - items.length ? ` · ${all.length - items.length} in your bank` : ""))),
+      list);
+      return block;
+    });
+    fill(preview,
+      h("div", { class: "row pack-bar" }, addButton,
+        h("button", { class: "link", type: "button", onclick: () => setAll(fresh(pack.words), true) }, "Select all new"),
+        h("button", { class: "link", type: "button", onclick: () => setAll(pack.words, false) }, "Clear"),
+        h("span", { class: "muted" }, "Open a topic to see its cards; tick a topic to take all of it.")),
+      topicBlocks);
+  }
+
+  return h("div", { class: "pack" },
+    h("div", {}, h("b", {}, p.name), " ", h("span", { class: "tag" }, p.tag)),
+    h("div", { class: "muted" }, p.description),
+    h("div", { class: "muted" }, `${p.count} cards · ${Object.keys(p.topics).length} topics · ${p.in_bank} already in your bank`),
+    h("div", { class: "row", style: "margin-top:6px" },
+      previewButton,
+      left ? h("button", { type: "button", onclick: async () => {
+        if (!confirm(`Add all ${left} new cards from "${p.name}"?`)) return;
+        addedToast(await api("POST", "words/packs/add", { id: p.id }));
         wordsView();
-      } }, "Delete")))));
-  draw("");
+      } }, `Add all ${left} new cards`) : h("span", { class: "muted" }, "All cards are in your bank")),
+    preview);
+}
+
+const bankTags = loadSaved("bankTags", []);
+
+async function wordsView() {
+  const [{ words, tags }, { packs }] = await Promise.all([api("GET", "words"), api("GET", "words/packs")]);
+  const matches = (w) => !bankTags.length || bankTags.some((t) =>
+    t === UNTAGGED ? !(w.tags || []).length : (w.tags || []).some((x) => x === t || x.startsWith(t + "/")));
+  const body = h("tbody", {});
+  const title = h("h1", {});
+  let search = "";
+  const LIMIT = 300; // rows drawn at once; search or filter to narrow down
+  const draw = () => {
+    const list = words.filter((w) => matches(w) && (!search || w.term.toLowerCase().includes(search.toLowerCase())
+      || (w.zh || "").includes(search)));
+    title.textContent = `Word bank (${list.length}${list.length === words.length ? "" : " of " + words.length})`;
+    fill(body, list.slice(0, LIMIT).map(row),
+      list.length > LIMIT ? h("tr", {}, h("td", { colspan: 4, class: "muted" }, `Showing ${LIMIT} of ${list.length}. Search or pick a tag to see the rest.`)) : null);
+  };
+  function row(w) {
+    const details = h("tr", { hidden: true }, h("td", { colspan: 4 }));
+    const editTags = h("button", { class: "link", type: "button", onclick: async () => {
+      const value = prompt("Tags, comma-separated (use / for a sub-topic):", (w.tags || []).join(", "));
+      if (value === null) return;
+      const r = await api("PUT", "words/" + w.id, { tags: value.split(",") });
+      Object.assign(w, r.word);
+      wordsView();
+    } }, "Edit tags");
+    const main = h("tr", {},
+      h("td", {}, h("b", {}, (w.emoji ? w.emoji + " " : "") + w.term), h("div", { class: "muted" }, w.respelling)),
+      h("td", {}, w.zh ? h("div", {}, w.zh) : null, h("div", { class: w.zh ? "muted" : "" }, w.definition),
+        tagList(w.tags)),
+      h("td", { class: "muted" }, w.srs.never ? "Hidden" : w.srs.due ? "Next " + w.srs.due : "New",
+        w.image ? h("div", {}, "🖼") : null),
+      h("td", {},
+        h("button", { class: "link", type: "button", onclick: () => {
+          details.hidden = !details.hidden;
+          if (!details.hidden) fill(details.firstChild, cardDetails(w), editTags);
+        } }, "Details"),
+        h("button", { class: "link", type: "button", onclick: async () => {
+          if (!confirm(`Delete "${w.term}"?`)) return;
+          await api("DELETE", "words/" + w.id);
+          wordsView();
+        } }, "Delete")));
+    return [main, details];
+  }
+
+  const packCards = packs.map(packCard);
+
+  draw();
   show(
-    h("h1", {}, `Word bank (${words.length})`),
-    h("input", { class: "wide", placeholder: "Search", oninput: (e) => draw(e.target.value.trim()), style: "margin-bottom:12px" }),
+    title,
+    packs.length ? h("details", { class: "card", open: !words.length },
+      h("summary", {}, h("b", {}, "Word packs"), h("span", { class: "muted" }, " · themed lists you can add with one click")),
+      h("p", { class: "muted" }, "Preview a pack, tick the topics or single cards you want, and add only those. New cards join the review queue in pack order, within your daily new-word limit (Settings)."),
+      packCards) : null,
+    Object.keys(tags).length ? tagFilter(tags, bankTags, () => { remember("bankTags", bankTags); draw(); }) : null,
+    h("input", { class: "wide", placeholder: "Search English or Chinese", style: "margin:8px 0 12px",
+      oninput: (e) => { search = e.target.value.trim(); draw(); } }),
     h("div", { class: "card" }, h("table", {}, body)),
   );
 }
 
 // ---- keep writing / keep speaking / improv / toastmasters ---------------
 const practiceTrack = {}; // remembered track per module
+// Tag given to words saved from each practice module's feedback.
+const MODULE_TAGS = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters",
+  talk: "Conversation" };
+// Saved words from private practice get this tag and no example sentence, so nothing about the
+// project reaches data/words.json (which is synced).
+const PRIVATE_TAG = "My projects";
+let talkSeed = null; // a conversation handed over from a work-writing piece ("Talk it through")
 let recorder = null; // active MediaRecorder, stopped when leaving the page
 
 function cancelRecording() {
@@ -558,6 +1122,8 @@ async function practiceView(module) {
   cancelRecording();
   const meta = (await api("GET", "practice/meta"))[module];
   settings = await api("GET", "settings");
+  if (module === "talk") meta.tracks.push(FREE_TALK);
+  if (module === "talk" && talkSeed) practiceTrack.talk = FREE_TALK.id;
   const open = meta.tracks.filter((t) => !t.locked);
   // Default: the highest unlocked level of a ladder, otherwise the first group.
   const levels = open.filter((t) => t.level);
@@ -570,7 +1136,7 @@ async function practiceView(module) {
     type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
     title: t.locked ? "Unlocks after the level below" : `${t.done} / ${t.count} prompts done`,
     onclick: () => { practiceTrack[module] = t.id; practiceView(module); },
-  }, (t.locked ? "🔒 " : "") + t.name);
+  }, (t.locked ? "🔒 " : "") + t.name + (t.private ? " (private)" : ""));
   // One row of buttons per group ("Levels", "Small talk"); no heading when there is only one group.
   const groups = [...new Set(meta.tracks.map((t) => t.group || ""))];
   const trackButtons = groups.map((g) => h("div", { class: "row", style: "margin-bottom:8px" },
@@ -579,12 +1145,17 @@ async function practiceView(module) {
   const next = track.level && meta.tracks.find((t) => t.level === track.level + 1);
   const ladderNote = next && next.locked
     ? `${Math.max(0, meta.unlock_sessions - track.good)} more good sessions on this level unlock "${next.name}"`
+    : track.id === FREE_TALK.id ? "Pick who you're talking to and what about. The AI asks follow-up questions about whatever you say."
     : `${track.done} / ${track.count} prompts done in this group`;
 
   show(
     h("h1", {}, meta.name),
     trackButtons,
     h("div", { class: "muted", style: "margin-bottom:16px" }, ladderNote),
+    track.private || track.id === FREE_TALK.id ? h("div", { class: "card muted" },
+      "Private: what you say here is kept in private/ on this computer and never synced to GitHub. "
+      + "It is still sent to OpenAI for transcription and feedback.") : null,
+    track.pack ? phrasePanel(track.pack) : null,
     box,
   );
 
@@ -597,14 +1168,15 @@ async function practiceView(module) {
     const work = h("div", {});
     fill(box, h("div", { class: "card" },
       h("div", { class: "answer" }, prompt.task),
-      prompt.say ? h("div", { class: "en", style: "font-size:20px;line-height:1.6" }, "“" + prompt.say + "”",
-        h("button", { class: "link", type: "button", onclick: () => speak(prompt.say) }, "🔊")) : null,
+      prompt.say && module !== "talk" ? h("div", { class: "en", style: "font-size:20px;line-height:1.6" }, "“" + prompt.say + "”",
+        h("button", { class: "link", type: "button", onclick: () => say(prompt, prompt.say) }, "🔊")) : null,
       // For translation prompts the Chinese is the sentence to translate, so it stays visible;
       // otherwise it is only a translation of the instruction.
       prompt.task.startsWith("Translate") ? h("div", { class: "zh" }, prompt.zh)
         : prompt.zh ? chineseToggle(prompt.zh) : null,
       work));
-    if (prompt.say) speak(prompt.say);
+    if (module === "talk") return talkInput(prompt, work);
+    if (prompt.say) say(prompt, prompt.say);
     if (voice) voiceInput(prompt, work); else textInput(prompt, work);
   }
 
@@ -745,15 +1317,14 @@ async function practiceView(module) {
       text ? h("div", { class: "card" },
         h("label", {}, mode === "speak" ? "What you said (transcribed)" : "What you wrote"), h("div", {}, text),
         f && f.natural ? [h("label", {}, "A more natural way to say it"),
-          h("div", { class: "answer" }, f.natural,
-            h("button", { class: "link", type: "button", onclick: () => speak(f.natural) }, "🔊"))] : null) : null,
+          h("div", { class: "answer pre" }, f.natural,
+            h("button", { class: "link", type: "button", onclick: () => say(prompt, f.natural) }, "🔊"))] : null) : null,
       prompt.example ? h("div", { class: "card" },
         h("label", {}, "One natural answer"),
-        h("div", { class: "answer" }, personalise(prompt.example),
-          h("button", { class: "link", type: "button", onclick: () => speak(personalise(prompt.example)) }, "🔊")),
-        (prompt.example.includes("{name}") && !settings.my_name)
-          || (prompt.example.includes("{hometown}") && !settings.hometown)
-          ? h("div", { class: "muted" }, "Add your name and hometown in Settings to see them here.") : null) : null,
+        h("div", { class: "answer pre" }, personalise(prompt.example),
+          h("button", { class: "link", type: "button", onclick: () => say(prompt, personalise(prompt.example)) }, "🔊")),
+        missingDetails(prompt.example)
+          ? h("div", { class: "muted" }, "Add your name, hometown, job title and company in Settings to see them here.") : null) : null,
       f && f.issues.length ? h("div", { class: "card" },
         h("label", {}, "What to fix first"),
         f.issues.map((i) => h("div", { class: "example" },
@@ -761,21 +1332,307 @@ async function practiceView(module) {
           h("b", {}, i.better), h("span", { class: "muted" }, i.why)))) : null,
       f && f.vocab.length ? h("div", { class: "card" },
         h("label", {}, "Expressions worth saving"),
-        f.vocab.map((v) => {
-          const add = h("button", { class: "link", type: "button", onclick: async () => {
-            const res = await api("POST", "words", { term: v.term, note: v.zh,
-              examples: v.example ? [{ en: v.example, zh: "" }] : [] });
-            add.disabled = true;
-            add.textContent = res.duplicate ? "Already saved" : "Saved";
-          } }, "+ Add to word bank");
-          return h("div", { class: "example" }, h("b", {}, v.term), " " + v.zh, add,
-            h("span", { class: "muted" }, v.example));
-        })) : null,
+        f.vocab.map((v) => vocabRow(v, prompt))) : null,
+      track.focus === "workwriting" && text ? h("div", { class: "card" },
+        h("label", {}, "Now say it"),
+        h("p", { class: "muted" }, "The person you wrote to calls you about it. Answer their follow-up questions out loud."),
+        h("button", { type: "button", onclick: () => {
+          talkSeed = {
+            id: "c-custom", private: true, turns: 4,
+            task: "You've just sent the message below. Now the reader calls you about it: answer their follow-up questions out loud. Lead with the point, then give details.",
+            zh: "你刚发出下面这段文字。现在读的人打电话来问你：口头回答他们的追问。先说结论，再讲细节。",
+            note: text,
+            custom: { turns: 4,
+              role: "The person this message was written to, as described in the writing task. React the way they would: ask what you'd want to know before acting on it.",
+              setting: `The writing task was: ${prompt.task}\nThe learner sent you this:\n"""${text}"""\nYou've read it and now call them to talk it through.`,
+              task: "Answer follow-up questions about the message you just sent." },
+          };
+          location.hash = "#talk";
+        } }, "Talk it through")) : null,
     );
     nextButton.focus();
   }
 
+  // A line read aloud; audio for private practice is cached in private/.
+  function say(prompt, text) {
+    return speak(text, null, { private: !!prompt.private });
+  }
+
+  // "+ Add to word bank" for an expression from the feedback.
+  function vocabRow(v, prompt) {
+    const add = h("button", { class: "link", type: "button", onclick: async () => {
+      const res = await api("POST", "words", prompt.private
+        ? { term: v.term, zh: v.zh, tags: [PRIVATE_TAG], examples: [] }
+        : { term: v.term, zh: v.zh, tags: [MODULE_TAGS[module], `${MODULE_TAGS[module]}/${track.name}`],
+          examples: v.example ? [{ en: v.example, zh: "" }] : [] });
+      add.disabled = true;
+      add.textContent = res.duplicate ? "Already saved" : "Saved";
+    } }, "+ Add to word bank");
+    return h("div", { class: "example" }, h("b", {}, v.term), " " + v.zh, add,
+      h("span", { class: "muted" }, v.example));
+  }
+
+  // Free topic: the learner picks who they talk to and what about.
+  function freeForm() {
+    const who = h("select", {}, Object.entries(TALK_PEOPLE).map(([k, p]) => h("option", { value: k }, p.label)));
+    const topic = h("textarea", { rows: 4, placeholder: "e.g. the project I'm working on: it moves 40 servers to Azure by March, we're a week behind because of firewall approvals" });
+    const turns = h("select", {}, [3, 4, 5].map((n) => h("option", { value: n, selected: n === 4 }, `${n} answers`)));
+    const go = () => {
+      if (!topic.value.trim()) return toast("Write what you want to talk about first");
+      const p = TALK_PEOPLE[who.value];
+      const n = Number(turns.value);
+      loadPrompt({ id: "c-custom", private: true, turns: n,
+        task: `Talk to ${p.label.toLowerCase()} about: ${topic.value.trim()}`,
+        custom: { role: p.role, turns: n, task: `Talk about: ${topic.value.trim()}`,
+          setting: `${p.setting} The learner wants to talk about: ${topic.value.trim()}` } });
+    };
+    fill(box, h("div", { class: "card" },
+      h("label", {}, "Who are you talking to?"), who,
+      h("label", {}, "What about? A few facts help the AI ask good questions."), topic,
+      h("div", { class: "row", style: "margin-top:10px" }, turns,
+        h("button", { class: "primary", type: "button", onclick: go }, "Start the conversation"))));
+    topic.focus();
+  }
+
+  // Conversation: the AI plays a person and asks follow-up questions; the learner answers out loud.
+  function talkInput(prompt, work) {
+    const history = [];
+    const total = prompt.turns || 4;
+    const scenario = prompt.custom ? { custom: prompt.custom } : { prompt_id: prompt.id };
+    let seconds = 0;
+    let stuck = 0;
+    let typed = 0;
+    let ended = false;
+    const log = h("div", { class: "talk-log" });
+    const controls = h("div", { style: "margin-top:12px" });
+    const hintBox = h("div", {});
+    fill(work, prompt.note ? h("div", { class: "example pre" }, prompt.note) : null, log, hintBox, controls);
+
+    const answered = () => history.filter((m) => m.who === "me").length;
+    function addLine(who, text) {
+      history.push({ who, text });
+      log.append(h("div", { class: "talk-line " + who },
+        h("b", {}, who === "ai" ? "Them" : "You"),
+        h("span", {}, text),
+        who === "ai" ? h("button", { class: "link", type: "button", onclick: () => say(prompt, text) }, "🔊") : null));
+    }
+
+    function busy(text) {
+      fill(controls, h("div", { class: "muted" }, text));
+    }
+
+    function failed(message, retry) {
+      fill(controls, h("p", { class: "feedback" }, h("span", { class: "bad" }, message)),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: retry }, "Retry"),
+          answered() ? h("button", { type: "button", onclick: finish }, "End and get feedback") : null));
+    }
+
+    async function theirTurn() {
+      busy("…");
+      try {
+        const r = await api("POST", "talk/turn", { ...scenario, history });
+        addLine("ai", r.line);
+        say(prompt, r.line);
+        if (r.done) return finish();
+        yourTurn();
+      } catch (e) {
+        failed(e.message, theirTurn);
+      }
+    }
+
+    function yourTurn() {
+      if (ended) return;
+      const start = h("button", { class: "primary", type: "button", onclick: record }, "🎙 Answer");
+      fill(controls, h("div", { class: "row" },
+        start,
+        h("button", { type: "button", onclick: typeAnswer }, "Type instead"),
+        h("button", { type: "button", onclick: hint }, "💡 Help me start"),
+        answered() ? h("button", { class: "link", type: "button", onclick: finish }, "End and get feedback") : null,
+        h("span", { class: "muted" }, `Answer ${answered() + 1} of ${total}`)));
+      start.focus();
+    }
+
+    async function hint() {
+      fill(hintBox, h("div", { class: "muted" }, "Thinking of a way in…"));
+      try {
+        const r = await api("POST", "talk/hint", { ...scenario, history });
+        fill(hintBox, h("div", { class: "card hint" },
+          r.starter ? h("div", { class: "answer" }, r.starter,
+            h("button", { class: "link", type: "button", onclick: () => say(prompt, r.starter) }, "🔊")) : null,
+          r.points.length ? h("ul", {}, r.points.map((p) => h("li", {}, p))) : null,
+          r.zh ? h("div", { class: "muted" }, r.zh) : null));
+      } catch (e) {
+        fill(hintBox, h("div", { class: "muted" }, "No hint: " + e.message));
+      }
+    }
+
+    function mine(text, secs) {
+      fill(hintBox);
+      seconds += secs;
+      addLine("me", text);
+      theirTurn();
+    }
+
+    function typeAnswer() {
+      const area = h("textarea", { rows: 3, placeholder: "Type your answer, then press Enter" });
+      const send = () => {
+        if (!area.value.trim()) return;
+        typed += 1;
+        mine(area.value.trim(), 0);
+      };
+      area.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+      fill(controls, area, h("div", { class: "row", style: "margin-top:8px" },
+        h("button", { class: "primary", type: "button", onclick: send }, "Send"),
+        h("button", { class: "link", type: "button", onclick: yourTurn }, "Speak instead")));
+      area.focus();
+    }
+
+    async function record() {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        return failed("Cannot use the microphone: " + e.message, yourTurn);
+      }
+      stopSpeaking();
+      const chunks = [];
+      const startedAt = Date.now();
+      const time = h("b", { style: "font-size:22px" }, "0:00");
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        clearInterval(ticker);
+        const cancelled = recorder.cancelled;
+        const type = recorder.mimeType || "audio/webm";
+        recorder = null;
+        if (cancelled) return;
+        const secs = (Date.now() - startedAt) / 1000;
+        const blob = new Blob(chunks, { type });
+        const transcribe = async () => {
+          busy("Transcribing…");
+          try {
+            const { text } = await api("POST", "practice/transcribe", { audio_b64: await blobToBase64(blob), mime: blob.type });
+            if (!text.trim()) return failed("Nothing was heard. Try again a bit closer to the microphone.", yourTurn);
+            mine(text.trim(), secs);
+          } catch (e) {
+            failed("Transcription failed: " + e.message, transcribe);
+          }
+        };
+        transcribe();
+      };
+      recorder.start();
+      const ticker = setInterval(() => { time.textContent = clock((Date.now() - startedAt) / 1000); }, 250);
+      const stuckButton = h("button", { class: "warn", type: "button", onclick: () => {
+        stuck += 1;
+        stuckButton.textContent = `Stuck (${stuck})`;
+      } }, `Stuck (${stuck})`);
+      const done = h("button", { class: "primary", type: "button", onclick: () => recorder && recorder.stop() }, "Done");
+      fill(controls, h("div", { class: "row" }, time, done, stuckButton,
+        h("span", { class: "muted" }, "Answer the question first, then add one detail.")));
+      done.focus();
+    }
+
+    async function finish() {
+      if (ended) return;
+      ended = true;
+      busy("Reading the whole conversation…");
+      let r;
+      try {
+        r = await api("POST", "talk/finish", { ...scenario, history, seconds, stuck,
+          mode: typed && typed === answered() ? "write" : "speak" });
+      } catch (e) {
+        ended = false;
+        return failed("Feedback failed: " + e.message, finish);
+      }
+      const f = r.feedback;
+      const s = r.session;
+      const facts = [`${s.words} words`, clock(s.seconds), `stuck ${s.stuck}×`, `+${s.xp} XP`, `rank ${r.rank.level}`];
+      const next = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "Next");
+      fill(controls,
+        h("div", { class: "card" },
+          h("div", { class: "muted" }, facts.join(" · ")),
+          f.score ? h("div", {}, "★".repeat(f.score) + "☆".repeat(5 - f.score)) : null,
+          h("p", {}, f.comment),
+          f.handling ? h("p", {}, h("b", {}, "Handling follow-ups: "), f.handling) : null,
+          h("div", { class: "row" }, next,
+            h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "Same conversation again"))),
+        f.turns.length ? h("div", { class: "card" },
+          h("label", {}, "Your answers, said more naturally"),
+          f.turns.map((t) => h("div", { class: "example" },
+            h("div", { class: "muted" }, t.you),
+            h("div", {}, h("b", {}, t.better),
+              h("button", { class: "link", type: "button", onclick: () => say(prompt, t.better) }, "🔊"))))) : null,
+        f.issues.length ? h("div", { class: "card" },
+          h("label", {}, "What to fix first"),
+          f.issues.map((i) => h("div", { class: "example" },
+            h("span", { class: "bad", style: "color:var(--bad)" }, i.original), " → ",
+            h("b", {}, i.better), h("span", { class: "muted" }, i.why)))) : null,
+        f.vocab.length ? h("div", { class: "card" },
+          h("label", {}, "Phrases for next time"), f.vocab.map((v) => vocabRow(v, prompt))) : null);
+      next.focus();
+    }
+
+    if (prompt.say) {
+      addLine("ai", prompt.say);
+      say(prompt, prompt.say);
+      yourTurn();
+    } else {
+      theirTurn();
+    }
+  }
+
+  if (module === "talk" && talkSeed) {
+    const seed = talkSeed;
+    talkSeed = null;
+    return loadPrompt(seed);
+  }
+  if (track.id === FREE_TALK.id) return freeForm();
   await loadPrompt();
+}
+
+// Conversation: a "Free topic" button beside the scenario groups, and who the AI can play there.
+const FREE_TALK = { id: "free", name: "Free topic", group: "Your own", count: 0, done: 0, locked: false, good: 0 };
+const TALK_PEOPLE = {
+  manager: { label: "Your manager", role: "The learner's manager. Friendly but busy; wants the point first, then dates, risks and whether they need to do anything.",
+    setting: "A quick catch-up at the learner's desk." },
+  client: { label: "A client", role: "A client stakeholder sponsoring the work. Polite and business-focused; cares about outcomes, cost, timing and risk; not technical.",
+    setting: "A short call with the client." },
+  newbie: { label: "A colleague who knows nothing about it", role: "A colleague from a non-technical team. Curious; asks what things mean, why they matter and for everyday examples.",
+    setting: "Chatting in the office kitchen." },
+  audience: { label: "Someone in the audience after your talk", role: "A colleague in the audience at the learner's internal presentation. Mix of curious and sceptical; asks how, why and what could go wrong.",
+    setting: "Q&A after the learner's presentation." },
+  interviewer: { label: "A job interviewer", role: "A hiring manager in a job interview. Professional; asks for specific examples, the learner's own part in them and the result.",
+    setting: "A job interview." },
+};
+
+// "Useful phrases" for a track: the cards of its word pack, grouped by topic, collapsed by default.
+function phrasePanel(packId) {
+  const body = h("div", {}, h("div", { class: "muted" }, "Loading…"));
+  const panel = h("details", { class: "card phrases", ontoggle: async () => {
+    if (!panel.open || panel.dataset.loaded) return;
+    panel.dataset.loaded = "1";
+    try {
+      const pack = await api("GET", "words/packs/" + encodeURIComponent(packId));
+      const topics = [...new Set(pack.words.map((w) => w.topic))];
+      const add = h("button", { type: "button", onclick: async () => {
+        const r = await api("POST", "words/packs/add", { id: packId });
+        add.disabled = true;
+        add.textContent = `Added ${r.added} new cards`;
+      } }, "Add all of these to my word bank");
+      fill(body,
+        h("p", { class: "muted" }, "Read a few aloud before you start, then try to use one or two in your answer."),
+        topics.map((t) => h("div", {}, h("h3", {}, t),
+          pack.words.filter((w) => w.topic === t).map((w) => h("div", { class: "example" },
+            h("b", {}, w.term), h("button", { class: "link", type: "button", onclick: () => speak(w.term) }, "🔊"),
+            " ", h("span", {}, w.zh),
+            w.examples[0] ? h("span", { class: "muted" }, w.examples[0].en) : null)))),
+        h("div", { class: "row", style: "margin-top:10px" }, add));
+    } catch (e) {
+      fill(body, h("div", { class: "muted" }, "Could not load the phrases: " + e.message));
+    }
+  } }, h("summary", {}, h("b", {}, "Useful phrases"), h("span", { class: "muted" }, " · words and sentence patterns for this kind of answer")), body);
+  return panel;
 }
 
 // ---- line chart (inline SVG, no library) --------------------------------
@@ -909,7 +1766,7 @@ async function statsView() {
   const sp = s.modules.spoken;
   const dash = (v, unit = "") => (v === null || v === undefined ? "—" : v + unit);
   const row = (label, ...cells) => h("tr", {}, h("td", { class: "muted" }, label), cells.map((c) => h("td", {}, String(c))));
-  const names = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters" };
+  const names = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters", talk: "Conversation" };
   show(
     h("h1", {}, "Stats"),
     h("div", { class: "grid" },
@@ -961,6 +1818,8 @@ async function settingsView() {
   const myName = h("input", { class: "wide", maxlength: "40", value: settings.my_name || "", placeholder: "The name you use in English" });
   const letterHint = h("input", { type: "checkbox", checked: settings.letter_hint !== false });
   const hometown = h("input", { class: "wide", maxlength: "40", value: settings.hometown || "", placeholder: "e.g. a city or region" });
+  const myRole = h("input", { class: "wide", maxlength: "60", value: settings.my_role || "", placeholder: "e.g. Data Engineer" });
+  const myCompany = h("input", { class: "wide", maxlength: "60", value: settings.my_company || "", placeholder: "The company you work for" });
   const option = (value, text, current) => h("option", { value, selected: value === current }, text);
   const engine = h("select", {},
     option("openai", "OpenAI natural voice (needs a key; each sentence is generated once)", settings.tts),
@@ -975,7 +1834,8 @@ async function settingsView() {
     accent.value, { tts: engine.value, voice: voice.value, pace: pace.value });
   const save = async () => {
     const body = { accent: accent.value, model: model.value, new_per_day: perDay.value,
-      my_name: myName.value, hometown: hometown.value, letter_hint: letterHint.checked,
+      my_name: myName.value, hometown: hometown.value, my_role: myRole.value, my_company: myCompany.value,
+      letter_hint: letterHint.checked,
       tts: engine.value, voice: voice.value, pace: pace.value, tts_model: ttsModel.value };
     if (key.value.trim()) body.openai_key = key.value.trim();
     try {
@@ -997,6 +1857,8 @@ async function settingsView() {
       h("div", { class: "muted" }, "Turn it off to recall every word with no hint. Particle choices such as up/down never show a letter."),
       h("label", {}, "Your name (used in small-talk example answers)"), myName,
       h("label", {}, "Where you're from (used in small-talk example answers)"), hometown,
+      h("label", {}, "Your job title (used in self-introduction example answers)"), myRole,
+      h("label", {}, "Your company (used in self-introduction example answers)"), myCompany,
       h("div", { class: "row", style: "margin-top:16px" },
         h("button", { class: "primary", type: "button", onclick: save }, "Save"))),
     h("div", { class: "card" },
@@ -1033,9 +1895,9 @@ document.getElementById("sync").addEventListener("click", async (e) => {
 
 // ---- router -----------------------------------------------------------
 const routes = {
-  home: homeView, cloze: clozeView, wrongbook: wrongbookView, review: reviewView,
+  home: homeView, cloze: clozeView, translate: translateView, wrongbook: wrongbookView, review: reviewView,
   add: addView, words: wordsView, settings: settingsView,
-  write: () => practiceView("write"), speak: () => practiceView("speak"),
+  write: () => practiceView("write"), speak: () => practiceView("speak"), talk: () => practiceView("talk"),
   improv: () => practiceView("improv"), toast: () => practiceView("toast"), stats: statsView,
 };
 
