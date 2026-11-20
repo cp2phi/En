@@ -259,7 +259,7 @@ class QuestionBankTest(unittest.TestCase):
 
     def test_counts(self):
         m = cloze.meta(self.questions)
-        expected = {"verb": 200, "combo": 20, "phrasal": 200, "adjective": 200, "preposition": 200,
+        expected = {"verb": 1750, "combo": 20, "phrasal": 1249, "adjective": 200, "preposition": 200,
                     "adverb": 200, "noun": 500, "nounphrase": 300, "other": 200, "grammar": 420,
                     "particle": 280}
         self.assertEqual(m["pos"], expected)

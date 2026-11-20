@@ -116,9 +116,9 @@ class ServerTest(unittest.TestCase):
 
     def test_cloze_flow(self):
         status, meta = self.call("GET", "/api/cloze/meta")
-        self.assertEqual((status, meta["pos"]["verb"]), (200, 200))
+        self.assertEqual((status, meta["pos"]["verb"]), (200, 1750))
         self.assertEqual(meta["by_pos"]["grammar"]["past"], 100)
-        self.assertEqual(meta["counts"]["pos"]["verb"], {"total": 200, "left": 200})
+        self.assertEqual(meta["counts"]["pos"]["verb"], {"total": 1750, "left": 1750})
         _, scoped = self.call("GET", "/api/cloze/meta?pos=grammar&scene=past")
         self.assertEqual(sum(c["total"] for c in scoped["counts"]["levels"].values()), 100)
         self.assertIn("past", scoped["counts"]["scenes"])
@@ -153,7 +153,7 @@ class ServerTest(unittest.TestCase):
         _, summary = self.call("GET", "/api/summary")
         self.assertEqual((summary["cloze"]["learning"], summary["cloze"]["due"]), (1, 1))
         _, after = self.call("GET", "/api/cloze/meta")
-        self.assertEqual(after["counts"]["pos"]["verb"], {"total": 200, "left": 199})
+        self.assertEqual(after["counts"]["pos"]["verb"], {"total": 1750, "left": 1749})
 
         self.assertEqual(self.call("POST", "/api/cloze/wrongbook/remove", {"id": q["id"]})[0], 200)
         self.assertEqual(self.call("GET", "/api/cloze/wrongbook")[1]["items"], [])

@@ -1,0 +1,20 @@
+[
+{"id":"v-diy-01","level":4,"g":"past","zh":"我们给木地板刷了清漆。","en":"We {varnished} the wooden floor."},
+{"id":"v-diy-02","level":4,"g":"ing","zh":"他们正在给新房子的墙抹灰。","en":"They're {plastering} the walls in the new house."},
+{"id":"v-diy-03","level":2,"g":"base","zh":"你得先在墙上钻个孔。","en":"You need to {drill} a hole in the wall first."},
+{"id":"v-diy-04","level":1,"g":"past","zh":"他往墙上钉了一颗钉子。","en":"He {hammered} a nail into the wall."},
+{"id":"v-diy-05","level":4,"g":"past","zh":"他用一块木头刻了一把勺子。","en":"He {carved|whittled} a spoon out of a piece of wood."},
+{"id":"v-diy-06","level":2,"g":"past","zh":"他把那块木板钉在了墙上。","en":"He {nailed} the board to the wall."},
+{"id":"v-diy-07","level":3,"g":"past","zh":"我钉钉子的时候把钉子敲弯了。","en":"I {bent} the nail while I was hammering it in."},
+{"id":"v-diy-08","level":1,"g":"past","zh":"我把断掉的把手又粘回去了。","en":"I {glued|stuck} the broken handle back on."},
+{"id":"v-diy-09","level":3,"g":"past","zh":"我们用螺栓把书架固定在了墙上。","en":"We {bolted|screwed|fixed|attached} the bookshelf to the wall."},
+{"id":"v-diy-10","level":3,"g":"past","zh":"建筑工估计这活儿要三周才能干完。","en":"The builder {estimated|reckoned} the job would take three weeks."},
+{"id":"v-diy-11","level":4,"g":"base","zh":"用绳子把拖车上的货物固定好。","en":"{Secure|Tie down|Fasten} the load on the trailer with rope."},
+{"id":"v-diy-12","level":2,"g":"base","zh":"你需要把这颗螺丝拧紧。","en":"You need to {tighten} this screw."},
+{"id":"v-diy-13","level":3,"g":"base","zh":"刷漆之前先把木头打磨一下。","en":"{Sand} the wood before you paint it."},
+{"id":"v-diy-14","level":2,"g":"past","zh":"他拧开了遥控器的后盖。","en":"He {unscrewed} the back of the remote."},
+{"id":"v-diy-15","level":2,"g":"past","zh":"他把木板锯成了两半。","en":"He {sawed|cut} the plank in half."},
+{"id":"v-diy-16","level":3,"g":"past","zh":"我们把碎石铲进了手推车。","en":"We {shovelled|shoveled} the gravel into the wheelbarrow."},
+{"id":"v-diy-17","level":3,"g":"ing","zh":"这个周末我们在重新粉刷装修客房。","en":"We're {decorating|redecorating|painting|doing up} the spare room this weekend."},
+{"id":"v-diy-18","level":4,"g":"base","zh":"铺地砖之前得先把地面弄平。","en":"We need to {level} the floor before laying the tiles."}
+]

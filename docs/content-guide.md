@@ -24,7 +24,9 @@ Each file is a JSON array, one question per line:
 ```
 
 - `id`: `<prefix>-<file name>-<number>`, unique, never reused. Numbers are
-  zero-padded (01, 02 … or 001 … when a file has 100+).
+  zero-padded (01, 02 … or 001 … for a new file that will have 100+). When an
+  existing file grows past 99, keep counting (99, 100, 101 …) and never renumber:
+  practice progress is stored by id.
 - `level`: 1 (very common) to 5 (hard). Aim for roughly 15% L1, 30% L2, 30% L3,
   18% L4, 7% L5.
 - `g`: a short grammar tag for the blank: `base`, `3sg`, `past`, `ing`,

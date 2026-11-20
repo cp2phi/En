@@ -1,0 +1,23 @@
+[
+{"id":"v-mind-01","level":2,"g":"base","zh":"你觉得会下雨吗？","en":"Do you {reckon|think} it'll rain?"},
+{"id":"v-mind-02","level":4,"g":"ing","zh":"我开始怀疑这样做是否值得。","en":"I'm starting to {question|wonder|doubt} whether it's worth it."},
+{"id":"v-mind-03","level":2,"g":"past","zh":"我还以为你已经知道了。","en":"I {assumed|thought|figured|presumed|supposed} you already knew."},
+{"id":"v-mind-04","level":1,"g":"base","zh":"我真希望我能去。","en":"I {wish} I could come."},
+{"id":"v-mind-05","level":2,"g":"past","zh":"我以前都不知道有这么个地方存在。","en":"I didn't even know this place {existed}."},
+{"id":"v-mind-06","level":5,"g":"past","zh":"从他的口音，我推断他是南非人。","en":"From his accent, I {deduced|guessed|figured|worked out|assumed} he was South African."},
+{"id":"v-mind-07","level":4,"g":"past","zh":"我从来没想到他是在开玩笑。","en":"It never {occurred} to me that he was joking."},
+{"id":"v-mind-08","level":1,"g":"3sg","zh":"听起来是个好主意！","en":"That {sounds} like a great idea!"},
+{"id":"v-mind-09","level":2,"g":"base","zh":"你注意到什么奇怪的事情了吗？","en":"Did you {notice|see} anything strange?"},
+{"id":"v-mind-10","level":3,"g":"ing","zh":"你想太多了，直接问她就好。","en":"You're {overthinking} it. Just ask her."},
+{"id":"v-mind-11","level":2,"g":"past","zh":"我本来打算给你打电话的，结果忘了。","en":"I {intended|meant|planned} to call you, but I forgot."},
+{"id":"v-mind-12","level":3,"g":"base","zh":"我梦想有一天能拥有一间海边度假屋。","en":"I {dream} of owning a bach one day."},
+{"id":"v-mind-13","level":1,"g":"3sg","zh":"他今天看起来有点累。","en":"He {seems|looks} a bit tired today."},
+{"id":"v-mind-14","level":4,"g":"base","zh":"我分不清这对双胞胎谁是谁。","en":"I can't {distinguish|tell} one twin from the other."},
+{"id":"v-mind-15","level":3,"g":"base","zh":"我怀疑他能准时到。","en":"I {doubt} he'll be on time."},
+{"id":"v-mind-16","level":1,"g":"base","zh":"我无法想象住在别的地方。","en":"I can't {imagine} living anywhere else."},
+{"id":"v-mind-17","level":1,"g":"ing","zh":"我在想他为什么还没回复。","en":"I'm {wondering} why he hasn't replied."},
+{"id":"v-mind-18","level":1,"g":"base","zh":"真不敢相信已经十二月了。","en":"I can't {believe} it's already December."},
+{"id":"v-mind-19","level":1,"g":"base","zh":"我想你说得对吧。","en":"I {suppose|guess} you're right."},
+{"id":"v-mind-20","level":2,"g":"base","zh":"我到家才意识到钥匙忘在办公室了。","en":"I didn't {realise|realize} I'd left my keys at work until I got home."},
+{"id":"v-mind-21","level":3,"g":"3sg","zh":"他早上往往很安静。","en":"He {tends} to be quiet in the mornings."}
+]

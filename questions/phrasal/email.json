@@ -1,0 +1,16 @@
+[
+{"id":"pv-email-01","level":3,"g":"3sg","zh":"她每封邮件结尾都加一个笑脸。","en":"She always {signs off|ends} her emails with a smiley face."},
+{"id":"pv-email-02","level":3,"g":"base","zh":"如果有任何问题，随时联系我。","en":"If you have any questions, feel free to {reach out to|get in touch with|contact|email|message} me."},
+{"id":"pv-email-03","level":3,"g":"past","zh":"我犯了个错，把邮件发给了错的客户。","en":"I {slipped up|messed up|stuffed up|screwed up|made a mistake} and sent the email to the wrong client."},
+{"id":"pv-email-04","level":1,"g":"perfect","zh":"我已经把会议邀请发出去了。","en":"I've {sent out|sent} the meeting invites."},
+{"id":"pv-email-05","level":3,"g":"base","zh":"期待你的回复。","en":"I {look forward to} hearing from you."},
+{"id":"pv-email-06","level":3,"g":"base","zh":"邮件太多了，我根本跟不上。","en":"There are so many emails that I can't {keep up with|keep on top of|stay on top of} them all."},
+{"id":"pv-email-07","level":4,"g":"base","zh":"如果想收到我们的新闻通讯，请选择订阅。","en":"{Opt in|Sign up} to receive our newsletter."},
+{"id":"pv-email-08","level":4,"g":"past","zh":"开会前我匆匆写了一封邮件。","en":"I {dashed off|fired off|knocked out|wrote} a quick email before the meeting."},
+{"id":"pv-email-09","level":3,"g":"base","zh":"你最好把那封邮件的措辞改得缓和一点。","en":"You might want to {tone down|soften} the language in that email."},
+{"id":"pv-email-10","level":3,"g":"ing","zh":"我今天先下线了，明天见。","en":"I'm {logging off|signing off|logging out} for the day. See you tomorrow."},
+{"id":"pv-email-11","level":3,"g":"base","zh":"千万别上那种诈骗邮件的当。","en":"Don't {fall for|be fooled by|be taken in by} those scam emails."},
+{"id":"pv-email-12","level":1,"g":"past","zh":"她一个小时之内就回信了。","en":"She {wrote back|replied|responded} within an hour."},
+{"id":"pv-email-13","level":3,"g":"past","zh":"我休假一周，邮件堆积如山。","en":"My emails really {piled up|built up|stacked up} while I was on leave."},
+{"id":"pv-email-14","level":2,"g":"base","zh":"你能帮我把这个消息转告给团队吗？","en":"Can you {pass on|relay|forward} this message to the team?"}
+]

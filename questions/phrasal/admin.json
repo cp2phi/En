@@ -1,0 +1,19 @@
+[
+{"id":"pv-admin-01","level":3,"g":"3sg","zh":"我的签证下个月到期。","en":"My visa {runs out|expires|ends} next month."},
+{"id":"pv-admin-02","level":1,"g":"base","zh":"请填好这张表，然后交到前台。","en":"Please {fill in|fill out|complete} this form and take it to reception."},
+{"id":"pv-admin-03","level":5,"g":"ing","zh":"她花了一整晚仔细研读合同。","en":"She spent all night {poring over|going through|studying|reading through} the contract."},
+{"id":"pv-admin-04","level":2,"g":"base","zh":"IRD是什么的缩写？","en":"What does IRD {stand for}?"},
+{"id":"pv-admin-05","level":4,"g":"base","zh":"这条规定没办法绕过去。","en":"There's no way to {get round|get around|avoid|bypass} the rule."},
+{"id":"pv-admin-06","level":3,"g":"past","zh":"有人把我的钱包交到了警察局。","en":"Someone {handed in|turned in} my wallet at the police station."},
+{"id":"pv-admin-07","level":2,"g":"base","zh":"所有访客都要在前台签到。","en":"All visitors need to {sign in} at reception."},
+{"id":"pv-admin-08","level":4,"g":"past","zh":"保险公司赔了我们三千块。","en":"The insurance company {paid out|paid} three thousand dollars."},
+{"id":"pv-admin-09","level":5,"g":"perfect","zh":"银行已经取消了纸质对账单。","en":"The bank has {done away with|got rid of|scrapped|abolished|dropped|ditched} paper statements."},
+{"id":"pv-admin-10","level":3,"g":"past","zh":"在电话里等了一个小时，我终于打通了税务局。","en":"After an hour on hold, I finally {got through} to IRD."},
+{"id":"pv-admin-11","level":2,"g":"perfect","zh":"你漏填了出生日期。","en":"You've {left out|missed|forgotten|skipped} your date of birth."},
+{"id":"pv-admin-12","level":3,"g":"past","zh":"我把旧的银行对账单撕碎了。","en":"I {tore up|ripped up|shredded} the old bank statements."},
+{"id":"pv-admin-13","level":2,"g":"past","zh":"今天早上我把护照申请寄出去了。","en":"I {sent off|posted|mailed|sent} my passport application this morning."},
+{"id":"pv-admin-14","level":3,"g":"base","zh":"我该怎么着手申请签证？","en":"How do I {go about} applying for a visa?"},
+{"id":"pv-admin-15","level":3,"g":"base","zh":"把表格底下那一联撕下来自己留着。","en":"{Tear off|Rip off|Detach} the bottom of the form and keep it."},
+{"id":"pv-admin-16","level":3,"g":"past","zh":"我的签证终于批下来了。","en":"My visa finally {came through|arrived|came|got approved}."},
+{"id":"pv-admin-17","level":3,"g":"ing","zh":"我出去一下，去邮局寄个包裹。","en":"I'm just {popping out|nipping out|ducking out|running out} to the post shop to send a parcel."}
+]

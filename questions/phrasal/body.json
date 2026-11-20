@@ -1,0 +1,21 @@
+[
+{"id":"pv-body-01","level":3,"g":"past","zh":"她当时穿着一件红夹克。","en":"She {had on|was wearing|wore} a red jacket."},
+{"id":"pv-body-02","level":2,"g":"base","zh":"把夹克扣好，外面冷。","en":"{Do up|Zip up|Button up|Fasten} your jacket. It's cold."},
+{"id":"pv-body-03","level":3,"g":"past","zh":"他伸出手来跟我握手。","en":"He {held out|put out|stretched out|extended|offered} his hand to shake mine."},
+{"id":"pv-body-04","level":3,"g":"ing","zh":"你的衣服标签露出来了。","en":"Your label is {sticking out|showing}."},
+{"id":"pv-body-05","level":3,"g":"past","zh":"那一幕太吓人了，我只好把脸转开。","en":"The scene was so scary that I had to {turn away|look away}."},
+{"id":"pv-body-06","level":2,"g":"base","zh":"坐直了，别驼背。","en":"{Sit up} straight and stop slouching."},
+{"id":"pv-body-07","level":1,"g":"base","zh":"小心台阶，别摔倒了。","en":"Mind the step or you'll {fall over|trip|fall}."},
+{"id":"pv-body-08","level":1,"g":"base","zh":"请往后退一步，门要关了。","en":"Please {step back|stand back|move back} from the doors."},
+{"id":"pv-body-09","level":1,"g":"base","zh":"把夹克拉链拉上，外面冷。","en":"{Zip up|Do up} your jacket. It's cold outside."},
+{"id":"pv-body-10","level":1,"g":"past","zh":"昨晚看电影的时候我打起了瞌睡。","en":"I {dozed off|nodded off|fell asleep|drifted off} during the movie last night."},
+{"id":"pv-body-11","level":5,"g":"past","zh":"他把烟头掐灭，回到了屋里。","en":"He {stubbed out|put out} his cigarette and went back inside."},
+{"id":"pv-body-12","level":1,"g":"past","zh":"我在黑暗中撞到了门上。","en":"I {bumped into|walked into|ran into|banged into|hit} the door in the dark."},
+{"id":"pv-body-13","level":2,"g":"base","zh":"不好意思，借过一下。","en":"Excuse me, can I {get by|get past|squeeze past|squeeze by}?"},
+{"id":"pv-body-14","level":2,"g":"base","zh":"你能往那边挪一点让我坐下吗？","en":"Can you {move over|shift over|budge up|scoot over} a bit so I can sit down?"},
+{"id":"pv-body-15","level":1,"g":"base","zh":"转过身来，让我看看后面。","en":"{Turn around|Turn round} and let me see the back."},
+{"id":"pv-body-16","level":2,"g":"base","zh":"请把衬衫塞进裤子里。","en":"Please {tuck in} your shirt."},
+{"id":"pv-body-17","level":1,"g":"base","zh":"进屋前请脱鞋。","en":"Please {take off|remove} your shoes before you come in."},
+{"id":"pv-body-18","level":1,"g":"base","zh":"外面很冷，把外套穿上。","en":"It's cold outside, {put on|wear} your jacket."},
+{"id":"pv-body-19","level":3,"g":"base","zh":"吃晚饭前我先去洗一洗。","en":"I'll just {clean up|wash up|freshen up|get washed} before dinner."}
+]

@@ -1,0 +1,23 @@
+[
+{"id":"pv-media-01","level":1,"g":"base","zh":"用公共电脑的时候，记得用完要登出。","en":"Remember to {log out|log off|sign out} when you use a public computer."},
+{"id":"pv-media-02","level":3,"g":"past","zh":"电影看到一半我就迷迷糊糊睡着了。","en":"I {drifted off|dozed off|nodded off|fell asleep} halfway through the movie."},
+{"id":"pv-media-03","level":3,"g":"perfect","zh":"这个新应用在青少年中很快流行起来了。","en":"The new app has really {caught on|taken off} with teenagers."},
+{"id":"pv-media-04","level":3,"g":"past","zh":"电影看到一半我就打起瞌睡来了。","en":"I {nodded off|dozed off|fell asleep|drifted off} halfway through the movie."},
+{"id":"pv-media-05","level":2,"g":"passive","zh":"那个视频一天后就被删掉了。","en":"The video was {taken down|removed|deleted} after a day."},
+{"id":"pv-media-06","level":4,"g":"ing","zh":"记者最喜欢翻出名人以前发的帖子。","en":"Journalists love {digging up|finding|unearthing|dragging up} celebrities' old posts."},
+{"id":"pv-media-07","level":1,"g":"base","zh":"注册只需要一分钟。","en":"It only takes a minute to {sign up|register|join}."},
+{"id":"pv-media-08","level":3,"g":"base","zh":"我们换个台吧？这个节目好无聊。","en":"Can we {switch over|change over|switch|turn over}? This show is boring."},
+{"id":"pv-media-09","level":3,"g":"base","zh":"别剧透结局！","en":"Don't {give away|spoil|reveal|tell} the ending!"},
+{"id":"pv-media-10","level":3,"g":"past","zh":"几百万人收看了决赛。","en":"Millions of people {tuned in|watched} to see the final."},
+{"id":"pv-media-11","level":4,"g":"past","zh":"我硬着头皮看完了一部三个小时的电影。","en":"I {sat through|got through|suffered through|endured} a three-hour movie last night."},
+{"id":"pv-media-12","level":2,"g":"base","zh":"删掉旧照片可以腾出一些手机空间。","en":"Deleting old photos will {free up|clear|clear up} some space on your phone."},
+{"id":"pv-media-13","level":1,"g":"base","zh":"把地图放大，就能看到街道名称。","en":"{Zoom in} on the map to see the street names."},
+{"id":"pv-media-14","level":3,"g":"3sg","zh":"这块污渍在照片上几乎看不出来。","en":"The stain barely {shows up|shows} in the photos."},
+{"id":"pv-media-15","level":3,"g":"base","zh":"我离不开我的手机。","en":"I couldn't {do without|live without|manage without|survive without} my phone."},
+{"id":"pv-media-16","level":3,"g":"past","zh":"我发照片之前稍微修了一下。","en":"I {touched up|edited|retouched} the photos before posting them."},
+{"id":"pv-media-17","level":3,"g":"past","zh":"苹果上个月推出了一款新手机。","en":"Apple {brought out|released|launched|put out} a new phone last month."},
+{"id":"pv-media-18","level":3,"g":"base","zh":"你能把那段视频回放一下吗？","en":"Can you {play back|replay} that bit of the video?"},
+{"id":"pv-media-19","level":4,"g":"base","zh":"这部电影没有大家吹的那么好。","en":"The movie didn't {live up to} the hype."},
+{"id":"pv-media-20","level":2,"g":"3sg","zh":"她的新书下周出版。","en":"Her new book {comes out|is released|is published} next week."},
+{"id":"pv-media-21","level":2,"g":"past","zh":"我翻看了手机里所有的老照片。","en":"I {looked through|went through|scrolled through} all the old photos on my phone."}
+]

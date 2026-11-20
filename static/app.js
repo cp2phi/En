@@ -16,6 +16,11 @@ const SCENE_NAMES = {
   subjunctive: "Subjunctive & conditionals", tenses: "Other tenses", third: "Third person",
   plural: "Plurals", misc: "Other grammar",
   calls: "Video calls & meetings", directions: "Directions & places (NZ)", everyday: "Everyday on / off / up / down",
+  email: "Email & messages", driving: "Driving & commuting", family: "Family & kids", feelings: "Feelings",
+  outdoors: "Weather & outdoors", admin: "Paperwork & services", speaking: "Presenting & speaking",
+  study: "Learning & study", body: "Body & movement", nature: "Animals & plants", news: "News, law & society",
+  media: "Phone & social media", hobbies: "Hobbies & arts", talk: "Ways of talking", mind: "Thinking & deciding",
+  diy: "DIY & repairs",
 };
 // Sentence translation: one file per sentence type, in this order.
 const TYPE_NAMES = {
