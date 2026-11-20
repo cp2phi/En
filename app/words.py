@@ -134,6 +134,19 @@ def rate_word(data: dict, word_id: str, rating: str, today: date) -> dict:
     return word
 
 
+def snapshot(word: dict, rating: str) -> dict:
+    """What a rating changes, taken before it, so undo_rating can put it back."""
+    return {"id": word["id"], "srs": dict(word["srs"]), "introduced": word["introduced"], "rating": rating}
+
+
+def undo_rating(data: dict, snap: dict) -> dict:
+    """Put a card back as it was before the rating in `snap`. KeyError if it was deleted."""
+    word = data["words"][snap["id"]]
+    word["srs"] = dict(snap["srs"])
+    word["introduced"] = snap["introduced"]
+    return word
+
+
 # ---- tag filter -----------------------------------------------------------
 
 def parse_filter(value) -> list[str]:

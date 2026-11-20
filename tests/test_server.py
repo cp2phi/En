@@ -235,6 +235,22 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(self.call("POST", "/api/words/rate", {"id": word_id, "rating": "x"})[0], 400)
         self.assertEqual(self.call("POST", "/api/words/rate", {"id": "nope", "rating": "forget"})[0], 404)
 
+        # "Previous card": take ratings back, newest first; failed ratings are not on the stack.
+        self.assertTrue(self.call("GET", "/api/words/next")[1]["can_undo"])
+        self.call("POST", "/api/words/rate", {"id": word_id, "rating": "never"})
+        _, undone = self.call("POST", "/api/words/undo", {})
+        self.assertEqual(undone["rating"], "never")
+        self.assertFalse(undone["word"]["srs"]["never"])
+        self.assertEqual(undone["word"]["srs"]["same_day_left"], 2)
+        self.assertTrue(undone["can_undo"])
+        _, undone = self.call("POST", "/api/words/undo", {})
+        self.assertEqual(undone["rating"], "forget")
+        self.assertIsNone(undone["word"]["introduced"])
+        self.assertEqual(undone["word"]["srs"]["reps"], 0)
+        self.assertFalse(undone["can_undo"])
+        self.assertEqual(self.call("POST", "/api/words/undo", {})[0], 409)
+        self.assertFalse(self.call("GET", "/api/words/next")[1]["can_undo"])
+
         self.call("PUT", f"/api/words/{word_id}", {"my_examples": ["I was in the zone."]})
         _, listing = self.call("GET", "/api/words")
         self.assertEqual(listing["words"][0]["my_examples"], ["I was in the zone."])

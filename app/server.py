@@ -28,6 +28,7 @@ DEFAULT_SETTINGS = {
 TTS_ENGINES = ("openai", "browser")
 MAX_BODY = 40 * 1024 * 1024  # a few minutes of recorded audio, base64 encoded
 MAX_SESSION_SECONDS = 4 * 3600  # caps a clock left running by mistake
+RATING_UNDO_LIMIT = 20  # how many word ratings "Previous card" can take back
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 
 
@@ -69,6 +70,8 @@ class App:
         self.cloze = JsonStore(self.data_dir / "cloze.json", cloze.DEFAULT_PROGRESS)
         self.translate = JsonStore(self.data_dir / "translate.json", translate.DEFAULT_PROGRESS)
         self.settings = JsonStore(self.data_dir / "settings.json", DEFAULT_SETTINGS)
+        # Recent word ratings, newest last, for "Previous card" (kept in memory only).
+        self.rating_undo: list[dict] = []
         # The API key stays out of data/ so the sync button never uploads it.
         self.secrets = JsonStore(self.root / "config.local.json", {"openai_key": ""})
         self.today = today
@@ -567,17 +570,32 @@ class App:
                 tags = words.parse_filter(query.get("tags"))
                 return {"word": words.next_word(data, today, limit, tags),
                         "counts": words.counts(data, today, limit, tags),
-                        "tags": words.tag_counts(data)}
+                        "tags": words.tag_counts(data),
+                        "can_undo": bool(self.rating_undo)}
             case ("POST", "words", "rate"):
                 data = self._load_words()
                 if body.get("id") not in data["words"]:
                     raise ApiError(404, "word not found")
+                snap = words.snapshot(data["words"][body["id"]], body.get("rating"))
                 try:
                     word = words.rate_word(data, body["id"], body.get("rating"), today)
                 except ValueError as e:
                     raise ApiError(400, str(e)) from e
                 self.words.save(data)
+                self.rating_undo = (self.rating_undo + [snap])[-RATING_UNDO_LIMIT:]
                 return {"word": word}
+            case ("POST", "words", "undo"):
+                # Take back the latest rating; the card is returned so it can be rated again.
+                if not self.rating_undo:
+                    raise ApiError(409, "nothing to undo")
+                snap = self.rating_undo.pop()
+                data = self._load_words()
+                try:
+                    word = words.undo_rating(data, snap)
+                except KeyError as e:
+                    raise ApiError(404, "that card was deleted") from e
+                self.words.save(data)
+                return {"word": word, "rating": snap["rating"], "can_undo": bool(self.rating_undo)}
             case ("PUT", "words", word_id):
                 data = self._load_words()
                 if word_id not in data["words"]:

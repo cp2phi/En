@@ -102,6 +102,7 @@ Themed card lists in `vocab/`, added from the Word bank page. Each card has the 
 - **Cloze**: a question answered right the first time does not come back (click **I actually guessed** to put it in the redo queue). A question answered wrong, or whose answer you revealed, is treated as **Forgot**. It passes once you keep getting it right until its interval reaches 15 days.
 - **Translate**: ✅ the first time means done. **Show answer** is treated as **Forgot** and goes to the wrong book. After ⚠️ or ❌ you choose: **Next** marks the sentence done without saving it; **Save to wrong book & next** treats it as **Forgot**. **☆ Save** puts a sentence in the wrong book without counting it as a mistake, and it comes back tomorrow.
 - Cloze questions, translation sentences and words can all be set to **Never show again**.
+- **← Previous** brings back what you just did. In Cloze and Translate it shows your last 20 answered cards with their buttons still working (e.g. **I actually guessed**, **☆ Save**), then **Back to current** returns to the question you were on, with what you'd typed still there. In Keep writing, Keep speaking, Conversation, Improv and Toastmasters it shows earlier AI feedback. In Review words, **← Previous card** takes back your last rating (up to 20) so you can rate the card again. None of this survives a page reload or a server restart. Cloze and Translate also lose it when you change the word class, sentence type or scene.
 
 ## Layout
 

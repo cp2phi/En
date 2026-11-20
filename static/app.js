@@ -170,6 +170,79 @@ function show(...nodes) {
   fill(view, ...nodes);
 }
 
+// "← Previous": look back at answers you have moved on from, then return to where you were.
+// Past cards are kept as live DOM nodes, so their buttons (Never show again, Add to word bank,
+// I actually guessed, ☆ Save) still work. `past` holds {nodes, label?}, newest last; pass an
+// array that outlives the view to keep it across re-renders. Nothing here is saved.
+const PAST_LIMIT = 20;
+function answerHistory(box, past = [], noun = "answer") {
+  let at = -1;        // index into past while looking back, -1 when showing the current content
+  let saved = null;   // the current content, set aside while looking back
+  const nav = h("span", { class: "row history-nav" });
+
+  function draw() {
+    const button = (text, onclick, attrs = {}) => h("button", { type: "button", onclick, ...attrs }, text);
+    if (at < 0) {
+      fill(nav, past.length ? button("← Previous", back,
+        { class: "link", title: `See your last ${noun} again` }) : null);
+      return;
+    }
+    const home = button("Back to current", toCurrent, { class: "primary" });
+    fill(nav,
+      h("span", { class: "muted" }, `Earlier ${noun} ${past.length - at} of ${past.length}`),
+      button("←", back, { disabled: at === 0, title: "Older", "aria-label": "Older" }),
+      button("→", forward, { title: "Newer", "aria-label": "Newer" }),
+      home);
+    home.focus();
+  }
+
+  function showPast() {
+    const entry = past[at];
+    fill(box, h("div", { class: "past" },
+      entry.label ? h("div", { class: "card muted" }, entry.label) : null, entry.nodes));
+    draw();
+  }
+
+  function back() {
+    if (at < 0) {
+      if (!past.length) return;
+      saved = [...box.childNodes];
+      at = past.length;
+    }
+    if (at > 0) { at -= 1; showPast(); }
+  }
+
+  function toCurrent() {
+    if (at < 0) return;
+    at = -1;
+    fill(box, saved);
+    saved = null;
+    draw();
+    const target = box.querySelector("input:not(:disabled), textarea:not(:disabled), button.primary");
+    if (target) target.focus();
+  }
+
+  function forward() {
+    if (at < 0) return;
+    if (at + 1 < past.length) { at += 1; showPast(); } else toCurrent();
+  }
+
+  draw();
+  return {
+    nav,
+    get reviewing() { return at >= 0; },
+    forward,
+    // A finished card the learner is moving on from.
+    keep(entry) {
+      past.push(entry);
+      if (past.length > PAST_LIMIT) past.shift();
+      draw();
+    },
+    // New content is going into the box: stop looking back.
+    reset() { at = -1; saved = null; draw(); },
+  };
+}
+
 // ---- home -------------------------------------------------------------
 async function homeView() {
   const s = await api("GET", "summary");
@@ -231,6 +304,8 @@ async function clozeView() {
     }
   }
   const box = h("div", {});
+  const earlier = answerHistory(box);
+  let current = null; // {nodes, done}: the question on screen
   show(
     h("h1", {}, clozeFilters.mode === "wrongbook" ? "Redo wrong answers" : "Translation cloze"),
     h("div", { class: "row", style: "margin-bottom:16px" },
@@ -240,11 +315,18 @@ async function clozeView() {
       clozeFilters.mode === "wrongbook"
         ? h("button", { type: "button", onclick: () => { clozeFilters.mode = ""; clozeView(); } }, "Back to normal practice")
         : null,
+      earlier.nav,
     ),
     box,
   );
 
+  // "Next" on a card: the next question, or, on an earlier card, the next newer one.
+  const advance = () => (earlier.reviewing ? earlier.forward() : loadQuestion());
+
   async function loadQuestion() {
+    if (current && current.done) earlier.keep(current);
+    current = null;
+    earlier.reset();
     refreshCounts();
     const params = new URLSearchParams(Object.entries(clozeFilters).filter(([, v]) => v));
     const { question: q, redo } = await api("GET", "cloze/next?" + params);
@@ -280,6 +362,8 @@ async function clozeView() {
         redo ? h("span", { class: "tag redo" }, "Redo") : null),
       // English first; the Chinese sits underneath as the meaning to aim for.
       sentence, h("div", { class: "zh zh-below" }, q.zh), feedback, actions);
+    const entry = { nodes: [form], done: false };
+    current = entry;
 
     function answeringActions() {
       fill(actions, 
@@ -312,10 +396,11 @@ async function clozeView() {
     async function never() {
       await api("POST", "cloze/mark", { id: q.id, outcome: "never" });
       toast("This question won't appear again");
-      loadQuestion();
+      advance();
     }
 
     function finish(result, firstTry) {
+      entry.done = true;
       inputs.forEach((i) => { i.disabled = true; });
       speak(result.sentence);
       fill(feedback, 
@@ -325,7 +410,7 @@ async function clozeView() {
           h("button", { class: "link", type: "button", onclick: () => speak(result.sentence) }, "🔊")),
         result.note ? h("div", { class: "note" }, "💡 " + result.note) : null,
       );
-      const next = h("button", { class: "primary", type: "button", onclick: loadQuestion }, "Next");
+      const next = h("button", { class: "primary", type: "button", onclick: advance }, "Next");
       const guessed = h("button", { type: "button", onclick: async () => {
         await api("POST", "cloze/mark", { id: q.id, outcome: "guessed" });
         guessed.disabled = true;
@@ -385,6 +470,8 @@ async function translateView() {
   }
   const wrongbook = translateFilters.mode === "wrongbook";
   const box = h("div", {});
+  const earlier = answerHistory(box);
+  let current = null; // {nodes, done, refresh}: the sentence on screen
   show(
     h("h1", {}, wrongbook ? "Redo saved and wrong translations" : "Translate the sentence"),
     h("div", { class: "row", style: "margin-bottom:16px" },
@@ -394,11 +481,21 @@ async function translateView() {
       wrongbook
         ? h("button", { type: "button", onclick: () => { translateFilters.mode = ""; translateView(); } }, "Back to normal practice")
         : null,
+      earlier.nav,
     ),
     box,
   );
 
+  // "Next" on a card: the next sentence, or, on an earlier card, the next newer one.
+  const advance = () => (earlier.reviewing ? earlier.forward() : loadQuestion());
+
   async function loadQuestion() {
+    if (current && current.done) {
+      current.refresh(); // its buttons now reflect what was recorded on leaving it
+      earlier.keep(current);
+    }
+    current = null;
+    earlier.reset();
     refreshCounts();
     const params = new URLSearchParams(Object.entries(translateFilters).filter(([, v]) => v));
     const r = await api("GET", "translate/next?" + params);
@@ -424,6 +521,9 @@ async function translateView() {
     const tags = h("div", {});
     const card = h("div", { class: "card" },
       tags, h("div", { class: "zh translate-zh" }, q.zh), input, feedback, actions);
+    let shown = null; // the last answer shown, for redrawing the buttons
+    const entry = { nodes: [card], done: false, refresh: () => { input.disabled = true; if (shown) drawActions(shown); } };
+    current = entry;
 
     function drawTags() {
       fill(tags,
@@ -450,7 +550,7 @@ async function translateView() {
     const never = async () => {
       await api("POST", "translate/mark", { id: q.id, outcome: "never" });
       toast("This sentence won't appear again");
-      loadQuestion();
+      advance();
     };
 
     function answering() {
@@ -494,6 +594,8 @@ async function translateView() {
 
     // r: the reference (en, alt, point) plus, after a check, verdict / issues / fixed.
     function finish(r, answer) {
+      entry.done = true;
+      shown = r;
       speak(r.en);
       const verdict = r.verdict && VERDICT_TEXT[r.verdict];
       const selfMark = answer && !r.verdict; // no key, or the AI call failed
@@ -543,13 +645,13 @@ async function translateView() {
       if (!settled) await api("POST", "translate/mark", { id: q.id, outcome });
       settled = true;
       if (outcome === "wrong") toast("Saved to the wrong book");
-      loadQuestion();
+      advance();
     }
 
     function drawActions(r) {
       const choose = !settled;
       const next = h("button", { class: "primary", type: "button",
-        onclick: choose ? () => decide("tried") : loadQuestion }, "Next");
+        onclick: choose ? () => decide("tried") : advance }, "Next");
       fill(actions,
         next,
         choose && !inBook
@@ -774,15 +876,30 @@ function cardDetails(word) {
 }
 
 const reviewTags = loadSaved("reviewTags", []);
+const RATING_TEXT = { forget: "Forgot", fuzzy: "Fuzzy", remember: "Remembered", never: "Never show again" };
 
-async function reviewView() {
+// undone: {word, rating} from words/undo, shown with its answer so it can be rated again.
+async function reviewView(undone) {
   const query = reviewTags.length ? "?tags=" + encodeURIComponent(reviewTags.join(",")) : "";
-  const { word, counts, tags } = await api("GET", "words/next" + query);
+  const next = await api("GET", "words/next" + query);
+  const { counts, tags } = next;
+  const word = undone ? undone.word : next.word;
   const header = h("h1", {}, "Review words");
   const filter = Object.keys(tags).length
     ? tagFilter(tags, reviewTags, () => { remember("reviewTags", reviewTags); reviewView(); }) : null;
-  const info = h("div", { class: "muted", style: "margin-bottom:12px" },
-    `Due ${counts.due} · New left today ${counts.new_today_left} · ${reviewTags.length ? "Cards with these tags" : "In word bank"} ${counts.total}`);
+  const previous = next.can_undo ? h("button", { class: "link", type: "button",
+    title: "Take back your last rating and see that card again",
+    onclick: async () => {
+      try {
+        reviewView(await api("POST", "words/undo", {}));
+      } catch (e) {
+        toast(e.message);
+        reviewView();
+      }
+    } }, "← Previous card") : null;
+  const info = h("div", { class: "row muted", style: "margin-bottom:12px" },
+    `Due ${counts.due} · New left today ${counts.new_today_left} · ${reviewTags.length ? "Cards with these tags" : "In word bank"} ${counts.total}`,
+    previous);
   if (!word) {
     show(header, filter, info, h("div", { class: "card" },
       counts.total ? "All done for today" + (reviewTags.length ? " with these tags." : ".")
@@ -816,9 +933,11 @@ async function reviewView() {
   const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "Show answer");
   actions.append(showButton);
   show(header, filter, info, h("div", { class: "card" },
+    undone ? h("div", { class: "muted" },
+      `Your rating “${RATING_TEXT[undone.rating] || undone.rating}” was taken back. Rate this card again.`) : null,
     h("div", { class: "term" }, word.term, speakButtons(word.term)), back, actions));
   speak(word.term);
-  showButton.focus();
+  if (undone) reveal(); else showButton.focus();
 }
 
 // ---- words: add / capture ---------------------------------------------
@@ -1078,6 +1197,7 @@ async function wordsView() {
 
 // ---- keep writing / keep speaking / improv / toastmasters ---------------
 const practiceTrack = {}; // remembered track per module
+const practicePast = {}; // per module: feedback you moved on from, for "← Previous" (this visit only)
 // Tag given to words saved from each practice module's feedback.
 const MODULE_TAGS = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters",
   talk: "Conversation" };
@@ -1131,6 +1251,10 @@ async function practiceView(module) {
   practiceTrack[module] = track.id;
   let voice = module !== "write";
   const box = h("div", {});
+  const earlier = answerHistory(box, practicePast[module] ||= [], "feedback");
+  // Leaving a feedback screen (Next, Same prompt again): keep it for "← Previous".
+  // label: the task, for screens that don't show it themselves.
+  const keepFeedback = (label) => earlier.keep({ nodes: [...box.childNodes], label });
 
   const trackButton = (t) => h("button", {
     type: "button", class: t.id === track.id ? "primary" : "", disabled: t.locked,
@@ -1151,7 +1275,7 @@ async function practiceView(module) {
   show(
     h("h1", {}, meta.name),
     trackButtons,
-    h("div", { class: "muted", style: "margin-bottom:16px" }, ladderNote),
+    h("div", { class: "row", style: "margin-bottom:16px" }, h("span", { class: "muted" }, ladderNote), earlier.nav),
     track.private || track.id === FREE_TALK.id ? h("div", { class: "card muted" },
       "Private: what you say here is kept in private/ on this computer and never synced to GitHub. "
       + "It is still sent to OpenAI for transcription and feedback.") : null,
@@ -1302,7 +1426,9 @@ async function practiceView(module) {
     if (s.seconds >= 30 && s.words) facts.push(`${Math.round(s.words / (s.seconds / 60))} words/min`);
     if (mode === "speak") facts.push(`stuck ${s.stuck}×`, `fillers ${s.fillers}×`);
     facts.push(`+${s.xp} XP`, `rank ${r.rank.level}`);
-    const nextButton = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "Next");
+    const label = "Task: " + prompt.task;
+    const nextButton = h("button", { class: "primary", type: "button",
+      onclick: () => { keepFeedback(label); practiceView(module); } }, "Next");
     fill(box, 
       h("div", { class: "card" },
         s.leveled_up ? h("p", { class: "feedback" }, h("b", { class: "good" }, `Level up: L${s.leveled_up} unlocked.`)) : null,
@@ -1311,9 +1437,9 @@ async function practiceView(module) {
         f ? h("p", {}, f.comment) : null,
         r.ai_error ? h("p", { class: "feedback" }, h("span", { class: "bad" }, "No AI feedback: " + r.ai_error)) : null,
         !f && !r.ai_error && text ? h("p", { class: "muted" }, "No OpenAI key, so only the stats were recorded.") : null,
-        h("div", { class: "row", style: "margin-top:10px" },
+        h("div", { class: "row live-only", style: "margin-top:10px" },
           nextButton,
-          h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "Same prompt again"))),
+          h("button", { type: "button", onclick: () => { keepFeedback(label); loadPrompt(prompt); } }, "Same prompt again"))),
       text ? h("div", { class: "card" },
         h("label", {}, mode === "speak" ? "What you said (transcribed)" : "What you wrote"), h("div", {}, text),
         f && f.natural ? [h("label", {}, "A more natural way to say it"),
@@ -1548,15 +1674,16 @@ async function practiceView(module) {
       const f = r.feedback;
       const s = r.session;
       const facts = [`${s.words} words`, clock(s.seconds), `stuck ${s.stuck}×`, `+${s.xp} XP`, `rank ${r.rank.level}`];
-      const next = h("button", { class: "primary", type: "button", onclick: () => practiceView(module) }, "Next");
+      const next = h("button", { class: "primary", type: "button",
+        onclick: () => { keepFeedback(); practiceView(module); } }, "Next");
       fill(controls,
         h("div", { class: "card" },
           h("div", { class: "muted" }, facts.join(" · ")),
           f.score ? h("div", {}, "★".repeat(f.score) + "☆".repeat(5 - f.score)) : null,
           h("p", {}, f.comment),
           f.handling ? h("p", {}, h("b", {}, "Handling follow-ups: "), f.handling) : null,
-          h("div", { class: "row" }, next,
-            h("button", { type: "button", onclick: () => loadPrompt(prompt) }, "Same conversation again"))),
+          h("div", { class: "row live-only" }, next,
+            h("button", { type: "button", onclick: () => { keepFeedback(); loadPrompt(prompt); } }, "Same conversation again"))),
         f.turns.length ? h("div", { class: "card" },
           h("label", {}, "Your answers, said more naturally"),
           f.turns.map((t) => h("div", { class: "example" },
