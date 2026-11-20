@@ -1,5 +1,22 @@
 {
  "items": {
+  "t-questions-02": {
+   "attempts": 0,
+   "last_answer": "did you off today?",
+   "last_verdict": "fix",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "status": "new",
+   "wrong": 0
+  },
   "t-subjectless-01": {
    "attempts": 1,
    "last_answer": "let's begin",
