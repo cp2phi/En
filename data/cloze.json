@@ -61,17 +61,17 @@
    "wrong": 0
   },
   "pv-work-11": {
-   "attempts": 2,
+   "attempts": 3,
    "in_wrong_book": true,
    "srs": {
     "due": "2026-11-20",
     "interval": 1,
     "lapses": 1,
     "last_reviewed": "2026-11-20",
-    "last_seq": 37,
+    "last_seq": 42,
     "never": false,
-    "reps": 1,
-    "same_day_left": 2
+    "reps": 2,
+    "same_day_left": 1
    },
    "status": "learning",
    "wrong": 1
@@ -92,17 +92,17 @@
    "wrong": 0
   },
   "pv-work-19": {
-   "attempts": 1,
+   "attempts": 2,
    "in_wrong_book": true,
    "srs": {
     "due": "2026-11-20",
     "interval": 1,
     "lapses": 1,
     "last_reviewed": "2026-11-20",
-    "last_seq": 35,
+    "last_seq": 41,
     "never": false,
-    "reps": 1,
-    "same_day_left": 2
+    "reps": 2,
+    "same_day_left": 1
    },
    "status": "learning",
    "wrong": 1
@@ -337,5 +337,5 @@
    "wrong": 0
   }
  },
- "seq": 40
+ "seq": 42
 }
