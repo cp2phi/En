@@ -1,6 +1,102 @@
 {
  "seq": 0,
  "words": {
+  "001ad356fa": {
+   "created": "2026-11-20",
+   "definition": "to continue doing something",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Sorry to interrupt. Please carry on.🔊",
+     "zh": "对不起打扰了，请继续。"
+    },
+    {
+     "en": "After the break, we will carry on with the meeting.",
+     "zh": "休息后，我们将继续会议。"
+    },
+    {
+     "en": "Don't stop talking, just carry on with your story.",
+     "zh": "别停下来，继续讲你的故事。"
+    },
+    {
+     "en": "She stumbled but quickly carried on with her presentation.",
+     "zh": "她摔了一跤，但很快继续了她的演讲。"
+    }
+   ],
+   "id": "001ad356fa",
+   "image": null,
+   "introduced": null,
+   "key": "carry on",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "KAR-ee on",
+   "source": "",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "carry on",
+   "wiki": "",
+   "zh": ""
+  },
+  "ac183a7e5e": {
+   "created": "2026-11-20",
+   "definition": "to manage or lead something",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "She runs the team meeting every Monday.",
+     "zh": "她每周一主持团队会议。"
+    },
+    {
+     "en": "He runs a small bakery successfully.",
+     "zh": "他成功地经营着一家小面包店。"
+    },
+    {
+     "en": "She runs a charity for children.",
+     "zh": "她为儿童管理一个慈善机构。"
+    },
+    {
+     "en": "They run the project efficiently.",
+     "zh": "他们高效地管理这个项目。"
+    }
+   ],
+   "id": "ac183a7e5e",
+   "image": null,
+   "introduced": null,
+   "key": "sh run th team meet every monday",
+   "my_examples": [],
+   "note": "在这里，'run' 的意思是 '主持' 或 '管理'。\n'run' 常用于表示控制或组织活动。",
+   "order": 0,
+   "respelling": "RUN",
+   "source": "",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "she runs the team meeting every monday.",
+   "wiki": "",
+   "zh": ""
+  },
   "b78a486dbb": {
    "created": "2026-11-11",
    "definition": "software that protects computers from harmful programs",
@@ -46,6 +142,54 @@
     "Manual"
    ],
    "term": "defender malware",
+   "wiki": "",
+   "zh": ""
+  },
+  "bc0dd26db7": {
+   "created": "2026-11-20",
+   "definition": "to cook food by dry heat in an oven",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "She bakes bread every morning.",
+     "zh": "她每天早上烤面包。"
+    },
+    {
+     "en": "He bakes cookies on weekends.",
+     "zh": "他周末烤饼干。"
+    },
+    {
+     "en": "They bake a cake for her birthday.",
+     "zh": "他们为她的生日烤蛋糕。"
+    },
+    {
+     "en": "I like to bake pizza at home.",
+     "zh": "我喜欢在家里烤比萨。"
+    }
+   ],
+   "id": "bc0dd26db7",
+   "image": null,
+   "introduced": null,
+   "key": "bak",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "BAYK",
+   "source": "",
+   "srs": {
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "bake",
    "wiki": "",
    "zh": ""
   }
