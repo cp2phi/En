@@ -303,15 +303,15 @@ function filledSentence(parts, fills) {
 }
 const sameAnswer = (a, b) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
 // The other accepted answers, one line per blank that has any. given (optional): what the
-// learner typed; an accepted alternative they used is highlighted and marked "yours".
+// learner typed; an accepted alternative they used is marked "yours". Each answer is highlighted.
 function acceptedLines(accepted, given) {
   return accepted.map((answers, i) => {
     const others = answers.slice(1);
     if (!others.length) return null;
     const lead = accepted.length > 1 ? `Blank ${i + 1}, also accepted: ` : "Also accepted: ";
     return h("div", { class: "also" }, h("span", { class: "muted" }, lead),
-      others.flatMap((a, k) => [k ? " · " : "",
-        ...(given && given[i] && sameAnswer(given[i], a) ? [h("mark", { class: "fill" }, a), " (yours)"] : [a])]));
+      others.flatMap((a, k) => [k ? " · " : "", h("mark", { class: "fill" }, a),
+        given && given[i] && sameAnswer(given[i], a) ? " (yours)" : ""]));
   });
 }
 
@@ -505,9 +505,9 @@ const VERDICT_TEXT = {
 // Loose sentence key: case, punctuation and spacing don't count.
 const sentenceKey = (s) => (s || "").toLowerCase().replace(/[^\p{L}\p{N}\s']/gu, " ").replace(/\s+/g, " ").trim();
 
-// The learner's sentence with the fix written into it: removed words struck out
-// in red, added words in green. Word-level LCS; punctuation and case don't count.
-function diffWords(from, to) {
+// Word-level LCS from one sentence to another; punctuation and case don't count.
+// Returns runs of { tag: null | "del" | "ins", words }.
+function wordRuns(from, to) {
   const a = from.match(/\S+/g) || [], b = to.match(/\S+/g) || [];
   const ka = a.map(sentenceKey), kb = b.map(sentenceKey);
   const L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
@@ -526,8 +526,19 @@ function diffWords(from, to) {
     else if (i < a.length && (j >= b.length || L[i + 1][j] >= L[i][j + 1])) put("del", a[i++]);
     else put("ins", b[j++]);
   }
-  return out.flatMap((part, n) => [n ? " " : null,
+  return out;
+}
+// The learner's sentence with the fix written into it: removed words struck out
+// in red, added words in green.
+function diffWords(from, to) {
+  return wordRuns(from, to).flatMap((part, n) => [n ? " " : null,
     part.tag ? h(part.tag, {}, part.words.join(" ")) : part.words.join(" ")]);
+}
+// Another way to say the model sentence, with the words that differ from it
+// bold and highlighted (words only in the model are left out).
+function markChanges(model, other) {
+  return wordRuns(model, other).filter((part) => part.tag !== "del").flatMap((part, n) => [n ? " " : null,
+    part.tag ? h("mark", { class: "fill" }, part.words.join(" ")) : part.words.join(" ")]);
 }
 const translateMeta = () => api("GET", "translate/meta?" + new URLSearchParams(
   Object.entries({ type: translateFilters.type, scene: translateFilters.scene }).filter(([, v]) => v)));
@@ -737,7 +748,8 @@ async function translateView() {
             h("div", { class: "fb-label" }, answer ? "Model answer" : "Answer"),
             h("div", { class: "fb-sentence answer" }, r.en,
               h("button", { class: "link", type: "button", onclick: () => speak(r.en) }, "🔊"))],
-          r.alt.length ? h("div", { class: "alt" }, h("span", { class: "fb-label" }, "Also: "), r.alt.join(" / ")) : null),
+          r.alt.length ? h("div", { class: "alt" }, h("span", { class: "fb-label" }, "Also: "),
+            r.alt.flatMap((s, k) => [k ? " · " : null, ...markChanges(r.en, s)])) : null),
         r.point ? h("div", { class: "note" }, "💡 " + r.point) : null,
         !answer ? h("div", { class: "muted" }, "Revealed sentences go to the wrong book and come back later today, then at growing intervals.") : null,
       );
@@ -979,7 +991,7 @@ function cardDetails(word) {
       h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
       h("span", { class: "muted" }, ex.zh))),
     word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ " + ex)),
-    word.note ? h("pre", {}, word.note) : null,
+    word.note ? h("div", { class: "note pre" }, word.note) : null,
     tagList(word.tags),
   ];
 }
@@ -993,7 +1005,6 @@ async function reviewView(undone) {
   const next = await api("GET", "words/next" + query);
   const { counts, tags } = next;
   const word = undone ? undone.word : next.word;
-  const header = h("h1", {}, "Review words");
   const filter = Object.keys(tags).length
     ? tagFilter(tags, reviewTags, () => { remember("reviewTags", reviewTags); reviewView(); }) : null;
   const previous = next.can_undo ? h("button", { class: "link", type: "button",
@@ -1006,9 +1017,11 @@ async function reviewView(undone) {
         reviewView();
       }
     } }, "← Previous card") : null;
-  const info = h("div", { class: "row muted", style: "margin-bottom:12px" },
-    `Due ${counts.due} · New left today ${counts.new_today_left} · ${reviewTags.length ? "Cards with these tags" : "In word bank"} ${counts.total}`,
-    previous);
+  const header = h("div", { class: "page-head" }, h("h1", {}, "Review words"), h("div", { class: "actions" }, previous));
+  const info = h("div", { class: "facts", style: "margin:0 0 12px" },
+    h("span", {}, h("b", {}, String(counts.due)), h("span", { class: "muted" }, " due")),
+    h("span", {}, h("b", {}, String(counts.new_today_left)), h("span", { class: "muted" }, " new left today")),
+    h("span", {}, h("b", {}, String(counts.total)), h("span", { class: "muted" }, reviewTags.length ? " cards with these tags" : " in word bank")));
   if (!word) {
     show(header, filter, info, h("div", { class: "card" },
       counts.total ? "All done for today" + (reviewTags.length ? " with these tags." : ".")
@@ -1016,10 +1029,18 @@ async function reviewView(undone) {
           : "Your word bank is empty. Add a few words in Add / Capture, or add a word pack in Word bank."));
     return;
   }
-  const back = h("div", {});
-  const actions = h("div", { class: "row", style: "margin-top:16px" });
-  const rate = async (rating) => {
-    await api("POST", "words/rate", { id: word.id, rating });
+  const back = h("div", { class: "card-back" });
+  const actions = h("div", { class: "rate" });
+  let rating = false; // a rating is being sent: ignore further presses
+  const rate = async (choice) => {
+    if (rating) return;
+    rating = true;
+    try {
+      await api("POST", "words/rate", { id: word.id, rating: choice });
+    } catch (e) {
+      rating = false;
+      return toast(e.message);
+    }
     reviewView();
   };
   const reveal = () => {
@@ -1033,18 +1054,30 @@ async function reviewView(undone) {
     });
     fill(back, cardDetails(word), mine);
     fill(actions,
-      h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "Forgot"),
-      h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "Fuzzy"),
-      h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "Remembered"),
+      h("button", { class: "bad", type: "button", onclick: () => rate("forget") }, "Forgot", h("kbd", {}, "1")),
+      h("button", { class: "warn", type: "button", onclick: () => rate("fuzzy") }, "Fuzzy", h("kbd", {}, "2")),
+      h("button", { class: "good", type: "button", onclick: () => rate("remember") }, "Remembered", h("kbd", {}, "3")),
       h("button", { class: "link", type: "button", onclick: () => rate("never") }, "Never show again"),
     );
+    revealed = true;
   };
-  const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "Show answer");
+  let revealed = false;
+  // Keys: Space shows the answer, then 1 / 2 / 3 rate it (not while typing an example).
+  const onKey = (e) => {
+    if (!card.isConnected) return document.removeEventListener("keydown", onKey);
+    if (e.target.closest?.("input, textarea, select") || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!revealed && e.key === " ") { e.preventDefault(); reveal(); }
+    else if (revealed && ["1", "2", "3"].includes(e.key)) rate(["forget", "fuzzy", "remember"][Number(e.key) - 1]);
+  };
+  document.addEventListener("keydown", onKey);
+  const showButton = h("button", { class: "primary", type: "button", onclick: reveal }, "Show answer", h("kbd", {}, "Space"));
   actions.append(showButton);
-  show(header, filter, info, h("div", { class: "card" },
+  const card = h("div", { class: "card review-card" },
     undone ? h("div", { class: "muted" },
       `Your rating “${RATING_TEXT[undone.rating] || undone.rating}” was taken back. Rate this card again.`) : null,
-    h("div", { class: "term" }, word.term, speakButtons(word.term)), back, actions));
+    h("div", { class: "term" }, word.term),
+    h("div", { class: "say" }, speakButtons(word.term)), back, actions);
+  show(header, filter, info, card);
   speak(word.term);
   if (undone) reveal(); else showButton.focus();
 }
@@ -1250,19 +1283,20 @@ async function wordsView() {
   const [{ words, tags }, { packs }] = await Promise.all([api("GET", "words"), api("GET", "words/packs")]);
   const matches = (w) => !bankTags.length || bankTags.some((t) =>
     t === UNTAGGED ? !(w.tags || []).length : (w.tags || []).some((x) => x === t || x.startsWith(t + "/")));
-  const body = h("tbody", {});
-  const title = h("h1", {});
+  const body = h("div", { class: "wordlist" });
+  const count = h("span", { class: "muted" });
   let search = "";
   const LIMIT = 300; // rows drawn at once; search or filter to narrow down
   const draw = () => {
     const list = words.filter((w) => matches(w) && (!search || w.term.toLowerCase().includes(search.toLowerCase())
       || (w.zh || "").includes(search)));
-    title.textContent = `Word bank (${list.length}${list.length === words.length ? "" : " of " + words.length})`;
+    count.textContent = list.length === words.length ? `${words.length} words` : `${list.length} of ${words.length} words`;
     fill(body, list.slice(0, LIMIT).map(row),
-      list.length > LIMIT ? h("tr", {}, h("td", { colspan: 4, class: "muted" }, `Showing ${LIMIT} of ${list.length}. Search or pick a tag to see the rest.`)) : null);
+      list.length > LIMIT ? h("div", { class: "word-more muted" }, `Showing ${LIMIT} of ${list.length}. Search or pick a tag to see the rest.`) : null,
+      list.length ? null : h("div", { class: "word-more muted" }, words.length ? "No words match." : "No words yet. Add a word pack above, or use Add / Capture."));
   };
   function row(w) {
-    const details = h("tr", { hidden: true }, h("td", { colspan: 4 }));
+    const details = h("div", { class: "word-details", hidden: true });
     const editTags = h("button", { class: "link", type: "button", onclick: async () => {
       const value = prompt("Tags, comma-separated (use / for a sub-topic):", (w.tags || []).join(", "));
       if (value === null) return;
@@ -1270,38 +1304,41 @@ async function wordsView() {
       Object.assign(w, r.word);
       wordsView();
     } }, "Edit tags");
-    const main = h("tr", {},
-      h("td", {}, h("b", {}, (w.emoji ? w.emoji + " " : "") + w.term), h("div", { class: "muted" }, w.respelling)),
-      h("td", {}, w.zh ? h("div", {}, w.zh) : null, h("div", { class: w.zh ? "muted" : "" }, w.definition),
-        tagList(w.tags)),
-      h("td", { class: "muted" }, w.srs.never ? "Hidden" : w.srs.due ? "Next " + w.srs.due : "New",
-        w.image ? h("div", {}, "🖼") : null),
-      h("td", {},
-        h("button", { class: "link", type: "button", onclick: () => {
-          details.hidden = !details.hidden;
-          if (!details.hidden) fill(details.firstChild, cardDetails(w), editTags);
-        } }, "Details"),
-        h("button", { class: "link", type: "button", onclick: async () => {
+    const status = w.srs.never ? ["Hidden", "off"] : w.srs.due ? ["Next " + shortDate(w.srs.due), ""] : ["New", "new"];
+    const toggle = h("button", { class: "link", type: "button", onclick: () => {
+      details.hidden = !details.hidden;
+      toggle.textContent = details.hidden ? "Details" : "Hide";
+      if (!details.hidden) fill(details, cardDetails(w), editTags);
+    } }, "Details");
+    const main = h("div", { class: "word-row" },
+      h("div", { class: "word-term" }, h("b", {}, (w.emoji ? w.emoji + " " : "") + w.term),
+        w.respelling ? h("div", { class: "muted small" }, w.respelling) : null),
+      h("div", { class: "word-meaning" }, w.zh ? h("div", {}, w.zh) : null,
+        w.definition ? h("div", { class: w.zh ? "muted small" : "" }, w.definition) : null, tagList(w.tags)),
+      h("div", { class: "word-meta" },
+        h("span", { class: "pill " + status[1] }, status[0]), w.image ? h("span", { title: "Has a picture" }, "🖼") : null,
+        toggle,
+        h("button", { class: "link danger", type: "button", onclick: async () => {
           if (!confirm(`Delete "${w.term}"?`)) return;
           await api("DELETE", "words/" + w.id);
           wordsView();
         } }, "Delete")));
-    return [main, details];
+    return h("div", { class: "word" }, main, details);
   }
 
   const packCards = packs.map(packCard);
 
   draw();
   show(
-    title,
+    h("div", { class: "page-head" }, h("h1", {}, "Word bank"), count),
     packs.length ? h("details", { class: "card", open: !words.length },
       h("summary", {}, h("b", {}, "Word packs"), h("span", { class: "muted" }, " · themed lists you can add with one click")),
       h("p", { class: "muted" }, "Preview a pack, tick the topics or single cards you want, and add only those. New cards join the review queue in pack order, within your daily new-word limit (Settings)."),
       packCards) : null,
-    Object.keys(tags).length ? tagFilter(tags, bankTags, () => { remember("bankTags", bankTags); draw(); }) : null,
-    h("input", { class: "wide", placeholder: "Search English or Chinese", style: "margin:8px 0 12px",
+    h("input", { class: "wide search", type: "search", placeholder: "Search English or Chinese",
       oninput: (e) => { search = e.target.value.trim(); draw(); } }),
-    h("div", { class: "card" }, h("table", {}, body)),
+    Object.keys(tags).length ? tagFilter(tags, bankTags, () => { remember("bankTags", bankTags); draw(); }) : null,
+    h("div", { class: "card flush" }, body),
   );
 }
 
@@ -2014,48 +2051,71 @@ function growthCharts(growth) {
     table);
 }
 
+let statsTab = "write"; // Writing / Speaking table on the stats page
+
 async function statsView() {
   const s = await api("GET", "practice/stats");
-  const w = s.modules.write;
-  const sp = s.modules.spoken;
   const dash = (v, unit = "") => (v === null || v === undefined ? "—" : v + unit);
-  const row = (label, ...cells) => h("tr", {}, h("td", { class: "muted" }, label), cells.map((c) => h("td", {}, String(c))));
   const names = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters", talk: "Conversation" };
+  // A table of numbers: label column on the left, figures right-aligned.
+  const table = (head, rows) => h("div", { class: "table-scroll" }, h("table", { class: "data" },
+    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "num" : "" }, t)))),
+    h("tbody", {}, rows.map(([label, ...cells]) => h("tr", {}, h("td", {}, label),
+      cells.map((c) => h("td", { class: "num" }, String(c))))))));
+  const periods = ["", "Today", "Last 7 days", "7 before", "All time"];
+  const across = (m, key, f = (v) => v) => ["today", "this_week", "last_week", "all"].map((p) => f(m[p][key]));
+  const fact = (label, value) => h("span", {}, h("span", { class: "muted" }, label + " "), h("b", {}, String(value)));
+
+  // Rank: XP needed grows with the square of the level (level L starts at step × (L-1)²).
+  const start = s.rank.next_at * ((s.rank.level - 1) / s.rank.level) ** 2;
+  const rankPct = Math.max(0, Math.min(100, Math.round(100 * (s.rank.xp - start) / (s.rank.next_at - start || 1))));
+  const kpi = (value, label, ...extra) => h("div", { class: "kpi" }, h("b", {}, value), h("span", { class: "muted" }, label), extra);
+
+  const panel = h("div", {});
+  const drawPanel = () => {
+    const w = s.modules.write;
+    const sp = s.modules.spoken;
+    fill(tabs, [["write", "Writing"], ["speak", "Speaking"]].map(([id, text]) => h("button", { type: "button",
+      class: statsTab === id ? "on" : "", onclick: () => { statsTab = id; drawPanel(); } }, text)));
+    fill(panel, statsTab === "write"
+      ? [table(periods, [
+          ["Words", ...across(w, "words")],
+          ["Minutes", ...across(w, "minutes")],
+          ["Typing speed (words/min)", ...across(w, "wpm", dash)],
+          ["Issues per 100 words", ...across(w, "issues_per_100", dash)],
+          ["Average score", ...across(w, "avg_score", dash)]]),
+        h("div", { class: "facts" }, fact("Different words used", w.unique_words), fact("Most words in one session", w.all.most_words))]
+      : [table(periods, [
+          ["Minutes speaking", ...across(sp, "minutes")],
+          ["Words spoken", ...across(sp, "words")],
+          ["Speaking speed (words/min)", ...across(sp, "wpm", dash)],
+          ["Times stuck", ...across(sp, "stuck")],
+          ["Filler words", ...across(sp, "fillers")],
+          ["Issues per 100 words", ...across(sp, "issues_per_100", dash)]]),
+        h("div", { class: "facts" }, fact("Different words used", sp.unique_words),
+          fact("Longest session", (sp.all.longest_seconds / 60).toFixed(1) + " min")),
+        h("div", { class: "muted small" }, "Speaking includes Improv, Toastmasters and Conversation.")]);
+  };
+  const tabs = h("div", { class: "tabs" });
+  drawPanel();
+
   show(
     h("h1", {}, "Stats"),
-    h("div", { class: "grid" },
-      h("div", { class: "card stat" }, h("b", {}, String(s.rank.level)), `Rank (${s.rank.xp} / ${s.rank.next_at} XP)`),
-      h("div", { class: "card stat" }, h("b", {}, String(s.streak)), "day streak"),
-      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.write), "Keep writing unlocked"),
-      h("div", { class: "card stat" }, h("b", {}, "L" + s.levels.speak), "Keep speaking unlocked")),
+    h("div", { class: "card kpis" },
+      kpi(String(s.rank.level), "Rank", h("div", { class: "bar" }, h("i", { style: `width:${rankPct}%` })),
+        h("span", { class: "muted small" }, `${s.rank.xp} / ${s.rank.next_at} XP`)),
+      kpi(String(s.streak), s.streak === 1 ? "day streak" : "days streak"),
+      kpi("L" + s.levels.write, "Writing level"),
+      kpi("L" + s.levels.speak, "Speaking level")),
     growthCharts(s.growth),
-    h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "Writing"), h("th", {}, "Today"), h("th", {}, "Last 7 days"), h("th", {}, "7 days before"), h("th", {}, "All time"))),
-      h("tbody", {},
-        row("Words", w.today.words, w.this_week.words, w.last_week.words, w.all.words),
-        row("Minutes", w.today.minutes, w.this_week.minutes, w.last_week.minutes, w.all.minutes),
-        row("Typing speed (words/min)", dash(w.today.wpm), dash(w.this_week.wpm), dash(w.last_week.wpm), dash(w.all.wpm)),
-        row("Issues per 100 words", dash(w.today.issues_per_100), dash(w.this_week.issues_per_100), dash(w.last_week.issues_per_100), dash(w.all.issues_per_100)),
-        row("Average score", dash(w.today.avg_score), dash(w.this_week.avg_score), dash(w.last_week.avg_score), dash(w.all.avg_score)),
-        row("Different words used", "", "", "", w.unique_words),
-        row("Most words in one session", "", "", "", w.all.most_words)))),
-    h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "Speaking (incl. Improv, Toastmasters)"), h("th", {}, "Today"), h("th", {}, "Last 7 days"), h("th", {}, "7 days before"), h("th", {}, "All time"))),
-      h("tbody", {},
-        row("Minutes speaking", sp.today.minutes, sp.this_week.minutes, sp.last_week.minutes, sp.all.minutes),
-        row("Words spoken", sp.today.words, sp.this_week.words, sp.last_week.words, sp.all.words),
-        row("Speaking speed (words/min)", dash(sp.today.wpm), dash(sp.this_week.wpm), dash(sp.last_week.wpm), dash(sp.all.wpm)),
-        row("Times stuck", sp.today.stuck, sp.this_week.stuck, sp.last_week.stuck, sp.all.stuck),
-        row("Filler words", sp.today.fillers, sp.this_week.fillers, sp.last_week.fillers, sp.all.fillers),
-        row("Issues per 100 words", dash(sp.today.issues_per_100), dash(sp.this_week.issues_per_100), dash(sp.last_week.issues_per_100), dash(sp.all.issues_per_100)),
-        row("Different words used", "", "", "", sp.unique_words),
-        row("Longest session (minutes)", "", "", "", (sp.all.longest_seconds / 60).toFixed(1))))),
-    h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "Module"), h("th", {}, "Sessions"), h("th", {}, "Words"), h("th", {}, "Minutes"))),
-      h("tbody", {}, Object.entries(s.by_module).map(([m, v]) => row(names[m] || m, v.sessions, v.words, v.minutes))))),
-    h("div", { class: "card" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", {}, "Last 14 days"), h("th", {}, "Written (words)"), h("th", {}, "Spoken (minutes)"), h("th", {}, "XP"))),
-      h("tbody", {}, [...s.days].reverse().map((d) => row(d.date, d.write_words, d.spoken_minutes, d.xp))))),
+    h("div", { class: "card" }, tabs, panel),
+    h("div", { class: "card" },
+      h("h2", { class: "card-title" }, "By module"),
+      table(["", "Sessions", "Words", "Minutes"],
+        Object.entries(s.by_module).map(([m, v]) => [names[m] || m, v.sessions, v.words, v.minutes])),
+      h("details", { class: "fold" }, h("summary", {}, "Last 14 days"),
+        table(["", "Words written", "Minutes spoken", "XP"],
+          [...s.days].reverse().map((d) => [shortDate(d.date), d.write_words, d.spoken_minutes, d.xp])))),
   );
 }
 

@@ -198,3 +198,67 @@ textarea.translation { font-size: 19px; line-height: 1.5; }
 .talk-line.ai { align-self: flex-start; }
 .talk-line.me { align-self: flex-end; border-color: var(--accent); }
 .hint ul { margin: 4px 0 4px 20px; padding: 0; }
+/* ---- shared bits for stats / word bank / review ---- */
+.small { font-size: 13px; }
+.card-title { font-size: 16px; margin: 0 0 8px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; margin: 12px 0 4px; }
+details.fold { margin-top: 12px; }
+details.fold > summary { color: var(--muted); font-size: 14px; padding: 4px 0; }
+kbd { font: 11px/1 ui-monospace, Menlo, monospace; padding: 2px 5px; margin-left: 8px; border-radius: 4px;
+      border: 1px solid currentColor; opacity: .55; vertical-align: 1px; }
+@media (hover: none), (max-width: 600px) { kbd { display: none; } }
+/* Stats: four headline numbers in one strip */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0; }
+.kpi { display: flex; flex-direction: column; gap: 2px; padding: 18px 20px; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+.kpi b { font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi .bar { max-width: none; margin-top: 8px; }
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .kpi:nth-child(3) { border-left: none; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+/* Tables of figures: quiet headers, numbers right-aligned in tabular digits */
+table.data th { font-size: 13px; font-weight: 600; color: var(--muted); padding: 6px 8px; }
+table.data td { padding: 9px 8px; }
+table.data .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data td:first-child { color: var(--muted); }
+.table-scroll { overflow-x: auto; }
+@media (max-width: 600px) {
+  table.data { font-size: 14px; }
+  table.data th, table.data td { padding-left: 4px; padding-right: 4px; }
+  table.data th.num { white-space: normal; }
+}
+/* Review words */
+.review-card .term { line-height: 1.2; margin-bottom: 4px; }
+.say { display: flex; gap: 4px; margin: 0 0 4px -6px; }
+.say button { font-size: 14px; }
+.card-back:not(:empty) { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 14px; }
+.card-back input.wide { margin-top: 10px; }
+.rate { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 10px; margin-top: 16px; }
+.rate:has(> :only-child) { display: flex; }
+.rate button { padding: 10px 12px; }
+.rate button.link { padding: 10px 6px; }
+@media (max-width: 600px) { .rate { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rate button.link { grid-column: 1 / -1; } }
+/* Word bank */
+input.search { margin-bottom: 12px; }
+.card.flush { padding: 0; overflow: hidden; }
+.word + .word { border-top: 1px solid var(--line); }
+.word-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 16px; padding: 14px 20px;
+            align-items: start; }
+.word-term b { font-size: 17px; }
+.word-meaning .tag { margin-top: 4px; }
+.word-meta { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.word-meta .pill { margin-right: 6px; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; background: var(--bg); color: var(--muted); }
+.pill.new { color: var(--accent); }
+.pill.off { text-decoration: line-through; }
+button.link.danger:hover { color: var(--bad); }
+.word-details { padding: 0 20px 16px; }
+.word-more { padding: 14px 20px; }
+@media (max-width: 600px) {
+  .word-row { grid-template-columns: 1fr; gap: 4px; padding: 12px 16px; }
+  .word-meta { margin-left: -6px; }
+  .word-details { padding: 0 16px 14px; }
+}
