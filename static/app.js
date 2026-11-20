@@ -49,8 +49,6 @@ function personalise(text) {
 const missingDetails = (text) => Object.entries(PLACEHOLDERS).some(([key, [field]]) =>
   text.includes(`{${key}}`) && !settings[field]);
 const clozeFilters = { pos: "", scene: "", level: "", mode: "" };
-// A finished cloze card set aside while its word is added to the word bank; shown again on return.
-let clozeResume = null;
 const translateFilters = { type: "", scene: "", level: "", mode: "" };
 
 // ---- helpers ----------------------------------------------------------
@@ -177,6 +175,21 @@ function show(...nodes) {
   fill(view, ...nodes);
 }
 
+// "Add to word bank" from a Cloze or Translate card: the page is set aside as it is (live
+// nodes, so the card, its buttons and ← Previous all keep working) and put back when the
+// learner returns, unless the filters changed in between (e.g. "Redo them all").
+let parked = null;
+function parkPage(hash, filters) {
+  parked = { hash, filters: JSON.stringify(filters), nodes: [...view.childNodes] };
+}
+function unparkPage(hash, filters) {
+  const p = parked;
+  parked = null;
+  if (!p || p.hash !== hash || p.filters !== JSON.stringify(filters)) return false;
+  show(p.nodes);
+  return true;
+}
+
 // "← Previous": look back at answers you have moved on from, then return to where you were.
 // Past cards are kept as live DOM nodes, so their buttons (Never show again, Add to word bank,
 // I don't know, ☆ Save) still work. `past` holds {nodes, label?}, newest last; pass an
@@ -294,7 +307,7 @@ function acceptedLines(accepted, given) {
     const lead = accepted.length > 1 ? `Blank ${i + 1}, also accepted: ` : "Also accepted: ";
     return h("div", { class: "also" }, h("span", { class: "muted" }, lead),
       others.flatMap((a, k) => [k ? " · " : "",
-        given && given[i] && sameAnswer(given[i], a) ? [h("mark", { class: "fill" }, a), " (yours)"] : a]));
+        ...(given && given[i] && sameAnswer(given[i], a) ? [h("mark", { class: "fill" }, a), " (yours)"] : [a])]));
   });
 }
 
@@ -302,6 +315,7 @@ const clozeMeta = () => api("GET", "cloze/meta?" + new URLSearchParams(
   Object.entries({ pos: clozeFilters.pos, scene: clozeFilters.scene }).filter(([, v]) => v)));
 
 async function clozeView() {
+  if (unparkPage("#cloze", clozeFilters)) return;
   let { counts } = await clozeMeta();
   // Scenes (or grammar topics) offered depend on the chosen word class; drop a stale scene.
   if (clozeFilters.scene && !(clozeFilters.scene in counts.scenes)) {
@@ -365,7 +379,7 @@ async function clozeView() {
     renderQuestion(q, redo);
   }
 
-  function renderQuestion(q, redo, resume) {
+  function renderQuestion(q, redo) {
     let attempted = false;
     const inputs = [];
     const sentence = h("div", { class: "en" }, q.segments.map((seg) => {
@@ -427,11 +441,11 @@ async function clozeView() {
     }
 
     // The best answer first, then the other accepted answers. given: what the learner typed,
-    // when it was accepted. resumed: coming back from the word bank, so nothing is spoken again.
-    function finish(result, firstTry, given, resumed) {
+    // when it was accepted.
+    function finish(result, firstTry, given) {
       entry.done = true;
       inputs.forEach((i) => { i.disabled = true; });
-      if (!resumed) speak(result.sentence);
+      speak(result.sentence);
       fill(feedback, 
         h("div", { class: firstTry ? "good" : "bad" },
           firstTry ? "Correct." : "This question comes back later today, then at growing intervals."),
@@ -447,7 +461,6 @@ async function clozeView() {
         dontKnow.disabled = true;
         toast("Added to the wrong book");
       } }, "I don't know");
-      if (resumed && resumed.inBook) dontKnow.disabled = true;
       fill(actions, 
         next,
         firstTry ? dontKnow : null,
@@ -456,12 +469,10 @@ async function clozeView() {
           // (if it isn't already), without counting as a mistake.
           if (firstTry && !dontKnow.disabled) {
             await api("POST", "cloze/mark", { id: q.id, outcome: "star" });
+            dontKnow.disabled = true;
             toast("Also added to the wrong book");
           }
-          // Come back to this same card after saving the word, not to a new question.
-          clozeResume = { q, redo, result, firstTry, given, inBook: true,
-            filters: JSON.stringify(clozeFilters),
-            inputs: inputs.map((i) => ({ value: i.value, className: i.className })) };
+          parkPage("#cloze", clozeFilters); // come back to this same card after saving the word
           prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }],
             tags: ["Cloze"], returnTo: "#cloze" };
           location.hash = "#add";
@@ -471,20 +482,12 @@ async function clozeView() {
       next.focus();
     }
 
-    fill(box, form);
-    if (resume) {
-      resume.inputs.forEach((saved, i) => Object.assign(inputs[i], saved));
-      finish(resume.result, resume.firstTry, resume.given, resume);
-      return;
-    }
     answeringActions();
+    fill(box, form);
     inputs[0].focus();
   }
 
-  const resume = clozeResume;
-  clozeResume = null;
-  if (resume && resume.filters === JSON.stringify(clozeFilters)) renderQuestion(resume.q, resume.redo, resume);
-  else await loadQuestion();
+  await loadQuestion();
 }
 
 // ---- sentence translation -------------------------------------------
@@ -497,6 +500,7 @@ const translateMeta = () => api("GET", "translate/meta?" + new URLSearchParams(
   Object.entries({ type: translateFilters.type, scene: translateFilters.scene }).filter(([, v]) => v)));
 
 async function translateView() {
+  if (unparkPage("#translate", translateFilters)) return;
   let { counts } = await translateMeta();
   if (translateFilters.scene && !(translateFilters.scene in counts.scenes)) translateFilters.scene = "";
   if (translateFilters.level && !(translateFilters.level in counts.levels)) translateFilters.level = "";
@@ -711,7 +715,9 @@ async function translateView() {
         h("button", { type: "button", onclick: answering }, "Try again"),
         choose ? null : starButton(),
         h("button", { type: "button", title: "Capture a word or pattern from this sentence", onclick: () => {
-          prefill = { sentence: r.en, examples: [{ en: r.en, zh: r.zh }], tags: ["Translate"] };
+          parkPage("#translate", translateFilters); // come back to this same card after saving
+          prefill = { sentence: r.en, examples: [{ en: r.en, zh: r.zh }], tags: ["Translate"],
+            returnTo: "#translate" };
           location.hash = "#add";
         } }, "Add to word bank"),
         h("button", { class: "link", type: "button", onclick: never }, "Never show again"));
