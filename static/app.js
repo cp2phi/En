@@ -21,7 +21,14 @@ const SCENE_NAMES = {
   study: "Learning & study", body: "Body & movement", nature: "Animals & plants", news: "News, law & society",
   media: "Phone & social media", hobbies: "Hobbies & arts", talk: "Ways of talking", mind: "Thinking & deciding",
   diy: "DIY & repairs",
+  renting: "Renting & flatting", utilities: "Power, internet & phone plans", neighbours: "Neighbours & community",
+  leisure: "Hobbies & going out", emergency: "Emergencies & police", jobhunt: "Job hunting", pets: "Pets & the vet",
+  repairs: "Tradies & repairs", occasions: "Holidays & special occasions",
 };
+// Translation scenes, in the order the dropdown shows them.
+const TRANSLATE_SCENES = ["work", "tech", "jobhunt", "study", "home", "renting", "neighbours", "utilities", "repairs",
+  "shopping", "restaurant", "money", "admin", "health", "emergency", "driving", "travel", "outdoors", "sports",
+  "leisure", "social", "occasions", "family", "pets", "feelings"];
 // Sentence translation: one file per sentence type, in this order.
 const TYPE_NAMES = {
   subjectless: "No subject in Chinese (下雨了 / 该走了)", topic: "Topic first & 把 (这事我来办)",
@@ -552,7 +559,8 @@ async function translateView() {
   const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left})`; // total / not yet attempted
   const select = (group, key, placeholder, rerender) => {
     const entries = Object.entries(counts[group]);
-    if (group === "types") entries.sort(([a], [b]) => (TYPE_ORDER.indexOf(a) + 1 || 99) - (TYPE_ORDER.indexOf(b) + 1 || 99));
+    const order = { types: TYPE_ORDER, scenes: TRANSLATE_SCENES }[group];
+    if (order) entries.sort(([a], [b]) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
     return h("select", { "aria-label": placeholder, "data-group": group,
       onchange: (e) => { translateFilters[key] = e.target.value; if (rerender) translateView(); else loadQuestion(); } },
       h("option", { value: "" }, placeholder),

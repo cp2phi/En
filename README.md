@@ -60,7 +60,7 @@ Each practice module has its own question bank and does not draw on your word ba
 | Combos (multiple blanks) | 20 | A verb and a noun blanked in the same sentence |
 | Grammar topics | 420 | Past 100, future 40, present continuous 40, subjunctive 40, other common tenses 60, third person 40, plurals 40, other grammar 60. Only the first letter is shown, not the base form, so the word and its form are tested together |
 
-Sentence translation: 660 sentences in `translate/`, 11 sentence types × 3 levels × 20, with 2 per scene (the same 10 scenes as cloze) in each level:
+Sentence translation: 4,950 sentences in `translate/`, 11 sentence types × 6 levels × 75, with 3 per scene in each level. The 25 scenes cover daily life in New Zealand: work, IT, job hunting, study, home, renting & flatting, neighbours, power/internet/phone plans, tradies & repairs, shopping, restaurants, money, paperwork & government, health, emergencies & police, driving & transport, travel, weather & outdoors, sport, hobbies & going out, social life, holidays & occasions, family & kids, pets, feelings & relationships:
 
 | Sentence type | Trains |
 |---|---|
@@ -76,7 +76,7 @@ Sentence translation: 660 sentences in `translate/`, 11 sentence types × 3 leve
 | Passive without 被 | 会议取消了 / 包裹送到了 |
 | Comparisons | -er / more, as … as, much + comparative, prefer … to |
 
-Levels: L1 one short clause, L2 adds a detail or a second clause, L3 two or three clauses in work-email or meeting register.
+Levels: L1 one short clause, L2 adds a detail, L3 two clauses with everyday-life vocabulary, L4 two or three clauses in message, phone-call or meeting register, L5 formal or official register (landlord, council, insurer, complaints), L6 native-like nuance (tact, hedging, idioms, implied meaning).
 
 Practice prompts: keep writing 240, work writing 115, keep speaking 240, small talk 400, meeting language 150, presenting data 160, introducing yourself 125, Improv 250, Toastmasters 160, conversation scenarios 42.
 

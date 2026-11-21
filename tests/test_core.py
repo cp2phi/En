@@ -400,15 +400,15 @@ class TranslateBankTest(unittest.TestCase):
         import check_bank
         self.assertEqual(check_bank.check_translate(ROOT / "translate"), [])
 
-    def test_every_type_has_twenty_per_level(self):
+    def test_every_type_has_75_per_level(self):
         sentences = translate.load(ROOT / "translate")
         types = {q["type"] for q in sentences.values()}
         self.assertEqual(types, {"subjectless", "topic", "existential", "questions", "polite", "relative",
                                  "time_if", "reason_contrast", "tense", "passive", "compare"})
         for t in types:
-            for level in (1, 2, 3):
+            for level in (1, 2, 3, 4, 5, 6):
                 n = sum(1 for q in sentences.values() if q["type"] == t and q["level"] == level)
-                self.assertEqual(n, 20, f"{t} L{level}")
+                self.assertEqual(n, 75, f"{t} L{level}")
 
 
 class WordsTest(unittest.TestCase):
