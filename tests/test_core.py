@@ -43,11 +43,35 @@ class SrsTest(unittest.TestCase):
         self.assertFalse(srs.is_due(s, D0))
         self.assertEqual(s["due"], (D0 + timedelta(days=7)).isoformat())
 
-    def test_forget_during_repeats_restores_two(self):
+    def test_forget_on_a_repeat_adds_one(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        self.assertEqual(s["same_day_left"], 2)
+        s = srs.rate(s, "forget", D0, 2)
+        self.assertEqual(s["same_day_left"], 1)
+        s = srs.rate(s, "remember", D0, 3)
+        self.assertFalse(srs.is_due(s, D0))
+        self.assertEqual(s["due"], (D0 + timedelta(days=1)).isoformat())
+
+    def test_at_most_three_showings_a_day(self):
         s = srs.rate(srs.new_state(), "forget", D0, 1)
         s = srs.rate(s, "remember", D0, 2)
+        s = srs.rate(s, "forget", D0, 3)  # third showing today: no more today
+        self.assertEqual(s["same_day_left"], 0)
+        self.assertFalse(srs.is_due(s, D0))
+        self.assertTrue(srs.is_due(s, D0 + timedelta(days=1)))
+
+    def test_new_day_resets_showings(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        s = srs.rate(s, "forget", D0, 2)
         s = srs.rate(s, "forget", D0, 3)
+        s = srs.rate(s, "forget", D0 + timedelta(days=1), 4)
         self.assertEqual(s["same_day_left"], 2)
+
+    def test_same_showing_is_not_counted_twice(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        s = srs.rate(s, "remember", D0, 2)
+        s = srs.rate(s, "forget", D0, 3, same_showing=True)  # "only guessed" on showing 2
+        self.assertEqual((s["day_shows"], s["same_day_left"]), (2, 1))
 
     def test_never_is_never_due(self):
         s = srs.rate(srs.rate(srs.new_state(), "forget", D0, 1), "never", D0, 2)
