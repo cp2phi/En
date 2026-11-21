@@ -1,5 +1,5 @@
 {
- "seq": 0,
+ "seq": 18,
  "words": {
   "001ad356fa": {
    "created": "2026-11-20",
@@ -21,18 +21,133 @@
     {
      "en": "She stumbled but quickly carried on with her presentation.",
      "zh": "她摔了一跤，但很快继续了她的演讲。"
+    },
+    {
+     "en": "Sorry to interrupt. Please carry on.",
+     "zh": "抱歉打断你。请继续。"
+    },
+    {
+     "en": "After the meeting, you can carry on with your work.",
+     "zh": "会议结束后，你可以继续你的工作。"
+    },
+    {
+     "en": "She paused for a moment but then decided to carry on with her story.",
+     "zh": "她暂停了一会儿，但决定继续她的故事。"
+    },
+    {
+     "en": "I thought he was done, but he asked me to carry on talking.",
+     "zh": "我以为他讲完了，但他让我继续说话。"
     }
    ],
    "id": "001ad356fa",
    "image": null,
-   "introduced": null,
+   "introduced": "2026-11-21",
    "key": "carry on",
    "my_examples": [],
-   "note": "",
+   "note": "常用于请求某人继续说话或做事。",
    "order": 0,
    "respelling": "KAR-ee on",
    "source": "",
    "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 2,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "carry on",
+   "wiki": "",
+   "zh": ""
+  },
+  "0cb0239cd5": {
+   "created": "2026-11-21",
+   "definition": "to breathe out deeply because you are sad or tired",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "She sighed when she saw the power bill.",
+     "zh": "当她看到电费账单时，她叹了口气。"
+    },
+    {
+     "en": "He sighed after a long day at work.",
+     "zh": "他在工作一天后叹了口气。"
+    },
+    {
+     "en": "She sighed with relief when she passed the exam.",
+     "zh": "她通过考试时松了一口气。"
+    },
+    {
+     "en": "The dog sighed and lay down on the floor.",
+     "zh": "那只狗叹了口气，躺在地板上。"
+    }
+   ],
+   "id": "0cb0239cd5",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "sigh",
+   "my_examples": [],
+   "note": "通常表示疲惫、失望或沮丧的情感。",
+   "order": 0,
+   "respelling": "SYE",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 5,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "sigh",
+   "wiki": "",
+   "zh": ""
+  },
+  "13e0927160": {
+   "created": "2026-11-21",
+   "definition": "made someone feel scared",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "The thunder frightened the kids.",
+     "zh": "雷声把孩子们吓坏了。"
+    },
+    {
+     "en": "She was frightened by the loud noise.",
+     "zh": "她被大声的噪音吓到了。"
+    },
+    {
+     "en": "The dog looked frightened during the storm.",
+     "zh": "暴风雨期间，狗看起来很害怕。"
+    },
+    {
+     "en": "Don't be frightened; it's just a movie.",
+     "zh": "别害怕，这只是部电影。"
+    }
+   ],
+   "id": "13e0927160",
+   "image": null,
+   "introduced": null,
+   "key": "frighten scar",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "FRY-TENd",
+   "source": "",
+   "srs": {
+    "day_shows": 0,
     "due": null,
     "interval": 0,
     "lapses": 0,
@@ -45,7 +160,203 @@
    "tags": [
     "Cloze"
    ],
-   "term": "carry on",
+   "term": "frightened · scared",
+   "wiki": "",
+   "zh": ""
+  },
+  "1e3a0117b8": {
+   "created": "2026-11-21",
+   "definition": "spoke very quietly",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "She whispered something in my ear.",
+     "zh": "她在我耳边小声说了一句话。"
+    },
+    {
+     "en": "He whispered a secret to his friend.",
+     "zh": "他对朋友低声说了一个秘密。"
+    },
+    {
+     "en": "I could only hear her whispered words.",
+     "zh": "我只能听到她低语的话语。"
+    },
+    {
+     "en": "They whispered during the movie.",
+     "zh": "他们在电影期间低声交谈。"
+    }
+   ],
+   "id": "1e3a0117b8",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "whisper",
+   "my_examples": [],
+   "note": "口气比较亲密，常用于秘密或不想被别人听到的内容。",
+   "order": 0,
+   "respelling": "WIS-perd",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 6,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "whispered",
+   "wiki": "",
+   "zh": ""
+  },
+  "3ccfc4d472": {
+   "created": "2026-11-21",
+   "definition": "the act of opening your mouth wide and inhaling deeply, often because you are tired or bored",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "He kept yawning during the meeting.",
+     "zh": "他开会的时候一直打哈欠。"
+    },
+    {
+     "en": "She yawned loudly after a long day.",
+     "zh": "她在辛苦的一天后大声打了一个哈欠。"
+    },
+    {
+     "en": "He couldn't stop yawning in class.",
+     "zh": "他在课堂上不停地打哈欠。"
+    },
+    {
+     "en": "Yawning can be contagious; seeing someone yawn may make you yawn too.",
+     "zh": "打哈欠是会传染的；看到别人打哈欠可能也会让你打哈欠。"
+    }
+   ],
+   "id": "3ccfc4d472",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "yawn",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "YAWN",
+   "source": "",
+   "srs": {
+    "day_shows": 2,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 15,
+    "never": false,
+    "reps": 2,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "yawn",
+   "wiki": "",
+   "zh": ""
+  },
+  "541d91e45f": {
+   "created": "2026-11-21",
+   "definition": "to restart a computer.",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Could you restart your computer?",
+     "zh": "你能重启一下电脑吗？"
+    },
+    {
+     "en": "I need to reboot my laptop to fix the issue.",
+     "zh": "我需要重启我的笔记本电脑来解决问题。"
+    },
+    {
+     "en": "After the update, please reboot your device.",
+     "zh": "更新后，请重启你的设备。"
+    },
+    {
+     "en": "Rebooting often solves many computer problems.",
+     "zh": "重启通常能解决许多计算机问题。"
+    }
+   ],
+   "id": "541d91e45f",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "restart reboot",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "ree-BOOT",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 8,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "restart · reboot",
+   "wiki": "",
+   "zh": ""
+  },
+  "65e0598d71": {
+   "created": "2026-11-21",
+   "definition": "to go and bring back something",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Can you fetch my glasses from the bedroom?",
+     "zh": "你能去卧室帮我把眼镜拿过来吗？"
+    },
+    {
+     "en": "The dog loves to fetch the ball.",
+     "zh": "那只狗喜欢去捡球。"
+    },
+    {
+     "en": "Can you fetch me a cup of water?",
+     "zh": "你能给我拿杯水吗？"
+    },
+    {
+     "en": "He went to fetch his coat from the car.",
+     "zh": "他去车里拿他的外套。"
+    }
+   ],
+   "id": "65e0598d71",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "fetch",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "FEHCH",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 9,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "fetch",
    "wiki": "",
    "zh": ""
   },
@@ -73,7 +384,7 @@
    ],
    "id": "75b5552391",
    "image": null,
-   "introduced": null,
+   "introduced": "2026-11-21",
    "key": "to be in",
    "my_examples": [],
    "note": "",
@@ -81,19 +392,143 @@
    "respelling": "to BE in",
    "source": "",
    "srs": {
-    "due": null,
-    "interval": 0,
-    "lapses": 0,
-    "last_reviewed": null,
-    "last_seq": 0,
+    "day_shows": 1,
+    "due": "2026-11-21",
+    "interval": 1,
+    "lapses": 1,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 18,
     "never": false,
-    "reps": 0,
-    "same_day_left": 0
+    "reps": 1,
+    "same_day_left": 2
    },
    "tags": [
     "Translate"
    ],
    "term": "to be in",
+   "wiki": "",
+   "zh": ""
+  },
+  "95df196a03": {
+   "created": "2026-11-21",
+   "definition": "",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Close the door quietly, the baby is asleep.",
+     "zh": "关门小声点，宝宝睡着了。"
+    }
+   ],
+   "id": "95df196a03",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "quietly gently softly",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 10,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "quietly · gently · softly",
+   "wiki": "",
+   "zh": ""
+  },
+  "960069db2a": {
+   "created": "2026-11-21",
+   "definition": "losing blood from the body",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Your nose is bleeding.",
+     "zh": "你的鼻子在出血。"
+    },
+    {
+     "en": "He was bleeding after he fell off his bike.",
+     "zh": "他摔下自行车后出血了。"
+    },
+    {
+     "en": "The doctor checked if the cut was bleeding.",
+     "zh": "医生检查伤口是否在出血。"
+    },
+    {
+     "en": "If you are bleeding, you should apply pressure to stop it.",
+     "zh": "如果你在出血，你应该施加压力来止血。"
+    }
+   ],
+   "id": "960069db2a",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "bleed",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "BLEE-ding",
+   "source": "",
+   "srs": {
+    "day_shows": 2,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 16,
+    "never": false,
+    "reps": 2,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "bleeding",
+   "wiki": "",
+   "zh": ""
+  },
+  "9650ac4ff2": {
+   "created": "2026-11-21",
+   "definition": "",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "Could you look over my CV?",
+     "zh": "你能帮我看看我的简历吗？"
+    }
+   ],
+   "id": "9650ac4ff2",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "look at check go over read through",
+   "my_examples": [],
+   "note": "",
+   "order": 0,
+   "respelling": "",
+   "source": "",
+   "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 13,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "look at · check · go over · read through",
    "wiki": "",
    "zh": ""
   },
@@ -121,7 +556,7 @@
    ],
    "id": "ac183a7e5e",
    "image": null,
-   "introduced": null,
+   "introduced": "2026-11-21",
    "key": "sh run th team meet every monday",
    "my_examples": [],
    "note": "在这里，'run' 的意思是 '主持' 或 '管理'。\n'run' 常用于表示控制或组织活动。",
@@ -129,19 +564,69 @@
    "respelling": "RUN",
    "source": "",
    "srs": {
-    "due": null,
-    "interval": 0,
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
     "lapses": 0,
-    "last_reviewed": null,
-    "last_seq": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 3,
     "never": false,
-    "reps": 0,
+    "reps": 1,
     "same_day_left": 0
    },
    "tags": [
     "Cloze"
    ],
    "term": "she runs the team meeting every monday.",
+   "wiki": "",
+   "zh": ""
+  },
+  "ad047445b3": {
+   "created": "2026-11-21",
+   "definition": "to support an activity or organization, usually with money.",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "A local company sponsors our team.",
+     "zh": "一家当地公司赞助我们的团队。"
+    },
+    {
+     "en": "The bank sponsors the community event every year.",
+     "zh": "这家银行每年赞助社区活动。"
+    },
+    {
+     "en": "They are looking for a company to sponsor their project.",
+     "zh": "他们正在寻找公司来赞助他们的项目。"
+    },
+    {
+     "en": "Many athletes have sponsors who help fund their training.",
+     "zh": "许多运动员有赞助商帮助他们的训练费用。"
+    }
+   ],
+   "id": "ad047445b3",
+   "image": null,
+   "introduced": "2026-11-21",
+   "key": "sponsor",
+   "my_examples": [],
+   "note": "可以是金钱、物资或服务上的支持。",
+   "order": 0,
+   "respelling": "SPON-sor",
+   "source": "",
+   "srs": {
+    "day_shows": 2,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 17,
+    "never": false,
+    "reps": 2,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "sponsor",
    "wiki": "",
    "zh": ""
   },
@@ -169,7 +654,7 @@
    ],
    "id": "b78a486dbb",
    "image": null,
-   "introduced": null,
+   "introduced": "2026-11-21",
    "key": "defender malwar",
    "my_examples": [],
    "note": "malware,  恶意软件",
@@ -177,13 +662,14 @@
    "respelling": "de-FEN-der MAL-ware",
    "source": "",
    "srs": {
-    "due": null,
-    "interval": 0,
+    "day_shows": 2,
+    "due": "2026-11-22",
+    "interval": 1,
     "lapses": 0,
-    "last_reviewed": null,
-    "last_seq": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 12,
     "never": false,
-    "reps": 0,
+    "reps": 2,
     "same_day_left": 0
    },
    "tags": [
@@ -213,11 +699,23 @@
     {
      "en": "I like to bake pizza at home.",
      "zh": "我喜欢在家里烤比萨。"
+    },
+    {
+     "en": "He bakes cookies for his friends.",
+     "zh": "他为他的朋友烤饼干。"
+    },
+    {
+     "en": "They bake a cake for the party.",
+     "zh": "他们为聚会烤一个蛋糕。"
+    },
+    {
+     "en": "I want to learn how to bake bread.",
+     "zh": "我想学习如何烤面包。"
     }
    ],
    "id": "bc0dd26db7",
    "image": null,
-   "introduced": null,
+   "introduced": "2026-11-21",
    "key": "bak",
    "my_examples": [],
    "note": "",
@@ -225,6 +723,56 @@
    "respelling": "BAYK",
    "source": "",
    "srs": {
+    "day_shows": 1,
+    "due": "2026-11-22",
+    "interval": 1,
+    "lapses": 0,
+    "last_reviewed": "2026-11-21",
+    "last_seq": 4,
+    "never": false,
+    "reps": 1,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Cloze"
+   ],
+   "term": "bake",
+   "wiki": "",
+   "zh": ""
+  },
+  "c6c272e7db": {
+   "created": "2026-11-21",
+   "definition": "a person who criticizes someone or something.",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "where a previously difficult detractor is now on-side",
+     "zh": "之前一个很难相处的批评者现在变成了盟友。"
+    },
+    {
+     "en": "The detractor of the policy expressed his concerns loudly.",
+     "zh": "该政策的批评者大声表达了他的担忧。"
+    },
+    {
+     "en": "Despite being a detractor, he eventually agreed with the majority.",
+     "zh": "尽管是个批评者，他最终还是同意了大多数人的意见。"
+    },
+    {
+     "en": "Many detractors of the film pointed out its flaws.",
+     "zh": "许多对这部电影不满的人指出了它的缺陷。"
+    }
+   ],
+   "id": "c6c272e7db",
+   "image": null,
+   "introduced": null,
+   "key": "detractor",
+   "my_examples": [],
+   "note": "常用于描述对某人或某事物的负面评价者。",
+   "order": 0,
+   "respelling": "di-TRAK-tor",
+   "source": "",
+   "srs": {
+    "day_shows": 0,
     "due": null,
     "interval": 0,
     "lapses": 0,
@@ -235,9 +783,58 @@
     "same_day_left": 0
    },
    "tags": [
-    "Cloze"
+    "Manual"
    ],
-   "term": "bake",
+   "term": "detractor",
+   "wiki": "",
+   "zh": ""
+  },
+  "fb9b88ce68": {
+   "created": "2026-11-21",
+   "definition": "supporting a person or idea.",
+   "emoji": "",
+   "examples": [
+    {
+     "en": "where a previously difficult detractor is now on-side",
+     "zh": "以前批评者现在支持。"
+    },
+    {
+     "en": "After discussing, she is finally on-side with the project.",
+     "zh": "讨论后，她终于支持这个项目。"
+    },
+    {
+     "en": "We need everyone on-side to succeed.",
+     "zh": "我们需要每个人支持才能成功。"
+    },
+    {
+     "en": "His support means he is firmly on-side now.",
+     "zh": "他的支持意味着他现在坚决支持。"
+    }
+   ],
+   "id": "fb9b88ce68",
+   "image": null,
+   "introduced": null,
+   "key": "on sid",
+   "my_examples": [],
+   "note": "常用于表达支持立场。",
+   "order": 0,
+   "respelling": "ON-sahyd",
+   "source": "",
+   "srs": {
+    "day_shows": 0,
+    "due": null,
+    "interval": 0,
+    "lapses": 0,
+    "last_reviewed": null,
+    "last_seq": 0,
+    "never": false,
+    "reps": 0,
+    "same_day_left": 0
+   },
+   "tags": [
+    "Manual"
+   ],
+   "term": "on-side",
    "wiki": "",
    "zh": ""
   }
