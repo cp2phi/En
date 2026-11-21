@@ -863,16 +863,17 @@ async function wrongbookView() {
           })
         : h("div", { class: "card" }, "Nothing here yet. Sentences whose answer you reveal land here, and so do the ones you save (☆, or Save to wrong book after a wrong answer)."),
       translateRows.map((item) => h("div", { class: "card" },
-        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
-          h("div", { class: "zh", style: "margin:0" }, item.zh),
+        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap;align-items:flex-start" },
+          h("div", { class: "answer", style: "margin:0" }, item.en,
+            h("button", { class: "link", type: "button", onclick: () => speak(item.en) }, "🔊")),
           remove("translate/wrongbook/remove", item.id, "sentence")),
-        h("div", { class: "muted" },
-          [TYPE_NAMES[item.type] || item.type, SCENE_NAMES[item.scene] || item.scene, "L" + item.level,
-            item.starred ? "★ saved" : null, item.wrong ? `wrong ${item.wrong}×` : null].filter(Boolean).join(" · ")),
-        h("div", { class: "answer" }, item.en,
-          h("button", { class: "link", type: "button", onclick: () => speak(item.en) }, "🔊")),
-        item.last_answer ? h("div", { class: "muted" }, "Your last answer: " + item.last_answer) : null,
-        item.point ? h("div", { class: "note" }, "💡 " + item.point) : null))]
+        h("div", { class: "book-zh" }, item.zh),
+        h("details", { class: "fold", style: "margin-top:4px" }, h("summary", {}, "Details"),
+          h("div", { class: "muted" },
+            [TYPE_NAMES[item.type] || item.type, SCENE_NAMES[item.scene] || item.scene, "L" + item.level,
+              item.starred ? "★ saved" : null, item.wrong ? `wrong ${item.wrong}×` : null].filter(Boolean).join(" · ")),
+          item.last_answer ? h("div", { class: "muted" }, "Your last answer: " + item.last_answer) : null,
+          item.point ? h("div", { class: "note" }, "💡 " + item.point) : null)))]
     : [clozeRows.length
         ? redoAll(() => {
             Object.assign(clozeFilters, { pos: "", scene: "", level: "", mode: "wrongbook" });
@@ -1023,16 +1024,65 @@ function pictureBox(word, onchange) {
 }
 pictureBox.tried = new Set(); // one automatic attempt per card per page load
 
+// A regex for term inside a sentence, allowing common endings on each word
+// (make → makes / making, stop → stopped, carry → carried, bleeding → bleeds).
+// "restart · reboot" matches either. null if term has no letters.
+function termPattern(term) {
+  const word = (t) => {
+    let stem = t;
+    if (stem.length > 5 && stem.endsWith("ing")) stem = stem.slice(0, -3);
+    else if (stem.length > 5 && /[^e]ed$/.test(stem)) stem = stem.slice(0, -2);
+    else if (stem.length > 3 && /[ey]$/.test(stem)) stem = stem.slice(0, -1);
+    const esc = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return `${esc}${esc.slice(-1)}?(?:e|y|s|es|ed|d|ing|ies|ied|ier|iest|er|est|ly)?`;
+  };
+  const phrases = term.toLowerCase().split(/[·,;/|]/)
+    .map((p) => p.match(/[a-z0-9']+/g)).filter(Boolean)
+    .map((tokens) => tokens.map(word).join("[\\s-]+"));
+  return phrases.length ? new RegExp(`\\b(?:${phrases.join("|")})\\b`, "gi") : null;
+}
+
+// The sentence with each occurrence of term bold and highlighted.
+function highlightTerm(sentence, term) {
+  const re = term && termPattern(term);
+  if (!re) return sentence;
+  const out = [];
+  let last = 0;
+  for (const m of sentence.matchAll(re)) {
+    out.push(sentence.slice(last, m.index), h("mark", { class: "fill" }, m[0]));
+    last = m.index + m[0].length;
+  }
+  return last ? [...out, sentence.slice(last)] : sentence;
+}
+
+const SHOWN_EXAMPLES = 3;
+
 function cardDetails(word) {
+  const examples = [
+    ...word.examples.map((ex) => h("div", { class: "example" }, highlightTerm(ex.en, word.term),
+      h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
+      h("span", { class: "muted" }, ex.zh))),
+    ...word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ ", highlightTerm(ex, word.term))),
+  ];
+  // A fresh order every time the card is shown, so a different example leads.
+  for (let i = examples.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [examples[i], examples[j]] = [examples[j], examples[i]];
+  }
+  const hidden = examples.slice(SHOWN_EXAMPLES);
+  hidden.forEach((el) => { el.hidden = true; });
+  const more = hidden.length ? h("button", { class: "link", type: "button", onclick: () => {
+    const open = hidden[0].hidden;
+    hidden.forEach((el) => { el.hidden = !open; });
+    more.textContent = open ? "Show fewer" : `View more (${hidden.length})`;
+  } }, `View more (${hidden.length})`) : null;
   return [
     word.respelling ? h("div", { class: "muted" }, word.respelling) : null,
     word.zh ? h("div", { class: "zh" }, (word.emoji ? word.emoji + " " : "") + word.zh) : null,
     word.definition ? h("p", {}, word.definition) : null,
     pictureBox(word),
-    word.examples.map((ex) => h("div", { class: "example" }, ex.en,
-      h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
-      h("span", { class: "muted" }, ex.zh))),
-    word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ " + ex)),
+    examples,
+    more,
     word.note ? h("div", { class: "note pre" }, word.note) : null,
     tagList(word.tags),
   ];
