@@ -116,6 +116,7 @@ input.blank.word, input.blank.empty { border-color: var(--bad); color: var(--bad
 .feedback { margin: 10px 0; }
 .feedback .good { color: var(--good); } .feedback .bad { color: var(--bad); }
 .answer { font-size: 20px; margin: 8px 0; }
+.book-zh { color: var(--muted); font-size: 15px; margin: 2px 0 6px; }
 /* The words that went in the cloze blanks: bold on highlighter yellow (dark text in both themes). */
 mark.fill { background: #fff35c; color: #1f2328; font-weight: 700; padding: 0 3px; border-radius: 3px; }
 .also { font-size: 17px; margin: -4px 0 8px; }
@@ -174,7 +175,7 @@ summary { cursor: pointer; }
 .pack-ex { font-size: 15px; margin-top: 2px; }
 .pack-note { font-size: 13px; }
 @media (max-width: 520px) { .pack-row { grid-template-columns: 24px 56px 1fr; } .pack-thumb { width: 56px; height: 56px; } }
-.translate-zh { font-size: 21px; margin: 8px 0 12px; }
+.translate-zh { font-size: 17px; margin: 8px 0 12px; }
 textarea.translation { font-size: 19px; line-height: 1.5; }
 .verdict { font-weight: 600; margin: 4px 0; }
 .verdict.good { color: var(--good); } .verdict.warn { color: var(--warn); } .verdict.bad { color: var(--bad); }

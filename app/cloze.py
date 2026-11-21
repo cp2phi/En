@@ -179,14 +179,12 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
         else:
             # Right the first time: passed, no replay.
             item["status"] = "passed"
-            item["srs"]["last_seq"] = seq
-            item["srs"]["last_reviewed"] = today.isoformat()
+            srs.mark_shown(item["srs"], today, seq)
     elif outcome == "tried" and item["status"] != "learning":
         item["status"] = "tried"
         item["wrong"] += 1
         item.setdefault("in_wrong_book", False)  # without the flag, any miss would count as in the book
-        item["srs"]["last_seq"] = seq
-        item["srs"]["last_reviewed"] = today.isoformat()
+        srs.mark_shown(item["srs"], today, seq)
     elif outcome == "tried":
         item["wrong"] += 1
         item["srs"] = srs.rate(item["srs"], "forget", today, seq)
@@ -194,7 +192,8 @@ def record(progress: dict, qid: str, outcome: str, today: date) -> dict:
         item["status"] = "learning"
         item["wrong"] += 1
         item["in_wrong_book"] = True
-        item["srs"] = srs.rate(item["srs"], "forget", today, seq)
+        # "guessed" follows a right answer on the same card: still one showing today.
+        item["srs"] = srs.rate(item["srs"], "forget", today, seq, same_showing=outcome == "guessed")
     return item
 
 

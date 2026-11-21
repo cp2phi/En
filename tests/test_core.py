@@ -24,13 +24,11 @@ class SrsTest(unittest.TestCase):
             day = date.fromisoformat(s["due"])
         self.assertEqual(intervals, [1, 3, 7, 15])
 
-    def test_forget_repeats_at_least_twice_today(self):
+    def test_forget_then_right_is_done_for_today(self):
         s = srs.rate(srs.new_state(), "forget", D0, 1)
-        self.assertEqual(s["same_day_left"], 2)
+        self.assertEqual(s["same_day_left"], 1)
         self.assertTrue(srs.is_due(s, D0))
-        s = srs.rate(s, "remember", D0, 2)
-        self.assertTrue(srs.is_due(s, D0), "one repeat is not enough after forget")
-        s = srs.rate(s, "remember", D0, 3)
+        s = srs.rate(s, "remember", D0, 2)  # right on the 2nd showing: no 3rd
         self.assertFalse(srs.is_due(s, D0))
         self.assertEqual(s["due"], (D0 + timedelta(days=1)).isoformat())
 
@@ -43,11 +41,34 @@ class SrsTest(unittest.TestCase):
         self.assertFalse(srs.is_due(s, D0))
         self.assertEqual(s["due"], (D0 + timedelta(days=7)).isoformat())
 
-    def test_forget_during_repeats_restores_two(self):
+    def test_wrong_three_times_stops_for_today(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        s = srs.rate(s, "forget", D0, 2)  # wrong on the 2nd showing: a 3rd
+        self.assertEqual(s["same_day_left"], 1)
+        s = srs.rate(s, "forget", D0, 3)  # wrong on the 3rd: no more today
+        self.assertEqual(s["same_day_left"], 0)
+        self.assertFalse(srs.is_due(s, D0))
+        self.assertTrue(srs.is_due(s, D0 + timedelta(days=1)))
+
+    def test_wrong_twice_then_right_on_third(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        s = srs.rate(s, "forget", D0, 2)
+        s = srs.rate(s, "remember", D0, 3)
+        self.assertFalse(srs.is_due(s, D0))
+        self.assertEqual(s["due"], (D0 + timedelta(days=1)).isoformat())
+
+    def test_new_day_resets_showings(self):
+        s = srs.rate(srs.new_state(), "forget", D0, 1)
+        s = srs.rate(s, "forget", D0, 2)
+        s = srs.rate(s, "forget", D0, 3)
+        s = srs.rate(s, "forget", D0 + timedelta(days=1), 4)
+        self.assertEqual((s["day_shows"], s["same_day_left"]), (1, 1))
+
+    def test_same_showing_is_not_counted_twice(self):
         s = srs.rate(srs.new_state(), "forget", D0, 1)
         s = srs.rate(s, "remember", D0, 2)
-        s = srs.rate(s, "forget", D0, 3)
-        self.assertEqual(s["same_day_left"], 2)
+        s = srs.rate(s, "forget", D0, 3, same_showing=True)  # "only guessed" on showing 2
+        self.assertEqual((s["day_shows"], s["same_day_left"]), (2, 1))
 
     def test_never_is_never_due(self):
         s = srs.rate(srs.rate(srs.new_state(), "forget", D0, 1), "never", D0, 2)
@@ -200,7 +221,7 @@ class ClozeTest(unittest.TestCase):
         p = {"seq": 0, "items": {}}
         cloze.record(p, "q1", "reveal", D0)
         item = p["items"]["q1"]
-        self.assertEqual(item["srs"]["same_day_left"], 2)
+        self.assertEqual(item["srs"]["same_day_left"], 1)
         day = D0
         for _ in range(20):
             if item["status"] == "passed":
@@ -223,8 +244,7 @@ class ClozeTest(unittest.TestCase):
         cloze.record(p, "q3", "correct", D0)
         # Nothing unseen is left: the waiting redo item is served.
         self.assertEqual(cloze.next_question(self.questions, p, {}, D0, rng)["id"], "q1")
-        cloze.record(p, "q1", "correct", D0)
-        cloze.record(p, "q1", "correct", D0)
+        cloze.record(p, "q1", "correct", D0)  # right on the repeat: done for today
         self.assertIsNone(cloze.next_question(self.questions, p, {}, D0, rng))
         self.assertEqual(cloze.next_question(self.questions, p, {}, D0 + timedelta(days=1), rng)["id"], "q1")
 
@@ -400,15 +420,15 @@ class TranslateBankTest(unittest.TestCase):
         import check_bank
         self.assertEqual(check_bank.check_translate(ROOT / "translate"), [])
 
-    def test_every_type_has_twenty_per_level(self):
+    def test_every_type_has_75_per_level(self):
         sentences = translate.load(ROOT / "translate")
         types = {q["type"] for q in sentences.values()}
         self.assertEqual(types, {"subjectless", "topic", "existential", "questions", "polite", "relative",
                                  "time_if", "reason_contrast", "tense", "passive", "compare"})
         for t in types:
-            for level in (1, 2, 3):
+            for level in (1, 2, 3, 4, 5, 6):
                 n = sum(1 for q in sentences.values() if q["type"] == t and q["level"] == level)
-                self.assertEqual(n, 20, f"{t} L{level}")
+                self.assertEqual(n, 75, f"{t} L{level}")
 
 
 class WordsTest(unittest.TestCase):
@@ -447,14 +467,14 @@ class WordsTest(unittest.TestCase):
         self.assertEqual(words.counts(self.data, D0, 2)["new_today_left"], 0)
         self.assertEqual(words.counts(self.data, D0 + timedelta(days=1), 2)["new_today_left"], 1)
 
-    def test_forgotten_word_returns_twice_today(self):
+    def test_forgotten_word_returns_once_today(self):
         w, _ = self.add("zone")
         words.rate_word(self.data, w["id"], "forget", D0)
         shown = 0
         while (nxt := words.next_word(self.data, D0, new_limit=0)) is not None:
             shown += 1
             words.rate_word(self.data, nxt["id"], "remember", D0)
-        self.assertEqual(shown, 2)
+        self.assertEqual(shown, 1)
         self.assertIsNotNone(words.next_word(self.data, D0 + timedelta(days=1), 0))
 
     def test_due_words_come_before_new_and_respect_gap(self):

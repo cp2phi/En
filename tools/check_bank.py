@@ -127,8 +127,14 @@ def check_prompts(folder: Path) -> list[str]:
 
 TRANSLATE_FIELDS = {"id", "level", "scene", "zh", "en", "alt", "point"}
 TRANSLATE_SCENES = ("work", "tech", "restaurant", "sports", "shopping",
-                    "travel", "health", "home", "social", "money")
-TRANSLATE_PER_SCENE = 2  # per level, so 20 sentences per level
+                    "travel", "health", "home", "social", "money",
+                    "renting", "driving", "family", "admin", "utilities",
+                    "neighbours", "outdoors", "leisure", "emergency", "jobhunt",
+                    "study", "pets", "repairs", "occasions", "feelings")
+TRANSLATE_LEVELS = (1, 2, 3, 4, 5, 6)
+TRANSLATE_PER_SCENE = 3  # per level, so 75 sentences per level and 450 per type
+# English words in the main translation, per level (alt sentences may differ a little).
+TRANSLATE_WORDS = {1: (2, 11), 2: (5, 17), 3: (8, 20), 4: (12, 28), 5: (14, 32), 6: (16, 35)}
 
 
 def check_translate(folder: Path) -> list[str]:
@@ -153,8 +159,9 @@ def check_translate(folder: Path) -> list[str]:
             if item["id"] in ids:
                 errors.append(f"{where}: duplicate id")
             ids.add(item["id"])
-            if item["level"] not in (1, 2, 3):
-                errors.append(f"{where}: level must be 1-3")
+            if item["level"] not in TRANSLATE_LEVELS:
+                errors.append(f"{where}: level must be 1-6")
+                continue
             if item["scene"] not in TRANSLATE_SCENES:
                 errors.append(f"{where}: scene must be one of {', '.join(TRANSLATE_SCENES)}")
             spread[(item["level"], item["scene"])] = spread.get((item["level"], item["scene"]), 0) + 1
@@ -173,13 +180,16 @@ def check_translate(folder: Path) -> list[str]:
                     errors.append(f"{where}: English should end with . ? or !: {en!r}")
                 if not 2 <= len(en.split()) <= 35:
                     errors.append(f"{where}: English should be 2-35 words: {en!r}")
+            low, high = TRANSLATE_WORDS[item["level"]]
+            if not low <= len(item["en"].split()) <= high:
+                errors.append(f"{where}: L{item['level']} English should be {low}-{high} words")
             if len({a.lower() for a in [item["en"], *alt]}) != 1 + len(alt):
                 errors.append(f"{where}: alt repeats a sentence")
             for key in (item["en"].lower(), item["zh"]):
                 if key in sentences:
                     errors.append(f"{where}: duplicate sentence (also {sentences[key]})")
                 sentences[key] = item["id"]
-        for level in (1, 2, 3):
+        for level in TRANSLATE_LEVELS:
             for scene in TRANSLATE_SCENES:
                 n = spread.get((level, scene), 0)
                 if n != TRANSLATE_PER_SCENE:

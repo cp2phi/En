@@ -72,16 +72,55 @@ passes. One file per sentence type, each a JSON array with one sentence per line
 {"id":"t-passive-01","level":1,"scene":"work","zh":"会议推迟到下周了。","en":"The meeting's been pushed back to next week.","alt":["The meeting has been postponed until next week."],"point":"中文没有“被”，英文也要用被动：has been pushed back"}
 ```
 
-- `id`: `t-<file name>-NN`, numbered 01–60 in file order: L1 first (01–20),
-  then L2 (21–40), then L3 (41–60).
-- `level`: 1–3, exactly 20 per level.
-  - **L1**: one short clause, 3–10 English words, very common words. The
+- `id`: `t-<file name>-NN`, unique, never reused or renumbered (progress is
+  stored by id). The first 60 of each file are 01–60; new sentences are
+  appended and keep counting (61, 62 … 100, 101 …).
+- `level`: 1–6, exactly 75 per level (450 per file). Levels grow in structure
+  and register, not just length (English word count of `en` in brackets):
+  - **L1** (2–11 words, aim 3–8): one short clause, very common words. The
     pattern in its plainest form.
-  - **L2**: 8–16 words, adds a detail (time, reason, a second short clause).
-  - **L3**: 14–28 words, two or three clauses, real work-email or meeting
-    register, a collocation or idiom a fluent speaker would use.
-- `scene`: one of `work`, `tech`, `restaurant`, `sports`, `shopping`, `travel`,
-  `health`, `home`, `social`, `money`. **Exactly 2 per scene in each level.**
+  - **L2** (5–17, aim 8–14): one clause plus a detail (time, place, reason, a
+    second short clause).
+  - **L3** (8–20, aim 10–18): two clauses or a less common form of the
+    pattern; everyday-life vocabulary (bond, GP, power bill, WOF, rego).
+  - **L4** (12–28, aim 16–24): two or three clauses, the register of a real
+    message, phone call or meeting; a collocation a fluent speaker would use.
+  - **L5** (14–32, aim 18–28): formal or official register: writing to a
+    landlord, school, council, insurer or bank, a complaint, a negotiation, an
+    interview answer. Precise vocabulary; may combine two patterns.
+  - **L6** (16–35, aim 20–32): native-like nuance: hedging and tact, implied
+    meaning, idioms and phrasal verbs, persuasion, gentle humour or pushback.
+    Several clauses that still sound like one natural sentence.
+- `scene`: one of the 25 scenes below. **Exactly 3 per scene in each level.**
+
+| Scene | Covers |
+|---|---|
+| `work` | office life, meetings, colleagues, deadlines, managers |
+| `tech` | IT work, computers, software, accounts, passwords, devices |
+| `jobhunt` | CVs, applications, interviews, references, salary, contracts, resigning |
+| `study` | courses, uni and polytech, English classes, exams, library, enrolment |
+| `home` | housework, cooking at home, furniture, garden, rubbish and recycling |
+| `renting` | flat hunting, viewings, bond, rent, landlord and property manager, flatmates, inspections, moving |
+| `neighbours` | neighbours, noise, fences, parking, community groups, lost cats, local events |
+| `utilities` | power, gas, water, broadband, mobile plans, bills, outages, calling a provider |
+| `repairs` | plumbers, electricians, builders, quotes, appliances breaking, DIY |
+| `shopping` | supermarket, returns, refunds, sizes, sales, online orders, deliveries |
+| `restaurant` | ordering, booking, cafés, takeaways, dietary needs, paying, complaints |
+| `money` | banking, cards, budgets, tax, KiwiSaver, loans, mortgages, scams, splitting costs |
+| `admin` | visas, IRD, council, passports, forms, the post office, government agencies, appointments |
+| `health` | GP, pharmacy, dentist, hospital, symptoms, prescriptions, ACC, insurance claims |
+| `emergency` | 111, police, fire, ambulance, accidents, theft, lost property, earthquakes, storms |
+| `driving` | driving, WOF, rego, parking, petrol, car repairs, buses, trains, ferries, commuting |
+| `travel` | flights, airports, hotels, bookings, holidays, customs, travel insurance |
+| `outdoors` | weather, beach, tramping, camping, gardens and parks, sun and safety |
+| `sports` | playing and watching sport, gym, teams, rugby, cricket, running |
+| `leisure` | hobbies, movies, concerts, books, games, clubs, going out, haircuts |
+| `social` | friends, small talk, invitations, parties, catching up, making plans |
+| `occasions` | birthdays, weddings, funerals, Christmas, Chinese New Year, gifts, public holidays |
+| `family` | kids, school and daycare, parents, partners' families, parenting |
+| `pets` | dogs and cats, the vet, pet sitting, walking the dog, pet rules in a rental |
+| `feelings` | emotions, relationships, apologising, comforting, disagreements, stress |
+
 - `zh`: natural Chinese the way a Chinese speaker would really say it, not
   Chinese written to mirror the English. The point of the exercise is the gap
   between the two. If the English tense is not clear from the Chinese, add a

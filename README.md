@@ -20,7 +20,7 @@ The interface is in English. Chinese appears only as learning support: the sente
 | Page | What it does |
 |---|---|
 | Cloze | Chinese → English fill-in-the-blank, served continuously. Filter by word class (or grammar topic), scene and level. An answer counts only if the word, its form and its spelling are all right. |
-| Translate | Whole-sentence Chinese → English. Filter by sentence type, scene and level. Type the full sentence and press Enter: the AI says ✅ correct and natural, ⚠️ almost or ❌ not quite, lists at most three fixes (wrong part → fix, a short reason in Chinese) and shows your sentence fixed. Any correct, natural translation passes, not only the reference. Then you see the reference, other ways to say it and a 💡 line on the trap for Chinese speakers. **Show answer** any time; a revealed sentence goes to the wrong book. After a wrong answer you choose: **Next** (move on) or **Save to wrong book & next**. **☆ Save** puts any sentence in the wrong book. **Add to word bank** brings you back to the same card after saving. Without an OpenAI key you compare with the answer and mark it yourself. |
+| Translate | Whole-sentence Chinese → English. Filter by sentence type, scene and level. Type the full sentence and press Enter: the AI says ✅ correct and natural, ⚠️ almost or ❌ not quite, lists at most three fixes (wrong part → fix, a short reason in Chinese) and shows your sentence fixed. Any correct, natural translation passes, not only the reference. Then you see the reference, other ways to say it and a 💡 line on the trap for Chinese speakers. **Show answer** any time; a revealed sentence goes to the wrong book. After a wrong answer you choose: **Next** (move on) or **Save to wrong book & next**. **☆ Save** puts any sentence in the wrong book. **Add to word bank** brings you back to the same card after saving (or **← Back to the card** without saving). Without an OpenAI key you compare with the answer and mark it yourself. |
 | Wrong book | Two tabs, Translation and Cloze. Every question you missed or revealed, and every sentence you saved with ☆, to read through (with your last answer) or redo them all. **Remove** takes one off the list (its redo schedule stays; it comes back if you miss it again). |
 | Keep writing | A six-level ladder, L1–L6: one-sentence translation → chat message → email → story or opinion → multi-paragraph piece → speech script. Five good sessions on a level unlock the next. You can write a Chinese word where you don't know the English. After you submit you get a natural rewrite, at most three issues that matter, and expressions you can save to the word bank with one click. |
 | Keep speaking | A six-level ladder, L1–L6: repeat a sentence → 30 seconds → an experience → an opinion → improvised story or rebuttal → impromptu speech. Recording, a timer and a "stuck" button; your speech is transcribed and you get feedback. |
@@ -60,7 +60,7 @@ Each practice module has its own question bank and does not draw on your word ba
 | Combos (multiple blanks) | 20 | A verb and a noun blanked in the same sentence |
 | Grammar topics | 420 | Past 100, future 40, present continuous 40, subjunctive 40, other common tenses 60, third person 40, plurals 40, other grammar 60. Only the first letter is shown, not the base form, so the word and its form are tested together |
 
-Sentence translation: 660 sentences in `translate/`, 11 sentence types × 3 levels × 20, with 2 per scene (the same 10 scenes as cloze) in each level:
+Sentence translation: 4,950 sentences in `translate/`, 11 sentence types × 6 levels × 75, with 3 per scene in each level. The 25 scenes cover daily life in New Zealand: work, IT, job hunting, study, home, renting & flatting, neighbours, power/internet/phone plans, tradies & repairs, shopping, restaurants, money, paperwork & government, health, emergencies & police, driving & transport, travel, weather & outdoors, sport, hobbies & going out, social life, holidays & occasions, family & kids, pets, feelings & relationships:
 
 | Sentence type | Trains |
 |---|---|
@@ -76,7 +76,7 @@ Sentence translation: 660 sentences in `translate/`, 11 sentence types × 3 leve
 | Passive without 被 | 会议取消了 / 包裹送到了 |
 | Comparisons | -er / more, as … as, much + comparative, prefer … to |
 
-Levels: L1 one short clause, L2 adds a detail or a second clause, L3 two or three clauses in work-email or meeting register.
+Levels: L1 one short clause, L2 adds a detail, L3 two clauses with everyday-life vocabulary, L4 two or three clauses in message, phone-call or meeting register, L5 formal or official register (landlord, council, insurer, complaints), L6 native-like nuance (tact, hedging, idioms, implied meaning).
 
 Practice prompts: keep writing 240, work writing 115, keep speaking 240, small talk 400, meeting language 150, presenting data 160, introducing yourself 125, Improv 250, Toastmasters 160, conversation scenarios 42.
 
@@ -96,11 +96,12 @@ Themed card lists in `vocab/`, added from the Word bank page. Each card has the 
 
 ## Review rules
 
-- **Forgot**: comes back at least 2 more times the same day, then the next day.
+- **Forgot**: comes back once more the same day. Right that time: done for today, back the next day. Wrong again: once more, so at most 3 showings that day, then the next day.
 - **Fuzzy**: comes back at least once more the same day; the interval does not grow.
+- A card is shown at most 3 times a day, and a same-day repeat waits until 10 other cards have been shown. Repeats past the limit move to the next day.
 - **Remembered**: intervals of 1, 3, 7, 15, 30, 60, then 120 days.
 - **Cloze**: a question answered right the first time does not come back. **I don't know** (before answering, or after a right answer you only guessed) shows the answer and treats it as **Forgot**, and so does a wrong first answer: all go to the wrong book. **Add to word bank** also puts the question in the wrong book (not counted as a mistake) and brings you back to the same card after saving. The answer shows the best answer first, with the blank words highlighted, then every other accepted answer. It passes once you keep getting it right until its interval reaches 15 days.
-- **Translate**: ✅ the first time means done. **Show answer** is treated as **Forgot** and goes to the wrong book. After ⚠️ or ❌ you choose: **Next** marks the sentence done without saving it; **Save to wrong book & next** treats it as **Forgot**. **☆ Save** puts a sentence in the wrong book without counting it as a mistake, and it comes back tomorrow.
+- **Translate**: ✅ the first time means done. **Show answer** is treated as **Forgot** and goes to the wrong book. After ⚠️ or ❌ you choose: **Next** marks the sentence done without saving it; **Save to wrong book & next** treats it as **Forgot**. If you leave a checked sentence before choosing (another page, a filter, closing or reloading the tab), it is saved to the wrong book; a sentence you never checked stays new. **☆ Save** puts a sentence in the wrong book without counting it as a mistake, and it comes back tomorrow.
 - Cloze questions, translation sentences and words can all be set to **Never show again**.
 - **← Previous** brings back what you just did. In Cloze and Translate it shows your last 20 answered cards with their buttons still working (e.g. **I don't know**, **☆ Save**), then **Back to current** returns to the question you were on, with what you'd typed still there. In Keep writing, Keep speaking, Conversation, Improv and Toastmasters it shows earlier AI feedback. In Review words, **← Previous card** takes back your last rating (up to 20) so you can rate the card again. None of this survives a page reload or a server restart. Cloze and Translate also lose it when you change the word class, sentence type or scene.
 

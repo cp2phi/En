@@ -21,7 +21,14 @@ const SCENE_NAMES = {
   study: "Learning & study", body: "Body & movement", nature: "Animals & plants", news: "News, law & society",
   media: "Phone & social media", hobbies: "Hobbies & arts", talk: "Ways of talking", mind: "Thinking & deciding",
   diy: "DIY & repairs",
+  renting: "Renting & flatting", utilities: "Power, internet & phone plans", neighbours: "Neighbours & community",
+  leisure: "Hobbies & going out", emergency: "Emergencies & police", jobhunt: "Job hunting", pets: "Pets & the vet",
+  repairs: "Tradies & repairs", occasions: "Holidays & special occasions",
 };
+// Translation scenes, in the order the dropdown shows them.
+const TRANSLATE_SCENES = ["work", "tech", "jobhunt", "study", "home", "renting", "neighbours", "utilities", "repairs",
+  "shopping", "restaurant", "money", "admin", "health", "emergency", "driving", "travel", "outdoors", "sports",
+  "leisure", "social", "occasions", "family", "pets", "feelings"];
 // Sentence translation: one file per sentence type, in this order.
 const TYPE_NAMES = {
   subjectless: "No subject in Chinese (下雨了 / 该走了)", topic: "Topic first & 把 (这事我来办)",
@@ -66,8 +73,8 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 
-async function api(method, path, body) {
-  const options = { method };
+async function api(method, path, body, extra = {}) {
+  const options = { method, ...extra };
   if (body !== undefined) {
     options.headers = { "Content-Type": "application/json" };
     options.body = JSON.stringify(body);
@@ -86,6 +93,7 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
 }
+
 
 // ---- read aloud --------------------------------------------------------
 // Natural OpenAI voice when enabled (generated once, cached on disk by the server and
@@ -287,7 +295,7 @@ async function homeView() {
         "#cloze", "Start cloze"),
       activity("Translate",
         [num(s.translate.due, "to redo"), num(s.translate.unseen, "not done")],
-        `${fmt(s.translate.passed)} passed · ${fmt(s.translate.learning)} learning`,
+        `${fmt(s.translate.passed)} passed · ${fmt(s.translate.learning)} learning` + (s.translate.never ? ` · ${fmt(s.translate.never)} hidden` : ""),
         "#translate", "Translate sentences"),
     ),
     s.has_key ? null : h("p", { class: "notice" }, "No OpenAI key yet, so AI explanations and feedback are off. Add it in Settings."),
@@ -302,15 +310,15 @@ function filledSentence(parts, fills) {
     : h("mark", { class: "fill" }, (fills && fills[p.blank]) || p.fill)));
 }
 const sameAnswer = (a, b) => a.trim().toLowerCase().replace(/\s+/g, " ") === b.trim().toLowerCase().replace(/\s+/g, " ");
-// The other accepted answers, one line per blank that has any. given (optional): what the
-// learner typed; an accepted alternative they used is marked "yours". Each answer is highlighted.
+// Every accepted answer, main one first, one line per blank that has alternatives (the full
+// list, so it can be copied onto a flashcard). given (optional): what the learner typed; the
+// answer they used is marked "yours". Each answer is highlighted.
 function acceptedLines(accepted, given) {
   return accepted.map((answers, i) => {
-    const others = answers.slice(1);
-    if (!others.length) return null;
-    const lead = accepted.length > 1 ? `Blank ${i + 1}, also accepted: ` : "Also accepted: ";
+    if (answers.length < 2) return null;
+    const lead = accepted.length > 1 ? `Blank ${i + 1}, accepted: ` : "Accepted: ";
     return h("div", { class: "also" }, h("span", { class: "muted" }, lead),
-      others.flatMap((a, k) => [k ? " · " : "", h("mark", { class: "fill" }, a),
+      answers.flatMap((a, k) => [k ? " · " : "", h("mark", { class: "fill" }, a),
         given && given[i] && sameAnswer(given[i], a) ? " (yours)" : ""]));
   });
 }
@@ -419,10 +427,18 @@ async function clozeView() {
       );
     }
 
+    let checking = false; // a second Enter while the first check is on its way is ignored
     async function submit() {
-      const result = await api("POST", "cloze/answer", {
-        id: q.id, answers: inputs.map((i) => i.value), record: !attempted,
-      });
+      if (checking || entry.done) return;
+      checking = true;
+      let result;
+      try {
+        result = await api("POST", "cloze/answer", {
+          id: q.id, answers: inputs.map((i) => i.value), record: !attempted,
+        });
+      } finally {
+        checking = false;
+      }
       result.blanks.forEach((b, i) => { inputs[i].className = "blank " + b.kind; });
       if (result.correct) return finish(result, !attempted, inputs.map((i) => i.value));
       attempted = true;
@@ -478,7 +494,9 @@ async function clozeView() {
             toast("Also added to the wrong book");
           }
           parkPage("#cloze", clozeFilters); // come back to this same card after saving the word
-          prefill = { term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }],
+          // The sentence and the blank word(s) go to the top, and the AI fills in the card.
+          prefill = { sentence: result.sentence, focus: result.answers.join(", "), explain: true,
+            term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }],
             tags: ["Cloze"], returnTo: "#cloze" };
           location.hash = "#add";
         } }, "Add to word bank"),
@@ -543,8 +561,21 @@ function markChanges(model, other) {
 const translateMeta = () => api("GET", "translate/meta?" + new URLSearchParams(
   Object.entries({ type: translateFilters.type, scene: translateFilters.scene }).filter(([, v]) => v)));
 
+// The Translate card on screen. If it was answered (checked) but the learner has not
+// picked "Next" or "Save to wrong book" yet, leaving it any other way (a filter,
+// another page, closing the tab) counts as wrong and saves it to the wrong book.
+// A card that was never answered is left alone and stays new.
+let leaveTranslateCard = null;
+function settleTranslateCard(keepalive = false) {
+  const leave = leaveTranslateCard;
+  leaveTranslateCard = null;
+  return leave ? leave(keepalive) : undefined;
+}
+window.addEventListener("pagehide", () => settleTranslateCard(true));
+
 async function translateView() {
   if (unparkPage("#translate", translateFilters)) return;
+  await settleTranslateCard();
   let { counts } = await translateMeta();
   if (translateFilters.scene && !(translateFilters.scene in counts.scenes)) translateFilters.scene = "";
   if (translateFilters.level && !(translateFilters.level in counts.levels)) translateFilters.level = "";
@@ -552,7 +583,8 @@ async function translateView() {
   const label = (group, k, c) => `${names[group](k)} (${c.total} / ${c.left})`; // total / not yet attempted
   const select = (group, key, placeholder, rerender) => {
     const entries = Object.entries(counts[group]);
-    if (group === "types") entries.sort(([a], [b]) => (TYPE_ORDER.indexOf(a) + 1 || 99) - (TYPE_ORDER.indexOf(b) + 1 || 99));
+    const order = { types: TYPE_ORDER, scenes: TRANSLATE_SCENES }[group];
+    if (order) entries.sort(([a], [b]) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
     return h("select", { "aria-label": placeholder, "data-group": group,
       onchange: (e) => { translateFilters[key] = e.target.value; if (rerender) translateView(); else loadQuestion(); } },
       h("option", { value: "" }, placeholder),
@@ -590,6 +622,7 @@ async function translateView() {
   const advance = () => (earlier.reviewing ? earlier.forward() : loadQuestion());
 
   async function loadQuestion() {
+    await settleTranslateCard();
     if (current && current.done) {
       current.refresh(); // its buttons now reflect what was recorded on leaving it
       earlier.keep(current);
@@ -624,6 +657,14 @@ async function translateView() {
     let shown = null; // the last answer shown, for redrawing the buttons
     const entry = { nodes: [card], done: false, refresh: () => { input.disabled = true; if (shown) drawActions(shown); } };
     current = entry;
+    leaveTranslateCard = (keepalive) => {
+      if (!attempted || settled) return undefined; // not answered, or already recorded
+      settled = true;
+      inBook = true;
+      if (!keepalive) toast("Saved to the wrong book");
+      return api("POST", "translate/mark", { id: q.id, outcome: "wrong" }, keepalive ? { keepalive: true } : {})
+        .catch((e) => toast(e.message));
+    };
 
     function drawTags() {
       fill(tags,
@@ -649,6 +690,7 @@ async function translateView() {
 
     const never = async () => {
       await api("POST", "translate/mark", { id: q.id, outcome: "never" });
+      settled = true; // recorded: leaving it must not save it to the wrong book as well
       toast("This sentence won't appear again");
       advance();
     };
@@ -821,16 +863,17 @@ async function wrongbookView() {
           })
         : h("div", { class: "card" }, "Nothing here yet. Sentences whose answer you reveal land here, and so do the ones you save (☆, or Save to wrong book after a wrong answer)."),
       translateRows.map((item) => h("div", { class: "card" },
-        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap" },
-          h("div", { class: "zh", style: "margin:0" }, item.zh),
+        h("div", { class: "row", style: "justify-content:space-between;flex-wrap:nowrap;align-items:flex-start" },
+          h("div", { class: "answer", style: "margin:0" }, item.en,
+            h("button", { class: "link", type: "button", onclick: () => speak(item.en) }, "🔊")),
           remove("translate/wrongbook/remove", item.id, "sentence")),
-        h("div", { class: "muted" },
-          [TYPE_NAMES[item.type] || item.type, SCENE_NAMES[item.scene] || item.scene, "L" + item.level,
-            item.starred ? "★ saved" : null, item.wrong ? `wrong ${item.wrong}×` : null].filter(Boolean).join(" · ")),
-        h("div", { class: "answer" }, item.en,
-          h("button", { class: "link", type: "button", onclick: () => speak(item.en) }, "🔊")),
-        item.last_answer ? h("div", { class: "muted" }, "Your last answer: " + item.last_answer) : null,
-        item.point ? h("div", { class: "note" }, "💡 " + item.point) : null))]
+        h("div", { class: "book-zh" }, item.zh),
+        h("details", { class: "fold", style: "margin-top:4px" }, h("summary", {}, "Details"),
+          h("div", { class: "muted" },
+            [TYPE_NAMES[item.type] || item.type, SCENE_NAMES[item.scene] || item.scene, "L" + item.level,
+              item.starred ? "★ saved" : null, item.wrong ? `wrong ${item.wrong}×` : null].filter(Boolean).join(" · ")),
+          item.last_answer ? h("div", { class: "muted" }, "Your last answer: " + item.last_answer) : null,
+          item.point ? h("div", { class: "note" }, "💡 " + item.point) : null)))]
     : [clozeRows.length
         ? redoAll(() => {
             Object.assign(clozeFilters, { pos: "", scene: "", level: "", mode: "wrongbook" });
@@ -981,16 +1024,65 @@ function pictureBox(word, onchange) {
 }
 pictureBox.tried = new Set(); // one automatic attempt per card per page load
 
+// A regex for term inside a sentence, allowing common endings on each word
+// (make → makes / making, stop → stopped, carry → carried, bleeding → bleeds).
+// "restart · reboot" matches either. null if term has no letters.
+function termPattern(term) {
+  const word = (t) => {
+    let stem = t;
+    if (stem.length > 5 && stem.endsWith("ing")) stem = stem.slice(0, -3);
+    else if (stem.length > 5 && /[^e]ed$/.test(stem)) stem = stem.slice(0, -2);
+    else if (stem.length > 3 && /[ey]$/.test(stem)) stem = stem.slice(0, -1);
+    const esc = stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return `${esc}${esc.slice(-1)}?(?:e|y|s|es|ed|d|ing|ies|ied|ier|iest|er|est|ly)?`;
+  };
+  const phrases = term.toLowerCase().split(/[·,;/|]/)
+    .map((p) => p.match(/[a-z0-9']+/g)).filter(Boolean)
+    .map((tokens) => tokens.map(word).join("[\\s-]+"));
+  return phrases.length ? new RegExp(`\\b(?:${phrases.join("|")})\\b`, "gi") : null;
+}
+
+// The sentence with each occurrence of term bold and highlighted.
+function highlightTerm(sentence, term) {
+  const re = term && termPattern(term);
+  if (!re) return sentence;
+  const out = [];
+  let last = 0;
+  for (const m of sentence.matchAll(re)) {
+    out.push(sentence.slice(last, m.index), h("mark", { class: "fill" }, m[0]));
+    last = m.index + m[0].length;
+  }
+  return last ? [...out, sentence.slice(last)] : sentence;
+}
+
+const SHOWN_EXAMPLES = 3;
+
 function cardDetails(word) {
+  const examples = [
+    ...word.examples.map((ex) => h("div", { class: "example" }, highlightTerm(ex.en, word.term),
+      h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
+      h("span", { class: "muted" }, ex.zh))),
+    ...word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ ", highlightTerm(ex, word.term))),
+  ];
+  // A fresh order every time the card is shown, so a different example leads.
+  for (let i = examples.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [examples[i], examples[j]] = [examples[j], examples[i]];
+  }
+  const hidden = examples.slice(SHOWN_EXAMPLES);
+  hidden.forEach((el) => { el.hidden = true; });
+  const more = hidden.length ? h("button", { class: "link", type: "button", onclick: () => {
+    const open = hidden[0].hidden;
+    hidden.forEach((el) => { el.hidden = !open; });
+    more.textContent = open ? "Show fewer" : `View more (${hidden.length})`;
+  } }, `View more (${hidden.length})`) : null;
   return [
     word.respelling ? h("div", { class: "muted" }, word.respelling) : null,
     word.zh ? h("div", { class: "zh" }, (word.emoji ? word.emoji + " " : "") + word.zh) : null,
     word.definition ? h("p", {}, word.definition) : null,
     pictureBox(word),
-    word.examples.map((ex) => h("div", { class: "example" }, ex.en,
-      h("button", { class: "link", type: "button", onclick: () => speak(ex.en) }, "🔊"),
-      h("span", { class: "muted" }, ex.zh))),
-    word.my_examples.map((ex) => h("div", { class: "example" }, "✍️ " + ex)),
+    examples,
+    more,
     word.note ? h("div", { class: "note pre" }, word.note) : null,
     tagList(word.tags),
   ];
@@ -1090,6 +1182,7 @@ function addView() {
   const sentence = h("textarea", { rows: 2, placeholder: "Paste the sentence you heard or read. A fragment is fine (optional)" });
   sentence.value = draft.sentence || "";
   const focus = field({ placeholder: "Which part don't you understand? A word, phrase or pattern (blank = the whole sentence)" });
+  focus.value = draft.focus || "";
   const term = field({ value: draft.term || "" });
   const respelling = field({ placeholder: "e.g. post-POHN" });
   const definition = field({});
@@ -1118,7 +1211,9 @@ function addView() {
       term.value = r.term;
       respelling.value = r.respelling;
       definition.value = r.definition;
-      const mine = r.sentence ? [{ en: r.sentence, zh: r.sentence_zh }] : [];
+      // Keep the source card's own Chinese for its sentence (e.g. from Cloze).
+      const known = (draft.examples || []).find((ex) => ex.zh && r.sentence && sentenceKey(ex.en) === sentenceKey(r.sentence));
+      const mine = r.sentence ? [{ en: r.sentence, zh: known ? known.zh : r.sentence_zh }] : [];
       setExamples([...mine, ...r.examples]);
       fill(notesBox, 
         h("label", {}, "AI notes (ticked ones go into the note)"),
@@ -1151,7 +1246,10 @@ function addView() {
   }
 
   show(
-    h("h1", {}, "Add / Capture"),
+    h("div", { class: "page-head" }, h("h1", {}, "Add / Capture"),
+      // Came from a Cloze or Translate card: a way back to it without saving anything.
+      draft.returnTo ? h("div", { class: "actions" }, h("button", { type: "button",
+        onclick: () => { location.hash = draft.returnTo; } }, "← Back to the card")) : null),
     h("div", { class: "card" },
       h("label", {}, "Original sentence"), sentence,
       h("label", {}, "The part you don't understand"), focus,
@@ -1170,6 +1268,7 @@ function addView() {
       h("div", { class: "row", style: "margin-top:12px" },
         h("button", { class: "primary", type: "button", onclick: save }, "Save to word bank"))),
   );
+  if (draft.explain && settings.has_key && sentence.value.trim()) explain();
 }
 
 function addedToast(r) {
@@ -1278,6 +1377,7 @@ function packCard(p) {
 }
 
 const bankTags = loadSaved("bankTags", []);
+let bankSearch = ""; // kept while the list redraws after an edit or delete
 
 async function wordsView() {
   const [{ words, tags }, { packs }] = await Promise.all([api("GET", "words"), api("GET", "words/packs")]);
@@ -1285,7 +1385,7 @@ async function wordsView() {
     t === UNTAGGED ? !(w.tags || []).length : (w.tags || []).some((x) => x === t || x.startsWith(t + "/")));
   const body = h("div", { class: "wordlist" });
   const count = h("span", { class: "muted" });
-  let search = "";
+  let search = bankSearch;
   const LIMIT = 300; // rows drawn at once; search or filter to narrow down
   const draw = () => {
     const list = words.filter((w) => matches(w) && (!search || w.term.toLowerCase().includes(search.toLowerCase())
@@ -1335,8 +1435,8 @@ async function wordsView() {
       h("summary", {}, h("b", {}, "Word packs"), h("span", { class: "muted" }, " · themed lists you can add with one click")),
       h("p", { class: "muted" }, "Preview a pack, tick the topics or single cards you want, and add only those. New cards join the review queue in pack order, within your daily new-word limit (Settings)."),
       packCards) : null,
-    h("input", { class: "wide search", type: "search", placeholder: "Search English or Chinese",
-      oninput: (e) => { search = e.target.value.trim(); draw(); } }),
+    h("input", { class: "wide search", type: "search", placeholder: "Search English or Chinese", value: bankSearch,
+      oninput: (e) => { search = bankSearch = e.target.value.trim(); draw(); } }),
     Object.keys(tags).length ? tagFilter(tags, bankTags, () => { remember("bankTags", bankTags); draw(); }) : null,
     h("div", { class: "card flush" }, body),
   );
@@ -1601,6 +1701,8 @@ async function practiceView(module) {
         f ? h("p", {}, f.comment) : null,
         r.ai_error ? h("p", { class: "feedback" }, h("span", { class: "bad" }, "No AI feedback: " + r.ai_error)) : null,
         !f && !r.ai_error && text ? h("p", { class: "muted" }, "No OpenAI key, so only the stats were recorded.") : null,
+        mode === "speak" && !text && settings.has_key
+          ? h("p", { class: "muted" }, "Nothing was heard in the recording, so there is no feedback. Try again a bit closer to the microphone.") : null,
         h("div", { class: "row live-only", style: "margin-top:10px" },
           nextButton,
           h("button", { type: "button", onclick: () => { keepFeedback(label); loadPrompt(prompt); } }, "Same prompt again"))),
@@ -2219,6 +2321,9 @@ async function render() {
   cancelRecording();
   stopSpeaking();
   const name = location.hash.slice(1) || "home";
+  // "add" parks the Translate card and comes back to it; "translate" settles it itself.
+  if (name !== "add" && name !== "translate") await settleTranslateCard();
+  if ((location.hash.slice(1) || "home") !== name) return; // another link was clicked meanwhile
   document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + name));
   // On phones the links are one scrolling strip: keep the current page's link in view.
   const active = document.querySelector("nav a.active");
