@@ -237,7 +237,7 @@ class ServerTest(unittest.TestCase):
         _, nxt = self.call("GET", "/api/words/next")
         self.assertEqual(nxt["word"]["id"], word_id)
         _, rated = self.call("POST", "/api/words/rate", {"id": word_id, "rating": "forget"})
-        self.assertEqual(rated["word"]["srs"]["same_day_left"], 2)
+        self.assertEqual(rated["word"]["srs"]["same_day_left"], 1)
         self.assertEqual(self.call("POST", "/api/words/rate", {"id": word_id, "rating": "x"})[0], 400)
         self.assertEqual(self.call("POST", "/api/words/rate", {"id": "nope", "rating": "forget"})[0], 404)
 
@@ -247,7 +247,7 @@ class ServerTest(unittest.TestCase):
         _, undone = self.call("POST", "/api/words/undo", {})
         self.assertEqual(undone["rating"], "never")
         self.assertFalse(undone["word"]["srs"]["never"])
-        self.assertEqual(undone["word"]["srs"]["same_day_left"], 2)
+        self.assertEqual(undone["word"]["srs"]["same_day_left"], 1)
         self.assertTrue(undone["can_undo"])
         _, undone = self.call("POST", "/api/words/undo", {})
         self.assertEqual(undone["rating"], "forget")

@@ -1,9 +1,9 @@
 """Spaced repetition shared by word cards and cloze questions.
 
 Rules:
-- forget:   the item comes back FORGET_REPEATS more times today, then tomorrow.
-            Forgotten again on one of today's repeats: REPEAT_FORGET_REPEATS
-            more time (not back up to FORGET_REPEATS).
+- forget:   the item comes back FORGET_REPEATS more time today. Right on that
+            repeat: done for today, back tomorrow. Wrong again: one more
+            time, up to MAX_DAY_SHOWS showings, then tomorrow.
 - fuzzy:    the item comes back at least FUZZY_REPEATS more time today,
             its interval is not lengthened.
 - an item is shown at most MAX_DAY_SHOWS times a day; repeats past that move
@@ -16,8 +16,7 @@ Rules:
 from datetime import date, timedelta
 
 LADDER = [1, 3, 7, 15, 30, 60, 120]
-FORGET_REPEATS = 2
-REPEAT_FORGET_REPEATS = 1
+FORGET_REPEATS = 1
 FUZZY_REPEATS = 1
 MAX_DAY_SHOWS = 3
 # A same-day repeat waits until this many other items have been shown.
@@ -80,7 +79,7 @@ def rate(state: dict, rating: str, today: date, seq: int, same_showing: bool = F
     elif rating == "forget":
         s["lapses"] += 1
         s["interval"] = 1
-        s["same_day_left"] = FORGET_REPEATS if shows <= 1 else REPEAT_FORGET_REPEATS
+        s["same_day_left"] = FORGET_REPEATS
         s["due"] = today.isoformat()
     elif rating == "fuzzy":
         s["interval"] = max(s["interval"], 1)

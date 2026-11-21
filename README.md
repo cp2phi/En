@@ -96,7 +96,7 @@ Themed card lists in `vocab/`, added from the Word bank page. Each card has the 
 
 ## Review rules
 
-- **Forgot**: comes back 2 more times the same day, then the next day. Forgot again on one of those repeats: once more that day (not 2 again).
+- **Forgot**: comes back once more the same day. Right that time: done for today, back the next day. Wrong again: once more, so at most 3 showings that day, then the next day.
 - **Fuzzy**: comes back at least once more the same day; the interval does not grow.
 - A card is shown at most 3 times a day, and a same-day repeat waits until 10 other cards have been shown. Repeats past the limit move to the next day.
 - **Remembered**: intervals of 1, 3, 7, 15, 30, 60, then 120 days.
