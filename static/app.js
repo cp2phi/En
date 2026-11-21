@@ -1449,6 +1449,9 @@ const practicePast = {}; // per module: feedback you moved on from, for "← Pre
 // Tag given to words saved from each practice module's feedback.
 const MODULE_TAGS = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters",
   talk: "Conversation" };
+// Difficulty of a prompt's "Word ideas" (lv in prompts/*.json), easiest first.
+const WORD_LEVELS = [[2, "中下"], [3, "中"], [4, "中上"], [5, "上"]];
+let wordIdeasOpen = false;
 // Saved words from private practice get this tag and no example sentence, so nothing about the
 // project reaches data/words.json (which is synced).
 const PRIVATE_TAG = "My projects";
@@ -1562,6 +1565,7 @@ async function practiceView(module) {
       // otherwise it is only a translation of the instruction.
       prompt.task.startsWith("Translate") ? h("div", { class: "zh" }, prompt.zh)
         : prompt.zh ? chineseToggle(prompt.zh) : null,
+      wordIdeas(prompt),
       work));
     if (module === "talk") return talkInput(prompt, work);
     if (prompt.say) say(prompt, prompt.say);
@@ -1762,6 +1766,31 @@ async function practiceView(module) {
     } }, "+ Add to word bank");
     return h("div", { class: "example" }, h("b", {}, v.term), " " + v.zh, add,
       h("span", { class: "muted" }, v.example));
+  }
+
+  // "Word ideas": words and phrases the learner could use, grouped by difficulty.
+  // Folded at first; once opened it stays open for the next prompts.
+  function wordIdeas(prompt) {
+    if (!prompt.words || !prompt.words.length) return null;
+    const groups = WORD_LEVELS.map(([lv, label]) => [label, prompt.words.filter((w) => w.lv === lv)])
+      .filter(([, ws]) => ws.length);
+    const chip = (w) => {
+      const add = h("button", { class: "link", type: "button", title: "Add to word bank", onclick: async () => {
+        const res = await api("POST", "words", prompt.private
+          ? { term: w.en, zh: w.zh, tags: [PRIVATE_TAG], examples: [] }
+          : { term: w.en, zh: w.zh, tags: [MODULE_TAGS[module], `${MODULE_TAGS[module]}/${track.name}`], examples: [] });
+        add.disabled = true;
+        add.textContent = res.duplicate ? "✓ saved" : "✓";
+      } }, "+");
+      return h("span", { class: `idea lv${w.lv}` },
+        h("button", { class: "idea-en", type: "button", title: "Listen", onclick: () => say(prompt, w.en) }, w.en),
+        h("span", { class: "idea-zh" }, w.zh), add);
+    };
+    const panel = h("details", { class: "fold ideas", open: wordIdeasOpen, ontoggle: () => { wordIdeasOpen = panel.open; } },
+      h("summary", {}, `💡 Word ideas (${prompt.words.length})`,
+        h("span", { class: "muted" }, " · words you could use: tap to hear, + to save")),
+      groups.map(([label, ws]) => h("div", { class: "idea-row" }, h("span", { class: "idea-lv" }, label), ws.map(chip))));
+    return panel;
   }
 
   // Free topic: the learner picks who they talk to and what about.
