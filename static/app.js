@@ -495,7 +495,7 @@ async function clozeView() {
           }
           parkPage("#cloze", clozeFilters); // come back to this same card after saving the word
           // The sentence and the blank word(s) go to the top, and the AI fills in the card.
-          prefill = { sentence: result.sentence, focus: result.answers.join(", "), explain: true,
+          prefill = { sentence: result.sentence, focus: result.answers.join(" … "), explain: true,
             term: result.answers[0], examples: [{ en: result.sentence, zh: result.zh }],
             tags: ["Cloze"], returnTo: "#cloze" };
           location.hash = "#add";
@@ -647,7 +647,7 @@ async function translateView() {
     let settled = false;
     let tries = 0;
     const input = h("textarea", { class: "translation", rows: 2, autocomplete: "off", spellcheck: "false",
-      placeholder: "Type the whole sentence in English. Enter to check, Shift+Enter for a new line.",
+      "aria-label": "Your English translation",
       onkeydown: (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); check(); } } });
     const feedback = h("div", { class: "feedback" });
     const actions = h("div", { class: "row" });
@@ -1175,39 +1175,54 @@ async function reviewView(undone) {
 }
 
 // ---- words: add / capture ---------------------------------------------
+// "detractor, on-side" -> ["detractor", "on-side"]: one card per word or phrase.
+function splitFocus(text) {
+  return text.split(/[,，;；、\n]/).map((p) => p.trim()).filter(Boolean);
+}
+
 function addView() {
   const draft = prefill || {};
   prefill = null;
   const field = (attrs) => h("input", { class: "wide", ...attrs });
   const sentence = h("textarea", { rows: 2, placeholder: "Paste the sentence you heard or read. A fragment is fine (optional)" });
   sentence.value = draft.sentence || "";
-  const focus = field({ placeholder: "Which part don't you understand? A word, phrase or pattern (blank = the whole sentence)" });
+  const focus = field({ placeholder: "A word, phrase or pattern. Several? Separate them with commas: one card each (blank = the whole sentence)" });
   focus.value = draft.focus || "";
-  const term = field({ value: draft.term || "" });
-  const respelling = field({ placeholder: "e.g. post-POHN" });
-  const definition = field({});
-  const zh = field({ value: draft.zh || "", placeholder: "Chinese meaning (optional)" });
   const tags = field({ value: (draft.tags || ["Manual"]).join(", "),
     placeholder: "Comma-separated, e.g. Manual, Work/Meetings" });
-  const note = h("textarea", { rows: 3 });
-  const examplesBox = h("div", {});
-  const notesBox = h("div", {});
   const aiStatus = h("span", { class: "muted" });
+  const cardsBox = h("div", {});
+  let forms = [];
 
-  const addExample = (ex = {}) => examplesBox.append(h("div", { class: "row example-row", style: "margin-bottom:6px" },
-    h("input", { style: "flex:2", placeholder: "English example", value: ex.en || "" }),
-    h("input", { style: "flex:1", placeholder: "Chinese", value: ex.zh || "" })));
-  const setExamples = (list) => {
-    fill(examplesBox);
-    list.forEach(addExample);
-    for (let i = list.length; i < 3; i++) addExample();
-  };
-  setExamples(draft.examples || []);
-
-  async function explain() {
-    aiStatus.textContent = "Asking the AI…";
-    try {
-      const r = await api("POST", "ai/explain", { sentence: sentence.value, focus: focus.value });
+  // One card's fields. `init` prefills it; apply(r) fills it from an AI explanation.
+  function cardForm(init, label) {
+    const term = field({ value: init.term || "" });
+    const respelling = field({ placeholder: "e.g. post-POHN" });
+    const definition = field({});
+    const zh = field({ value: init.zh || "", placeholder: "Chinese meaning (optional)" });
+    const note = h("textarea", { rows: 3 });
+    const examplesBox = h("div", {});
+    const notesBox = h("div", {});
+    const addExample = (ex = {}) => examplesBox.append(h("div", { class: "row example-row", style: "margin-bottom:6px" },
+      h("input", { style: "flex:2", placeholder: "English example", value: ex.en || "" }),
+      h("input", { style: "flex:1", placeholder: "Chinese", value: ex.zh || "" })));
+    const setExamples = (list) => {
+      fill(examplesBox);
+      list.forEach(addExample);
+      for (let i = list.length; i < 3; i++) addExample();
+    };
+    setExamples(init.examples || []);
+    const el = h("div", { class: "card" },
+      label ? h("div", { class: "muted" }, label) : null,
+      h("label", {}, "Word / phrase / pattern"), term,
+      h("label", {}, "Pronunciation respelling"), respelling,
+      h("label", {}, "English definition"), definition,
+      h("label", {}, "Chinese meaning"), zh,
+      h("label", {}, "Examples"), examplesBox,
+      h("button", { class: "link", type: "button", onclick: () => addExample() }, "+ Add an example"),
+      notesBox,
+      h("label", {}, "Note"), note);
+    const apply = (r) => {
       term.value = r.term;
       respelling.value = r.respelling;
       definition.value = r.definition;
@@ -1215,34 +1230,68 @@ function addView() {
       const known = (draft.examples || []).find((ex) => ex.zh && r.sentence && sentenceKey(ex.en) === sentenceKey(r.sentence));
       const mine = r.sentence ? [{ en: r.sentence, zh: known ? known.zh : r.sentence_zh }] : [];
       setExamples([...mine, ...r.examples]);
-      fill(notesBox, 
+      fill(notesBox,
         h("label", {}, "AI notes (ticked ones go into the note)"),
         ...r.notes.map((n) => h("div", {}, h("label", { style: "color:inherit;font-size:16px;margin:4px 0" },
           h("input", { type: "checkbox", value: n }), " " + n))));
-      aiStatus.textContent = "";
-    } catch (e) {
-      aiStatus.textContent = e.message;
+    };
+    const payload = () => {
+      const picked = [...notesBox.querySelectorAll("input:checked")].map((c) => c.value);
+      const examples = [...examplesBox.querySelectorAll(".example-row")].map((row) => {
+        const [en, zh] = row.querySelectorAll("input");
+        return { en: en.value, zh: zh.value };
+      });
+      return { term: term.value, respelling: respelling.value, definition: definition.value, zh: zh.value,
+        examples, note: [...picked, note.value.trim()].filter(Boolean).join("\n") };
+    };
+    return { el, apply, payload, term };
+  }
+
+  // n card forms; the first keeps the draft, the others start from the draft's sentence.
+  const setForms = (n) => {
+    forms = Array.from({ length: n }, (_, i) => cardForm(i === 0 ? draft : { examples: draft.examples },
+      n > 1 ? `Card ${i + 1} of ${n}` : ""));
+    fill(cardsBox, ...forms.map((f) => f.el));
+  };
+  setForms(1);
+
+  async function explain() {
+    const parts = splitFocus(focus.value);
+    const asks = parts.length ? parts : [""];
+    aiStatus.textContent = asks.length > 1 ? `Asking the AI about ${asks.length} words…` : "Asking the AI…";
+    const results = await Promise.allSettled(
+      asks.map((part) => api("POST", "ai/explain", { sentence: sentence.value, focus: part })));
+    if (results.every((r) => r.status === "rejected")) {
+      aiStatus.textContent = results[0].reason.message;
+      return;
     }
+    if (forms.length !== asks.length) setForms(asks.length);
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") forms[i].apply(r.value);
+      else forms[i].term.value = asks[i]; // fill this one in by hand
+    });
+    const failed = results.filter((r) => r.status === "rejected");
+    aiStatus.textContent = failed.length ? `${failed.length} could not be explained: ${failed[0].reason.message}` : "";
   }
 
   async function save() {
-    const picked = [...notesBox.querySelectorAll("input:checked")].map((c) => c.value);
-    const examples = [...examplesBox.querySelectorAll(".example-row")].map((row) => {
-      const [en, zh] = row.querySelectorAll("input");
-      return { en: en.value, zh: zh.value };
-    });
-    try {
-      const r = await api("POST", "words", {
-        term: term.value, respelling: respelling.value, definition: definition.value, zh: zh.value,
-        tags: tags.value.split(","),
-        examples, note: [...picked, note.value.trim()].filter(Boolean).join("\n"),
-      });
-      toast(r.duplicate ? "Already in your word bank. New examples were merged in" : "Added to your word bank");
-      if (draft.returnTo) location.hash = draft.returnTo; // back to the card you came from
-      else addView();
-    } catch (e) {
-      toast(e.message);
+    const cards = forms.map((f) => f.payload());
+    const filled = forms.length > 1 ? cards.filter((c) => c.term.trim()) : cards;
+    let added = 0, merged = 0;
+    for (const card of filled) {
+      try {
+        const r = await api("POST", "words", { ...card, tags: tags.value.split(",") });
+        if (r.duplicate) merged++; else added++;
+      } catch (e) {
+        toast((added || merged ? `Saved ${added + merged}, then: ` : "") + e.message);
+        return;
+      }
     }
+    if (filled.length === 1) toast(merged ? "Already in your word bank. New examples were merged in" : "Added to your word bank");
+    else toast(`Added ${added} card${added === 1 ? "" : "s"} to your word bank`
+      + (merged ? `, ${merged} already there got the new examples` : ""));
+    if (draft.returnTo) location.hash = draft.returnTo; // back to the card you came from
+    else addView();
   }
 
   show(
@@ -1255,15 +1304,8 @@ function addView() {
       h("label", {}, "The part you don't understand"), focus,
       h("div", { class: "row", style: "margin-top:12px" },
         h("button", { type: "button", onclick: explain }, "Explain with AI and fill in the card"), aiStatus)),
+    cardsBox,
     h("div", { class: "card" },
-      h("label", {}, "Word / phrase / pattern"), term,
-      h("label", {}, "Pronunciation respelling"), respelling,
-      h("label", {}, "English definition"), definition,
-      h("label", {}, "Chinese meaning"), zh,
-      h("label", {}, "Examples"), examplesBox,
-      h("button", { class: "link", type: "button", onclick: () => addExample() }, "+ Add an example"),
-      notesBox,
-      h("label", {}, "Note"), note,
       h("label", {}, "Tags (use / for a sub-topic, e.g. Restaurant/Coffee)"), tags,
       h("div", { class: "row", style: "margin-top:12px" },
         h("button", { class: "primary", type: "button", onclick: save }, "Save to word bank"))),
@@ -1449,6 +1491,9 @@ const practicePast = {}; // per module: feedback you moved on from, for "← Pre
 // Tag given to words saved from each practice module's feedback.
 const MODULE_TAGS = { write: "Keep writing", speak: "Keep speaking", improv: "Improv", toast: "Toastmasters",
   talk: "Conversation" };
+// Difficulty of a prompt's "Word ideas" (lv in prompts/*.json), easiest first.
+const WORD_LEVELS = [[2, "中下"], [3, "中"], [4, "中上"], [5, "上"]];
+let wordIdeasOpen = false;
 // Saved words from private practice get this tag and no example sentence, so nothing about the
 // project reaches data/words.json (which is synced).
 const PRIVATE_TAG = "My projects";
@@ -1562,6 +1607,7 @@ async function practiceView(module) {
       // otherwise it is only a translation of the instruction.
       prompt.task.startsWith("Translate") ? h("div", { class: "zh" }, prompt.zh)
         : prompt.zh ? chineseToggle(prompt.zh) : null,
+      wordIdeas(prompt),
       work));
     if (module === "talk") return talkInput(prompt, work);
     if (prompt.say) say(prompt, prompt.say);
@@ -1762,6 +1808,31 @@ async function practiceView(module) {
     } }, "+ Add to word bank");
     return h("div", { class: "example" }, h("b", {}, v.term), " " + v.zh, add,
       h("span", { class: "muted" }, v.example));
+  }
+
+  // "Word ideas": words and phrases the learner could use, grouped by difficulty.
+  // Folded at first; once opened it stays open for the next prompts.
+  function wordIdeas(prompt) {
+    if (!prompt.words || !prompt.words.length) return null;
+    const groups = WORD_LEVELS.map(([lv, label]) => [label, prompt.words.filter((w) => w.lv === lv)])
+      .filter(([, ws]) => ws.length);
+    const chip = (w) => {
+      const add = h("button", { class: "link", type: "button", title: "Add to word bank", onclick: async () => {
+        const res = await api("POST", "words", prompt.private
+          ? { term: w.en, zh: w.zh, tags: [PRIVATE_TAG], examples: [] }
+          : { term: w.en, zh: w.zh, tags: [MODULE_TAGS[module], `${MODULE_TAGS[module]}/${track.name}`], examples: [] });
+        add.disabled = true;
+        add.textContent = res.duplicate ? "✓ saved" : "✓";
+      } }, "+");
+      return h("span", { class: `idea lv${w.lv}` },
+        h("button", { class: "idea-en", type: "button", title: "Listen", onclick: () => say(prompt, w.en) }, w.en),
+        h("span", { class: "idea-zh" }, w.zh), add);
+    };
+    const panel = h("details", { class: "fold ideas", open: wordIdeasOpen, ontoggle: () => { wordIdeasOpen = panel.open; } },
+      h("summary", {}, `💡 Word ideas (${prompt.words.length})`,
+        h("span", { class: "muted" }, " · words you could use: tap to hear, + to save")),
+      groups.map(([label, ws]) => h("div", { class: "idea-row" }, h("span", { class: "idea-lv" }, label), ws.map(chip))));
+    return panel;
   }
 
   // Free topic: the learner picks who they talk to and what about.

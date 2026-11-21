@@ -263,3 +263,15 @@ button.link.danger:hover { color: var(--bad); }
   .word-meta { margin-left: -6px; }
   .word-details { padding: 0 16px 14px; }
 }
+/* "Word ideas" on a practice prompt: one row per difficulty, a chip per word. */
+.ideas .idea-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+.idea-lv { width: 36px; flex: none; font-size: 12px; color: var(--muted); }
+.idea { display: inline-flex; align-items: baseline; gap: 6px; padding: 2px 4px 2px 10px; border-radius: 14px;
+        border: 1px solid var(--line); border-left: 3px solid var(--idea, var(--line)); font-size: 15px; }
+.idea.lv2 { --idea: var(--muted); }
+.idea.lv3 { --idea: var(--accent); }
+.idea.lv4 { --idea: var(--series-1); }
+.idea.lv5 { --idea: var(--series-2); }
+.idea .idea-en { border: none; background: none; padding: 0; font: inherit; color: var(--text); font-weight: 600; cursor: pointer; }
+.idea .idea-zh { font-size: 13px; color: var(--muted); }
+.idea button.link { padding: 0 6px; }

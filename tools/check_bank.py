@@ -74,6 +74,28 @@ def check_questions(folder: Path) -> list[str]:
     return errors
 
 
+def check_word_ideas(words) -> list[str]:
+    """A prompt's "Word ideas": [{"en", "zh", "lv": 2-5}], 6-12 of them."""
+    if not isinstance(words, list) or not 6 <= len(words) <= 12:
+        return ["words must be a list of 6-12 items"]
+    errors, seen = [], set()
+    for w in words:
+        if not isinstance(w, dict) or set(w) != {"en", "zh", "lv"}:
+            errors.append(f"bad word {w!r} (needs exactly en, zh, lv)")
+            continue
+        if w["lv"] not in (2, 3, 4, 5):
+            errors.append(f"word {w['en']!r}: lv must be 2-5")
+        if not isinstance(w["en"], str) or not w["en"].strip() or CJK.search(w["en"]) or len(w["en"].split()) > 7:
+            errors.append(f"word {w['en']!r}: en must be English, 1-7 words")
+        if not isinstance(w["zh"], str) or not CJK.search(w["zh"]) or len(w["zh"]) > 24:
+            errors.append(f"word {w['en']!r}: zh must be Chinese, at most 24 characters")
+        key = str(w["en"]).lower()
+        if key in seen:
+            errors.append(f"word {w['en']!r}: duplicate")
+        seen.add(key)
+    return errors
+
+
 def check_prompts(folder: Path) -> list[str]:
     errors, ids = [], set()
     meta_path = folder / "_meta.json"
@@ -114,6 +136,8 @@ def check_prompts(folder: Path) -> list[str]:
                                   f"(set example_words on the track in _meta.json for longer ones)")
                 elif set(re.findall(r"\{[^}]*\}", example)) - PLACEHOLDERS or re.search(r"\{[^}]*$|^[^{]*\}", example):
                     errors.append(f"{where}: example may only use the placeholders {', '.join(sorted(PLACEHOLDERS))}")
+            if "words" in item:
+                errors += [f"{where}: {e}" for e in check_word_ideas(item["words"])]
             if folder.name == "talk":  # conversation scenarios: the AI plays `role`
                 for field in ("role", "setting", "say"):
                     value = item.get(field)

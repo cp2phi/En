@@ -178,6 +178,22 @@ Each file is a JSON array, one prompt per line:
   shown after the learner replies, 1–3 short sentences (3–60 words), the way
   a friendly New Zealander would really say it. English only.
 
+- `words` (every public prompt has one): "Word ideas" shown folded under the
+  prompt, words and phrases the learner could use in the answer, to widen what
+  they reach for. A list of 8 (6–10; 10 for `talk` scenarios, up to 12) items
+  `{"en": "a steep learning curve", "zh": "上手很难", "lv": 4}`, easiest first.
+  - `en`: 1–7 words, a natural chunk or collocation rather than a lone word
+    where possible; British/NZ spelling. `zh`: short Chinese (≤ 24 characters)
+    in the sense used in this prompt.
+  - `lv`: 2 中下 (catch up, on time), 3 中 (heads-up, worth it, follow up on),
+    4 中上 (trade-off, keep sb in the loop, to be fair), 5 上 (a double-edged
+    sword, mitigate). No lv 1 words (good, important, because). Per prompt:
+    1–2 lv2, 2–3 lv3, 2–3 lv4, 0–1 lv5.
+  - Specific to the prompt's topic and the job of the answer (agree, hedge,
+    tell a story, describe a trend, wrap up). Vary them: a phrase appears in at
+    most about 1 in 8 prompts of a file. Listen-and-repeat and translation
+    prompts list the key chunks plus alternatives that say the same thing.
+
 `example` may use the placeholders `{name}`, `{hometown}`, `{role}` (job
 title) and `{company}`; the app fills them in from Settings.
 
